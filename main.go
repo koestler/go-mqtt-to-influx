@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/jessevdk/go-flags"
 	"github.com/koestler/go-mqtt-to-influxdb/config"
+	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"github.com/koestler/go-mqtt-to-influxdb/mqttClient"
 	"log"
 	"os"
@@ -19,6 +20,7 @@ func main() {
 
 	setupConfig()
 	setupMqttClient()
+	setupInfluxDbClient()
 
 	log.Print("main: start completed; run until kill signal is received")
 
@@ -48,8 +50,21 @@ func setupMqttClient() {
 			"main: start mqtt client, broker=%v, clientId=%v",
 			mqttClientConfig.Broker, mqttClientConfig.ClientId,
 		)
-		mqttClient.Run(mqttClientConfig)
+		mqttClient.Run(mqttClientConfig, MessageHandler)
 	} else {
 		log.Printf("main: skip mqtt client, err=%v", err)
+	}
+}
+
+func setupInfluxDbClient() {
+	influxDbClientConfig, err := config.GetInfluxDbConfig()
+	if err == nil {
+		log.Printf(
+			"main: start influxDB client, addr=%v",
+			influxDbClientConfig.Addr,
+		)
+		influxDbClient.Run(influxDbClientConfig)
+	} else {
+		log.Printf("main: skip influxDb client, err=%v", err)
 	}
 }
