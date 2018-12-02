@@ -7,14 +7,14 @@ import (
 	"time"
 )
 
-var dbClient influxClient.Client
-var database string
+type InfluxDbClient struct {
+	config *config.InfluxDbConfig
+	client influxClient.Client
+}
 
-func Run(config *config.InfluxDbConfig) {
-
+func Run(config *config.InfluxDbConfig) (influxDbClient *InfluxDbClient) {
 	// Create a new HTTPClient
-	var err error
-	dbClient, err = influxClient.NewHTTPClient(influxClient.HTTPConfig{
+	dbClient, err := influxClient.NewHTTPClient(influxClient.HTTPConfig{
 		Addr:     config.Addr,
 		Username: config.User,
 		Password: config.Password,
@@ -22,32 +22,36 @@ func Run(config *config.InfluxDbConfig) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	database = config.Database
+
+	return &InfluxDbClient{
+		config,
+		dbClient,
+	}
 }
 
-func Stop() {
+func (ic *InfluxDbClient) Stop() {
 	// Close client resources
-	if err := dbClient.Close(); err != nil {
+	if err := ic.client.Close(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func WritePoint(name string, tags map[string]string, fields map[string]interface{}) {
-	if dbClient == nil {
-		// connection not ready yet / ignore
-		return
-	}
-
-	// Create a new point batch
+func (ic *InfluxDbClient) WritePoint(
+	measurement string,
+	tags map[string]string,
+	fields map[string]interface{},
+	precision string,
+	time time.Time,
+) {
 	bp, err := influxClient.NewBatchPoints(influxClient.BatchPointsConfig{
-		Database:  database,
-		Precision: "s",
+		Database:  ic.config.Database,
+		Precision: precision,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	pt, err := influxClient.NewPoint(name, tags, fields, time.Now())
+	pt, err := influxClient.NewPoint(measurement, tags, fields, time)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,7 +60,7 @@ func WritePoint(name string, tags map[string]string, fields map[string]interface
 	log.Printf("influxDb: write point %v", pt)
 
 	// Write the batch
-	if err := dbClient.Write(bp); err != nil {
+	if err := ic.client.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 }

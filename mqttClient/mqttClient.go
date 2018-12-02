@@ -8,9 +8,12 @@ import (
 	"strings"
 )
 
-var client mqtt.Client
+type MqttClient struct {
+	config *config.MqttClientConfig
+	client mqtt.Client
+}
 
-func Run(config *config.MqttClientConfig, messageHandler func(client mqtt.Client, msg mqtt.Message)) {
+func Run(config *config.MqttClientConfig) (mqttClient *MqttClient) {
 	// configure client and start connection
 	opts := mqtt.NewClientOptions().AddBroker(config.Broker).SetClientID(config.ClientId)
 	if len(config.User) > 0 {
@@ -19,7 +22,6 @@ func Run(config *config.MqttClientConfig, messageHandler func(client mqtt.Client
 	if len(config.Password) > 0 {
 		opts.SetPassword(config.Password)
 	}
-	opts.SetDefaultPublishHandler(messageHandler)
 
 	mqtt.ERROR = log.New(os.Stdout, "", 0)
 	if config.DebugLog {
@@ -31,7 +33,7 @@ func Run(config *config.MqttClientConfig, messageHandler func(client mqtt.Client
 	opts.SetWill(availableTopic, "Offline", config.Qos, true)
 
 	// start connection
-	client = mqtt.NewClient(opts)
+	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		log.Fatal("mqttClient connect failed", token.Error())
 	}
@@ -40,10 +42,9 @@ func Run(config *config.MqttClientConfig, messageHandler func(client mqtt.Client
 	// public availability
 	client.Publish(availableTopic, config.Qos, true, "Online")
 
-	// Subscribe to configured topics
-	if token := client.Subscribe("piegn/go-ve-sensor/#", config.Qos, nil);
-		token.Wait() && token.Error() != nil {
-		log.Fatal(token.Error())
+	return &MqttClient{
+		config: config,
+		client: client,
 	}
 }
 
@@ -51,4 +52,13 @@ func replaceTemplate(template string, config *config.MqttClientConfig) (r string
 	r = strings.Replace(template, "%Prefix%", config.TopicPrefix, 1)
 	r = strings.Replace(r, "%ClientId%", config.ClientId, 1)
 	return
+}
+
+func (mq *MqttClient) Subscribe(topic string, callback mqtt.MessageHandler) (error) {
+	log.Printf("mqttClient: subscribe to %s", topic)
+	if token := mq.client.Subscribe(topic, mq.config.Qos, callback);
+		token.Wait() && token.Error() != nil {
+		return token.Error()
+	}
+	return nil
 }

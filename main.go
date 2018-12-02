@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/jessevdk/go-flags"
 	"github.com/koestler/go-mqtt-to-influxdb/config"
+	"github.com/koestler/go-mqtt-to-influxdb/converter"
 	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"github.com/koestler/go-mqtt-to-influxdb/mqttClient"
 	"log"
@@ -15,12 +16,16 @@ type CmdOptions struct {
 
 var cmdOptions CmdOptions
 
+var mqttClientInstance *mqttClient.MqttClient
+var influxDbClientInstance *influxDbClient.InfluxDbClient
+
 func main() {
 	log.Print("main: start go-mqtt-to-influxdb...")
 
 	setupConfig()
 	setupMqttClient()
 	setupInfluxDbClient()
+	setupConverters()
 
 	log.Print("main: start completed; run until kill signal is received")
 
@@ -50,7 +55,7 @@ func setupMqttClient() {
 			"main: start mqtt client, broker=%v, clientId=%v",
 			mqttClientConfig.Broker, mqttClientConfig.ClientId,
 		)
-		mqttClient.Run(mqttClientConfig, MessageHandler)
+		mqttClientInstance = mqttClient.Run(mqttClientConfig)
 	} else {
 		log.Printf("main: skip mqtt client, err=%v", err)
 	}
@@ -63,8 +68,18 @@ func setupInfluxDbClient() {
 			"main: start influxDB client, addr=%v",
 			influxDbClientConfig.Addr,
 		)
-		influxDbClient.Run(influxDbClientConfig)
+		influxDbClientInstance = influxDbClient.Run(influxDbClientConfig)
 	} else {
 		log.Printf("main: skip influxDb client, err=%v", err)
+	}
+}
+
+func setupConverters() {
+	converterConfigs := config.GetConvertConfigs()
+	for _, convertConfig := range converterConfigs {
+		log.Printf("main: start converter %s", convertConfig.Name)
+		if err := converter.RunConverter(convertConfig, mqttClientInstance, influxDbClientInstance); err != nil {
+			log.Fatalf("main: cannot get converter; err=%s", err)
+		}
 	}
 }

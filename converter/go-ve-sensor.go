@@ -1,28 +1,14 @@
-package main
+package converter
 
 import (
-	"encoding/json"
 	"github.com/eclipse/paho.mqtt.golang"
-	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"log"
-	"regexp"
 )
 
-var topicMatcher *regexp.Regexp = regexp.MustCompile("^(.*)/([^/]*)/([^/]*)$")
+func goVeSensorHandler(converter Converter, msg mqtt.Message) {
+	log.Printf("go-ve-sensor-converter: %s", msg.Payload())
 
-type Measurement struct {
-	Value float64
-	Unit  string
-}
-
-func (m Measurement) toFields() (map[string]interface{}) {
-	return map[string]interface{}{
-		"Value": m.Value,
-		"Unit":  m.Unit,
-	}
-}
-
-var MessageHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
+	/*
 	log.Printf("mqtt: %s %s\n", msg.Topic(), msg.Payload())
 
 	// parse topic
@@ -46,5 +32,21 @@ var MessageHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Messa
 		map[string]string{"device": device},
 		measurement.toFields(),
 	)
-
+	*/
 }
+
+/*
+var topicMatcher *regexp.Regexp = regexp.MustCompile("^(.*)/([^/]*)/([^/]*)$")
+
+type Measurement struct {
+	Value float64
+	Unit  string
+}
+
+func (m Measurement) toFields() (map[string]interface{}) {
+	return map[string]interface{}{
+		"Value": m.Value,
+		"Unit":  m.Unit,
+	}
+}
+*/
