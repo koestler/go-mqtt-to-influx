@@ -1,52 +1,70 @@
 package converter
 
 import (
+	"encoding/json"
 	"github.com/eclipse/paho.mqtt.golang"
+	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"log"
+	"regexp"
+	"time"
 )
 
+const timeFormat string = "2006-01-02T15:04:05"
+
+type TelemetryMessage struct {
+	Time     string
+	NextTele string
+	TimeZone string
+	Values   map[string]struct {
+		Value float64
+		Unit  string
+	}
+}
+
+var topicMatcher = regexp.MustCompile("^(.*)/([^/]*)$")
+
 func goVeSensorHandler(converter Converter, msg mqtt.Message) {
-	log.Printf("go-ve-sensor-converter: %s", msg.Payload())
-
-	/*
-	log.Printf("mqtt: %s %s\n", msg.Topic(), msg.Payload())
-
 	// parse topic
 	strings := topicMatcher.FindStringSubmatch(msg.Topic())
-	if len(strings) < 4 {
+	if len(strings) < 3 {
 		return
 	}
 	device := strings[2]
-	name := strings[3]
 
 	// parse payload
-	var measurement Measurement
-	if err := json.Unmarshal(msg.Payload(), &measurement); err != nil {
-		log.Printf("cannot json decode: %s", err)
+	var message TelemetryMessage
+	if err := json.Unmarshal(msg.Payload(), &message); err != nil {
+		log.Printf("go-ve-sensor: cannot json decode: %s", err)
 		return
 	}
 
-	// write to db
-	influxDbClient.WritePoint(
-		name,
-		map[string]string{"device": device},
-		measurement.toFields(),
-	)
-	*/
-}
-
-/*
-var topicMatcher *regexp.Regexp = regexp.MustCompile("^(.*)/([^/]*)/([^/]*)$")
-
-type Measurement struct {
-	Value float64
-	Unit  string
-}
-
-func (m Measurement) toFields() (map[string]interface{}) {
-	return map[string]interface{}{
-		"Value": m.Value,
-		"Unit":  m.Unit,
+	// map values to points
+	points := make([]influxDbClient.Point, len(message.Values))
+	i := 0
+	for field, value := range message.Values {
+		points[i] = influxDbClient.Point{
+			Tags: map[string]string{
+				"device": device,
+				"field":  field,
+				"unit":   value.Unit,
+			},
+			Fields: map[string]interface{}{
+				"value": value.Value,
+			},
+		}
+		i += 1
 	}
+
+	timeStamp, err := time.Parse(timeFormat, message.Time)
+	if err != nil {
+		log.Printf("go-ve-sensor: cannot parse timeStamp, err=%v", err)
+		return
+	}
+
+	converter.influxDbClientInstance.WritePoints(
+		"ve-sensor-float",
+		"1s",
+		points,
+		timeStamp,
+	)
 }
-*/
