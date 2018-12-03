@@ -7,9 +7,17 @@ import (
 	"time"
 )
 
+type Point struct {
+	Tags   map[string]string
+	Fields map[string]interface{}
+}
+
 type InfluxDbClient struct {
 	config *config.InfluxDbConfig
 	client influxClient.Client
+
+	pointToSendChannel chan *influxClient.Point
+	currentBatch       influxClient.BatchPoints
 }
 
 func Run(config *config.InfluxDbConfig) (influxDbClient *InfluxDbClient) {
@@ -23,10 +31,17 @@ func Run(config *config.InfluxDbConfig) (influxDbClient *InfluxDbClient) {
 		log.Fatal(err)
 	}
 
-	return &InfluxDbClient{
+	influxDbClient = &InfluxDbClient{
 		config,
 		dbClient,
+		make(chan *influxClient.Point, 64),
+		getBatch(config.Database),
 	}
+
+	// start to send out points
+	go influxDbClient.pointsSender(config.WriteInterval)
+
+	return
 }
 
 func (ic *InfluxDbClient) Stop() {
@@ -36,24 +51,53 @@ func (ic *InfluxDbClient) Stop() {
 	}
 }
 
-type Point struct {
-	Tags   map[string]string
-	Fields map[string]interface{}
+func (ic *InfluxDbClient) pointsSender(writeInterval time.Duration) {
+	writeTick := time.Tick(writeInterval)
+
+	for {
+		select {
+		case point := <-ic.pointToSendChannel:
+			ic.currentBatch.AddPoint(point)
+
+			// if interval = 0 -> send immediately
+			if (writeInterval == 0) {
+				ic.sendBatch()
+			}
+		case <-writeTick:
+			ic.sendBatch()
+		}
+	}
 }
 
-func (ic *InfluxDbClient) WritePoints(
-	measurement string,
-	precision string,
-	points []Point,
-	time time.Time,
-) {
+func getBatch(database string) (bp influxClient.BatchPoints) {
 	bp, err := influxClient.NewBatchPoints(influxClient.BatchPointsConfig{
-		Database:  ic.config.Database,
-		Precision: precision,
+		Database:  database,
+		Precision: "1s",
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
+	return
+}
+
+func (ic *InfluxDbClient) sendBatch() {
+	if len(ic.currentBatch.Points()) < 1 {
+		// nothing to send
+		return
+	}
+
+	if err := ic.client.Write(ic.currentBatch); err != nil {
+		log.Printf("cannot write to db, err=%v", err)
+		return
+	}
+	ic.currentBatch = getBatch(ic.config.Database)
+}
+
+func (ic *InfluxDbClient) WritePoints(
+	measurement string,
+	points []Point,
+	time time.Time,
+) {
 
 	for _, point := range points {
 		pt, err := influxClient.NewPoint(measurement, point.Tags, point.Fields, time)
@@ -61,12 +105,6 @@ func (ic *InfluxDbClient) WritePoints(
 			log.Printf("influxDbClient: error=%v", err)
 			continue
 		}
-		bp.AddPoint(pt)
-		log.Printf("influxDb: write point %v", pt)
-	}
-
-	// Write the batch
-	if err := ic.client.Write(bp); err != nil {
-		log.Printf("influxDbClient: cannot write to db, err=%v",err)
+		ic.pointToSendChannel <- pt
 	}
 }

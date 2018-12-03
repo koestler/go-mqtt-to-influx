@@ -57,7 +57,7 @@ func setupMqttClient() {
 		)
 		mqttClientInstance = mqttClient.Run(mqttClientConfig)
 	} else {
-		log.Printf("main: skip mqtt client, err=%v", err)
+		log.Fatalf("main: skip mqtt client, err=%v", err)
 	}
 }
 
@@ -70,7 +70,7 @@ func setupInfluxDbClient() {
 		)
 		influxDbClientInstance = influxDbClient.Run(influxDbClientConfig)
 	} else {
-		log.Printf("main: skip influxDb client, err=%v", err)
+		log.Fatalf("main: skip influxDb client, err=%v", err)
 	}
 }
 

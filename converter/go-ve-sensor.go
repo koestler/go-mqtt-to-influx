@@ -63,7 +63,6 @@ func goVeSensorHandler(converter Converter, msg mqtt.Message) {
 
 	converter.influxDbClientInstance.WritePoints(
 		"ve-sensor-float",
-		"1s",
 		points,
 		timeStamp,
 	)
