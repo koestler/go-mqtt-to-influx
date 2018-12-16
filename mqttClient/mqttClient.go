@@ -30,6 +30,7 @@ func Run(config *config.MqttClientConfig) (mqttClient *MqttClient) {
 
 	// setup availability topic using will
 	availableTopic := replaceTemplate(config.AvailabilityTopic, config)
+	log.Printf("mqttClient: set will to topic='%s' payload='Offline'", availableTopic)
 	opts.SetWill(availableTopic, "Offline", config.Qos, true)
 
 	// start connection
@@ -40,6 +41,7 @@ func Run(config *config.MqttClientConfig) (mqttClient *MqttClient) {
 	log.Printf("mqttClient: connected to %v", config.Broker)
 
 	// public availability
+	log.Printf("mqttClient: set availability to topic='%s' payload='Online'", availableTopic)
 	client.Publish(availableTopic, config.Qos, true, "Online")
 
 	return &MqttClient{

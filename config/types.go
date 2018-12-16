@@ -26,7 +26,7 @@ type MqttClientConfig struct {
 	Qos               byte   `yaml:"Qos"`
 	DebugLog          bool   `yaml:"DebugLog"`
 	TopicPrefix       string `yaml:"TopicPrefix,omitempty"`
-	AvailabilityTopic string `yaml:"AvailabilityTopic,omitempty"`
+	AvailabilityTopic string `yaml:"AvailabilityTopic"`
 }
 
 type MqttClientConfigRead struct {

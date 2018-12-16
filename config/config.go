@@ -87,6 +87,10 @@ func (i *MqttClientConfigRead) TransformAndValidate() MqttClientConfig {
 		ret.Qos = *i.Qos
 	}
 
+	if len(ret.AvailabilityTopic) < 1 {
+		ret.AvailabilityTopic = "%Prefix%%ClientId%/LWT"
+	}
+
 	if i.DebugLog != nil && *i.DebugLog {
 		ret.DebugLog = true
 	}
