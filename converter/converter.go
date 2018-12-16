@@ -11,12 +11,12 @@ import (
 type ConverterHandleFunc func(converter Converter, msg mqtt.Message)
 
 type Converter struct {
-	config                 *config.ConvertConfig
+	config                 *config.ConverterConfig
 	influxDbClientInstance *influxDbClient.InfluxDbClient
 }
 
 func RunConverter(
-	config *config.ConvertConfig,
+	config *config.ConverterConfig,
 	mqttClientInstance *mqttClient.MqttClient,
 	influcDbClientInstance *influxDbClient.InfluxDbClient,
 ) (err error) {
@@ -36,8 +36,10 @@ func RunConverter(
 		influxDbClientInstance: influcDbClientInstance,
 	}
 
-	if err := mqttClientInstance.Subscribe(config.MqttTopic, getMqttMessageHandler(converter, handleFunc)); err != nil {
-		return err
+	for _, mqttTopic := range config.MqttTopics {
+		if err := mqttClientInstance.Subscribe(mqttTopic, getMqttMessageHandler(converter, handleFunc)); err != nil {
+			return err
+		}
 	}
 
 	return nil

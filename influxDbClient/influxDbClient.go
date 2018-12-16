@@ -13,17 +13,17 @@ type Point struct {
 }
 
 type InfluxDbClient struct {
-	config *config.InfluxDbConfig
+	config *config.InfluxDbClientConfig
 	client influxClient.Client
 
 	pointToSendChannel chan *influxClient.Point
 	currentBatch       influxClient.BatchPoints
 }
 
-func Run(config *config.InfluxDbConfig) (influxDbClient *InfluxDbClient) {
+func Run(config *config.InfluxDbClientConfig) (influxDbClient *InfluxDbClient) {
 	// Create a new HTTPClient
 	dbClient, err := influxClient.NewHTTPClient(influxClient.HTTPConfig{
-		Addr:     config.Addr,
+		Addr:     config.Address,
 		Username: config.User,
 		Password: config.Password,
 	})

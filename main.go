@@ -11,13 +11,15 @@ import (
 )
 
 type CmdOptions struct {
-	Config flags.Filename `short:"c" long:"config" description:"Config File in ini format" default:"./config.ini"`
+	Config flags.Filename `short:"c" long:"config" description:"Config File in ini format" default:"./config.yaml"`
 }
 
-var cmdOptions CmdOptions
-
-var mqttClientInstance *mqttClient.MqttClient
-var influxDbClientInstance *influxDbClient.InfluxDbClient
+var (
+	cmdOptions             CmdOptions
+	mqttClientInstance     *mqttClient.MqttClient
+	influxDbClientInstance *influxDbClient.InfluxDbClient
+	configInstance         config.Config
+)
 
 func main() {
 	log.Print("main: start go-mqtt-to-influxdb...")
@@ -44,41 +46,31 @@ func setupConfig() {
 			os.Exit(1)
 		}
 	}
-	// initialize config library
-	config.Setup(string(cmdOptions.Config))
+
+	// read, transform and validate configuration
+	configInstance = config.ReadConfig(string(cmdOptions.Config))
 }
 
 func setupMqttClient() {
-	mqttClientConfig, err := config.GetMqttClientConfig()
-	if err == nil {
-		log.Printf(
-			"main: start mqtt client, broker=%v, clientId=%v",
-			mqttClientConfig.Broker, mqttClientConfig.ClientId,
-		)
-		mqttClientInstance = mqttClient.Run(mqttClientConfig)
-	} else {
-		log.Fatalf("main: skip mqtt client, err=%v", err)
-	}
+	log.Printf(
+		"main: start mqtt client, broker=%v, clientId=%v",
+		configInstance.MqttClient.Broker, configInstance.MqttClient.ClientId,
+	)
+	mqttClientInstance = mqttClient.Run(&configInstance.MqttClient)
 }
 
 func setupInfluxDbClient() {
-	influxDbClientConfig, err := config.GetInfluxDbConfig()
-	if err == nil {
-		log.Printf(
-			"main: start influxDB client, addr=%v",
-			influxDbClientConfig.Addr,
-		)
-		influxDbClientInstance = influxDbClient.Run(influxDbClientConfig)
-	} else {
-		log.Fatalf("main: skip influxDb client, err=%v", err)
-	}
+	log.Printf(
+		"main: start influxDB client, addr=%v",
+		configInstance.InfluxDbClient.Address,
+	)
+	influxDbClientInstance = influxDbClient.Run(&configInstance.InfluxDbClient)
 }
 
 func setupConverters() {
-	converterConfigs := config.GetConvertConfigs()
-	for _, convertConfig := range converterConfigs {
+	for _, convertConfig := range configInstance.Converters {
 		log.Printf("main: start converter %s", convertConfig.Name)
-		if err := converter.RunConverter(convertConfig, mqttClientInstance, influxDbClientInstance); err != nil {
+		if err := converter.RunConverter(&convertConfig, mqttClientInstance, influxDbClientInstance); err != nil {
 			log.Fatalf("main: cannot get converter; err=%s", err)
 		}
 	}

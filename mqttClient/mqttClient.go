@@ -29,13 +29,13 @@ func Run(config *config.MqttClientConfig) (mqttClient *MqttClient) {
 	}
 
 	// setup availability topic using will
-	availableTopic := replaceTemplate(config.AvailableTopic, config)
+	availableTopic := replaceTemplate(config.AvailabilityTopic, config)
 	opts.SetWill(availableTopic, "Offline", config.Qos, true)
 
 	// start connection
 	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		log.Fatal("mqttClient connect failed", token.Error())
+		log.Fatal("mqttClient: connect failed", token.Error())
 	}
 	log.Printf("mqttClient: connected to %v", config.Broker)
 

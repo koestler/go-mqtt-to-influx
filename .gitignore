@@ -1,2 +1,2 @@
-config.ini
+config.yaml
 go-mqtt-to-influxdb
