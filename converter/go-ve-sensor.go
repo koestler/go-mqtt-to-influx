@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-const timeFormat string = "2006-01-02T15:04:05"
-
 type TelemetryMessage struct {
 	Time     string
 	NextTele string
@@ -28,6 +26,7 @@ func goVeSensorHandler(converter Converter, msg mqtt.Message) {
 	// parse topic
 	strings := topicMatcher.FindStringSubmatch(msg.Topic())
 	if len(strings) < 3 {
+		log.Printf("go-ve-sensor: cannot extract device from topic='%s", msg.Topic())
 		return
 	}
 	device := strings[2]
@@ -61,10 +60,9 @@ func goVeSensorHandler(converter Converter, msg mqtt.Message) {
 		log.Printf("go-ve-sensor: TimeZone='%s' but only UTC is supported", message.TimeZone)
 	}
 
-	timeStamp, err := time.Parse(timeFormat, message.Time)
+	timeStamp, err := parseTime(message.Time)
 	if err != nil {
-		log.Printf("go-ve-sensor: cannot parse timeStamp, err=%v", err)
-		return
+		timeStamp = time.Now()
 	}
 
 	converter.influxDbClientInstance.WritePoints(

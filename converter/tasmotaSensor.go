@@ -30,6 +30,7 @@ func tasmotaSensorHandler(converter Converter, msg mqtt.Message) {
 	// parse topic
 	strings := tasmotaSensorTopicMatcher.FindStringSubmatch(msg.Topic())
 	if len(strings) < 3 {
+		log.Printf("tasmota-sensor: cannot extract device from topic='%s", msg.Topic())
 		return
 	}
 	device := strings[2]
@@ -52,10 +53,9 @@ func tasmotaSensorHandler(converter Converter, msg mqtt.Message) {
 		return
 	}
 
-	timeStamp, err := time.Parse(timeFormat, message.Time)
+	timeStamp, err := parseTime(message.Time)
 	if err != nil {
-		log.Printf("tasmota-sensor: cannot parse timeStamp, err=%v", err)
-		return
+		timeStamp = time.Now()
 	}
 
 	converter.influxDbClientInstance.WritePoints(

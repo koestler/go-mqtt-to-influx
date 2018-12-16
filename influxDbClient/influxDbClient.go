@@ -7,6 +7,13 @@ import (
 	"time"
 )
 
+type RawPoint struct {
+	Measurement string
+	Tags        map[string]string
+	Fields      map[string]interface{}
+	Time        time.Time
+}
+
 type Point struct {
 	Tags   map[string]string
 	Fields map[string]interface{}
@@ -93,18 +100,31 @@ func (ic *InfluxDbClient) sendBatch() {
 	ic.currentBatch = getBatch(ic.config.Database)
 }
 
-func (ic *InfluxDbClient) WritePoints(
-	measurement string,
-	points []Point,
-	time time.Time,
-) {
-
-	for _, point := range points {
-		pt, err := influxClient.NewPoint(measurement, point.Tags, point.Fields, time)
+func (ic *InfluxDbClient) WriteRawPoints(rawPoints []RawPoint) {
+	for _, point := range rawPoints {
+		pt, err := influxClient.NewPoint(point.Measurement, point.Tags, point.Fields, point.Time)
 		if err != nil {
 			log.Printf("influxDbClient: error=%v", err)
 			continue
 		}
 		ic.pointToSendChannel <- pt
 	}
+}
+
+func (ic *InfluxDbClient) WritePoints(
+	measurement string,
+	points []Point,
+	time time.Time,
+) {
+	rawPoints := make([]RawPoint, len(points))
+
+	for i, point := range points {
+		rawPoints[i] = RawPoint{
+			Measurement: measurement,
+			Tags:        point.Tags,
+			Fields:      point.Fields,
+			Time:        time,
+		}
+	}
+	ic.WriteRawPoints(rawPoints)
 }

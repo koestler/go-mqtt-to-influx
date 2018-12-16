@@ -14,6 +14,7 @@ func lwtHandler(converter Converter, msg mqtt.Message) {
 	// parse topic
 	strings := lwtTopicMatcher.FindStringSubmatch(msg.Topic())
 	if len(strings) < 3 {
+		log.Printf("lwt: cannot extract device from topic='%s", msg.Topic())
 		return
 	}
 	device := strings[2]
