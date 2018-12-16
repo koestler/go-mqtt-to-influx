@@ -15,6 +15,7 @@ type TelemetryMessage struct {
 	Time     string
 	NextTele string
 	TimeZone string
+	Model    string
 	Values   map[string]struct {
 		Value float64
 		Unit  string
@@ -47,12 +48,17 @@ func goVeSensorHandler(converter Converter, msg mqtt.Message) {
 				"device": device,
 				"field":  field,
 				"unit":   value.Unit,
+				"sensor": message.Model,
 			},
 			Fields: map[string]interface{}{
 				"value": value.Value,
 			},
 		}
 		i += 1
+	}
+
+	if message.TimeZone != "UTC" {
+		log.Printf("go-ve-sensor: TimeZone='%s' but only UTC is supported", message.TimeZone)
 	}
 
 	timeStamp, err := time.Parse(timeFormat, message.Time)
@@ -62,7 +68,7 @@ func goVeSensorHandler(converter Converter, msg mqtt.Message) {
 	}
 
 	converter.influxDbClientInstance.WritePoints(
-		"ve-sensor-float",
+		converter.config.TargetMeasurement,
 		points,
 		timeStamp,
 	)
