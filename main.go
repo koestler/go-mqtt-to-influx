@@ -67,8 +67,12 @@ func setupInfluxDbClient() {
 
 func setupConverters() {
 	for _, convertConfig := range configInstance.Converters {
-		log.Printf("main: start converter %s", convertConfig.Name)
-		if err := converter.RunConverter(&convertConfig, mqttClientInstance, influxDbClientInstance); err != nil {
+		log.Printf(
+			"main: start converter name=%s implementation=%s",
+			convertConfig.Name,
+			convertConfig.Implementation,
+		)
+		if err := converter.RunConverter(convertConfig, mqttClientInstance, influxDbClientInstance); err != nil {
 			log.Fatalf("main: cannot get converter; err=%s", err)
 		}
 	}

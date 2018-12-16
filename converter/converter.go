@@ -11,23 +11,26 @@ import (
 type ConverterHandleFunc func(converter Converter, msg mqtt.Message)
 
 type Converter struct {
-	config                 *config.ConverterConfig
+	config                 config.ConverterConfig
 	influxDbClientInstance *influxDbClient.InfluxDbClient
 }
 
+var converterImplementations = map[string]ConverterHandleFunc{
+	"go-ve-sensor":   goVeSensorHandler,
+	"lwt":            lwtHandler,
+	"tasmota-state":  tasmotaStateHandler,
+	"tasmota-sensor": tasmotaSensorHandler,
+}
+
 func RunConverter(
-	config *config.ConverterConfig,
+	config config.ConverterConfig,
 	mqttClientInstance *mqttClient.MqttClient,
 	influcDbClientInstance *influxDbClient.InfluxDbClient,
 ) (err error) {
 	var handleFunc ConverterHandleFunc
 
-	switch config.Implementation {
-	case "go-ve-sensor":
-		handleFunc = goVeSensorHandler
-	case "tasmota":
-		handleFunc = tasmotaHandler
-	default:
+	handleFunc, ok := converterImplementations[config.Implementation]
+	if !ok {
 		return fmt.Errorf("unknown implementation '%s'", config.Implementation)
 	}
 
@@ -47,6 +50,7 @@ func RunConverter(
 
 func getMqttMessageHandler(converter Converter, handleFunc ConverterHandleFunc) (mqtt.MessageHandler) {
 	return func(client mqtt.Client, message mqtt.Message) {
+		logTopicOnce(converter.config.Name, message.Topic())
 		handleFunc(converter, message)
 	}
 }
