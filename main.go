@@ -35,8 +35,6 @@ func main() {
 }
 
 func setupConfig() {
-	log.Printf("main: setup config")
-
 	// parse command line options
 	parser := flags.NewParser(&cmdOptions, flags.Default)
 	if _, err := parser.Parse(); err != nil {

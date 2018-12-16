@@ -23,9 +23,9 @@ func Run(config *config.MqttClientConfig) (mqttClient *MqttClient) {
 		opts.SetPassword(config.Password)
 	}
 
-	mqtt.ERROR = log.New(os.Stdout, "", 0)
+	mqtt.ERROR = log.New(os.Stdout, "", log.LstdFlags)
 	if config.DebugLog {
-		mqtt.DEBUG = log.New(os.Stdout, "", 0)
+		mqtt.DEBUG = log.New(os.Stdout, "", log.LstdFlags)
 	}
 
 	// setup availability topic using will
@@ -35,7 +35,7 @@ func Run(config *config.MqttClientConfig) (mqttClient *MqttClient) {
 	// start connection
 	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		log.Fatal("mqttClient: connect failed", token.Error())
+		log.Fatalf("mqttClient: connect failed: %v", token.Error())
 	}
 	log.Printf("mqttClient: connected to %v", config.Broker)
 
