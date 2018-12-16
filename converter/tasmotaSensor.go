@@ -41,6 +41,7 @@ func tasmotaSensorHandler(converter Converter, msg mqtt.Message) {
 		return
 	}
 
+	// create points
 	points := message.toPoints(device)
 	if len(points) < 1 {
 		log.Printf(

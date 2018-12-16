@@ -140,12 +140,25 @@ func (i ConverterReadMap) TransformAndValidate() []ConverterConfig {
 	return ret
 }
 
+var implementationsAndDefaultMeaseurement = map[string]string{
+	"go-ve-sensor":   "floatValue",
+	"lwt":            "boolValue",
+	"tasmota-state":  "boolValue",
+	"tasmota-sensor": "floatValue",
+}
+
 func (i ConverterConfigRead) TransformAndValidate(name string) ConverterConfig {
 	ret := ConverterConfig{
 		Name:              name,
 		Implementation:    i.Implementation,
 		TargetMeasurement: i.TargetMeasurement,
 		MqttTopics:        i.MqttTopics,
+	}
+
+	if def, ok := implementationsAndDefaultMeaseurement[ret.Implementation]; !ok {
+		log.Fatalf("config:  Converters->%s->Implementation='%s' is unkown", name, ret.Implementation)
+	} else if len(ret.TargetMeasurement) < 1 {
+		ret.TargetMeasurement = def
 	}
 
 	if len(ret.MqttTopics) < 1 {
