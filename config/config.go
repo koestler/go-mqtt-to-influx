@@ -88,7 +88,7 @@ func (i *MqttClientConfigRead) TransformAndValidate() MqttClientConfig {
 	}
 
 	if len(ret.AvailabilityTopic) < 1 {
-		ret.AvailabilityTopic = "%Prefix%%ClientId%/LWT"
+		ret.AvailabilityTopic = "%Prefix%tele/%ClientId%/LWT"
 	}
 
 	if i.DebugLog != nil && *i.DebugLog {
