@@ -26,11 +26,11 @@ type SensorMessage struct {
 
 var tasmotaSensorTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/SENSOR$")
 
-func tasmotaSensorHandler(converter Converter, msg mqtt.Message) {
+func tasmotaSensorHandler(c *Converter, msg mqtt.Message) {
 	// parse topic
 	strings := tasmotaSensorTopicMatcher.FindStringSubmatch(msg.Topic())
 	if len(strings) < 3 {
-		log.Printf("tasmota-sensor: cannot extract device from topic='%s", msg.Topic())
+		log.Printf("tasmota-sensor[%s]: cannot extract device from topic='%s", c.GetName(), msg.Topic())
 		return
 	}
 	device := strings[2]
@@ -38,7 +38,7 @@ func tasmotaSensorHandler(converter Converter, msg mqtt.Message) {
 	// parse payload
 	var message SensorMessage
 	if err := json.Unmarshal(msg.Payload(), &message); err != nil {
-		log.Printf("tasmota-sensor: cannot json decode: %s", err)
+		log.Printf("tasmota-sensor[%s]: cannot json decode: %s", c.GetName(), err)
 		return
 	}
 
@@ -46,9 +46,9 @@ func tasmotaSensorHandler(converter Converter, msg mqtt.Message) {
 	points := message.toPoints(device)
 	if len(points) < 1 {
 		log.Printf(
-			"tasmota-sensor: could not extract any sensor data; "+
-				"sensor type is probably unknown; known sensors are AM2301, SI7021, DS18B20; payload=",
-			msg.Payload(),
+			"tasmota-sensor[%s]: could not extract any sensor data; "+
+				"sensor type is probably unknown; known sensors are AM2301, SI7021, DS18B20; payload='%s'",
+			c.GetName(), msg.Payload(),
 		)
 		return
 	}
@@ -58,11 +58,11 @@ func tasmotaSensorHandler(converter Converter, msg mqtt.Message) {
 		timeStamp = time.Now()
 	}
 
-	converter.influxDbClientPoolInstance.WritePoints(
-		converter.config.TargetMeasurement,
+	c.influxDbClientPoolInstance.WritePoints(
+		c.config.TargetMeasurement,
 		points,
 		timeStamp,
-		converter.config.InfluxDbClients,
+		c.config.InfluxDbClients,
 	)
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/eclipse/paho.mqtt.golang"
 	"github.com/jessevdk/go-flags"
 	"github.com/koestler/go-mqtt-to-influxdb/config"
 	"github.com/koestler/go-mqtt-to-influxdb/converter"
@@ -11,25 +12,30 @@ import (
 )
 
 type CmdOptions struct {
-	Config flags.Filename `short:"c" long:"config" description:"Config File in ini format" default:"./config.yaml"`
+	Config flags.Filename `short:"c" long:"config" description:"Config File in yaml format" default:"./config.yaml"`
 }
 
 var (
 	cmdOptions                 CmdOptions
 	mqttClientInstances        map[string]*mqttClient.MqttClient
 	influxDbClientPoolInstance *influxDbClient.InfluxDbClientPool
-	configInstance             config.Config
+	cfg                        config.Config
 )
 
 func main() {
-	log.Print("main: start go-mqtt-to-influxdb...")
-
 	setupConfig()
+
+	if cfg.LogWorkerStart {
+		log.Print("main: start go-mqtt-to-influxdb...")
+	}
+
 	setupMqttClient()
 	setupInfluxDbClient()
 	setupConverters()
 
-	log.Print("main: start completed; run until kill signal is received")
+	if cfg.LogWorkerStart {
+		log.Print("main: start completed; run until kill signal is received")
+	}
 
 	select {}
 }
@@ -37,6 +43,7 @@ func main() {
 func setupConfig() {
 	// parse command line options
 	parser := flags.NewParser(&cmdOptions, flags.Default)
+	parser.Usage = "[-c <path to yaml config file>]"
 	if _, err := parser.Parse(); err != nil {
 		if flagsErr, ok := err.(*flags.Error); ok && flagsErr.Type == flags.ErrHelp {
 			os.Exit(0)
@@ -46,17 +53,27 @@ func setupConfig() {
 	}
 
 	// read, transform and validate configuration
-	configInstance = config.ReadConfig(string(cmdOptions.Config))
+	cfg = config.ReadConfig(parser.Name, string(cmdOptions.Config))
+	if cfg.LogConfig {
+		cfg.PrintConfig()
+	}
 }
 
 func setupMqttClient() {
+	mqtt.ERROR = log.New(os.Stdout, "MqttDebugLog: ", log.LstdFlags)
+	if cfg.LogMqttDebug {
+		mqtt.DEBUG = log.New(os.Stdout, "MqttDebugLog: ", log.LstdFlags)
+	}
+
 	mqttClientInstances = make(map[string]*mqttClient.MqttClient)
 
-	for _, mqttClientConfig := range configInstance.MqttClients {
-		log.Printf(
-			"main: start mqtt client, name=%s, broker=%s, clientId=%s",
-			mqttClientConfig.Name, mqttClientConfig.Broker, mqttClientConfig.ClientId,
-		)
+	for _, mqttClientConfig := range cfg.MqttClients {
+		if cfg.LogWorkerStart {
+			log.Printf(
+				"main: start mqtt client, name='%s', broker='%s', clientId='%s'",
+				mqttClientConfig.Name, mqttClientConfig.Broker, mqttClientConfig.ClientId,
+			)
+		}
 		mqttClientInstances[mqttClientConfig.Name] = mqttClient.Run(mqttClientConfig)
 	}
 }
@@ -64,12 +81,14 @@ func setupMqttClient() {
 func setupInfluxDbClient() {
 	influxDbClientPoolInstance = influxDbClient.RunPool()
 
-	for _, influxDbClientConfig := range configInstance.InfluxDbClients {
-		log.Printf(
-			"main: start influxDB client, name=%s addr=%v",
-			influxDbClientConfig.Name,
-			influxDbClientConfig.Address,
-		)
+	for _, influxDbClientConfig := range cfg.InfluxDbClients {
+		if cfg.LogWorkerStart {
+			log.Printf(
+				"main: start influxDB client, name='%s' addr='%s'",
+				influxDbClientConfig.Name,
+				influxDbClientConfig.Address,
+			)
+		}
 		influxDbClientPoolInstance.AddClient(
 			influxDbClient.RunClient(influxDbClientConfig),
 		)
@@ -77,18 +96,20 @@ func setupInfluxDbClient() {
 }
 
 func setupConverters() {
-	for _, convertConfig := range configInstance.Converters {
+	for _, convertConfig := range cfg.Converters {
 		for _, clientInstance := range getMqttClient(convertConfig.MqttClients) {
-			log.Printf(
-				"main: start converter name=%s, implementation=%s, mqttClient=%s, influxDbClients=%v",
-				convertConfig.Name,
-				convertConfig.Implementation,
-				clientInstance.GetName(),
-				convertConfig.InfluxDbClients,
-			)
+			if cfg.LogWorkerStart {
+				log.Printf(
+					"main: start converter name='%s', implementation='%s', mqttClient='%s', influxDbClients=%v",
+					convertConfig.Name,
+					convertConfig.Implementation,
+					clientInstance.GetName(),
+					convertConfig.InfluxDbClients,
+				)
+			}
 
 			if err := converter.RunConverter(convertConfig, clientInstance, influxDbClientPoolInstance); err != nil {
-				log.Fatalf("main: cannot start converter; err=%s", err)
+				log.Fatalf("main: cannot start converter: %s", err)
 			}
 		}
 	}

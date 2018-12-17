@@ -7,6 +7,9 @@ type Config struct {
 	MqttClients     []MqttClientConfig     `yaml:"MqttClient"`
 	InfluxDbClients []InfluxDbClientConfig `yaml:"InfluxDbClients"`
 	Converters      []ConverterConfig      `yaml:"Converters"`
+	LogConfig       bool                   `yaml:"LogConfig"`
+	LogWorkerStart  bool                   `yaml:"LogWorkerStart"`
+	LogMqttDebug    bool                   `yaml:"LogMqttDebug"`
 }
 
 type ConfigRead struct {
@@ -14,6 +17,9 @@ type ConfigRead struct {
 	MqttClients     MqttClientConfigReadMap     `yaml:"MqttClients"`
 	InfluxDbClients InfluxDbClientConfigReadMap `yaml:"InfluxDbClients"`
 	Converters      ConverterReadMap            `yaml:"Converters"`
+	LogConfig       *bool                       `yaml:"LogConfig"`
+	LogWorkerStart  *bool                       `yaml:"LogWorkerStart"`
+	LogMqttDebug    *bool                       `yaml:"LogMqttDebug"`
 }
 
 type MqttClientConfig struct {
@@ -23,9 +29,9 @@ type MqttClientConfig struct {
 	Password          string `yaml:"Password"`
 	ClientId          string `yaml:"ClientId"`
 	Qos               byte   `yaml:"Qos"`
-	DebugLog          bool   `yaml:"DebugLog"`
-	TopicPrefix       string `yaml:"TopicPrefix"`
 	AvailabilityTopic string `yaml:"AvailabilityTopic"`
+	TopicPrefix       string `yaml:"TopicPrefix"`
+	LogMessages       bool   `yaml:"LogMessages"`
 }
 
 type MqttClientConfigRead struct {
@@ -34,28 +40,32 @@ type MqttClientConfigRead struct {
 	Password          string `yaml:"Password"`
 	ClientId          string `yaml:"ClientId"`
 	Qos               *byte  `yaml:"Qos"`
-	DebugLog          *bool  `yaml:"DebugLog"`
 	TopicPrefix       string `yaml:"TopicPrefix"`
 	AvailabilityTopic string `yaml:"AvailabilityTopic"`
+	LogMessages       *bool  `yaml:"LogMessages"`
 }
 
 type MqttClientConfigReadMap map[string]MqttClientConfigRead
 
 type InfluxDbClientConfig struct {
-	Name          string        `yaml:"Name"`
-	Address       string        `yaml:"Address"`
-	User          string        `yaml:"User"`
-	Password      string        `yaml:"Password"`
-	Database      string        `yaml:"Database"`
-	WriteInterval time.Duration `yaml:"WriteInterval"`
+	Name            string        `yaml:"Name"`
+	Address         string        `yaml:"Address"`
+	User            string        `yaml:"User"`
+	Password        string        `yaml:"Password"`
+	Database        string        `yaml:"Database"`
+	WriteInterval   time.Duration `yaml:"WriteInterval"`
+	TimePrecision   time.Duration `yaml:"TimePrecision "`
+	LogLineProtocol bool          `yaml:"LogLineProtocol"`
 }
 
 type InfluxDbClientConfigRead struct {
-	Address       string `yaml:"Address"`
-	User          string `yaml:"User"`
-	Password      string `yaml:"Password"`
-	Database      string `yaml:"Database"`
-	WriteInterval string `yaml:"WriteInterval"`
+	Address         string `yaml:"Address"`
+	User            string `yaml:"User"`
+	Password        string `yaml:"Password"`
+	Database        string `yaml:"Database"`
+	WriteInterval   string `yaml:"WriteInterval"`
+	TimePrecision   string `yaml:"TimePrecision "`
+	LogLineProtocol *bool  `yaml:"LogLineProtocol"`
 }
 
 type InfluxDbClientConfigReadMap map[string]InfluxDbClientConfigRead
@@ -67,6 +77,7 @@ type ConverterConfig struct {
 	MqttTopics        []string `yaml:"MqttTopics"`
 	MqttClients       []string `yaml:"MqttClients"`
 	InfluxDbClients   []string `yaml:"InfluxDbClients"`
+	LogHandleOnce     bool     `yaml:"LogHandleOnce"`
 }
 
 type ConverterConfigRead struct {
@@ -75,6 +86,7 @@ type ConverterConfigRead struct {
 	MqttTopics        []string `yaml:"MqttTopics"`
 	MqttClients       []string `yaml:"MqttClients"`
 	InfluxDbClients   []string `yaml:"InfluxDbClients"`
+	LogHandleOnce     *bool    `yaml:"LogHandleOnce"`
 }
 
 type ConverterReadMap map[string]ConverterConfigRead

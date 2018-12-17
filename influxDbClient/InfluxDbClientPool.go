@@ -76,7 +76,7 @@ func (p *InfluxDbClientPool) WriteRawPoints(rawPoints []RawPoint, receiverNames 
 	for _, point := range rawPoints {
 		pt, err := influxClient.NewPoint(point.Measurement, point.Tags, point.Fields, point.Time)
 		if err != nil {
-			log.Printf("influxDbClient: error=%v", err)
+			log.Printf("InfluxDbClientPool: error creating a point: %s", err)
 			continue
 		}
 

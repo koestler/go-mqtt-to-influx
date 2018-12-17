@@ -4,42 +4,44 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
-	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
 
-func ReadConfig(source string) (config Config) {
-	configDir := filepath.Dir(source) + "/"
+const NameRegexp = "^[a-zA-Z0-9\\-]{1,32}$"
 
-	log.Printf("config: load configuration source=%v, configDir=%v", source, configDir)
+var nameMatcher = regexp.MustCompile(NameRegexp)
 
+func ReadConfig(exe, source string) (config Config) {
 	var err error
 	yamlStr, err := ioutil.ReadFile(source)
 	if err != nil {
-		log.Fatalf("config: cannot read configuration: %v", err)
+		log.Fatalf("config: cannot read configuration: %v; use see `%s --help`", err, exe)
 	}
 
 	var configRead ConfigRead
 
 	err = yaml.Unmarshal(yamlStr, &configRead)
 	if err != nil {
-		log.Fatalf("config: cannot parse yaml: %v", err)
+		log.Fatalf("config: cannot parse yaml: %s", err)
 	}
 
 	config = configRead.TransformAndValidate()
 
+	return
+}
+
+func (config Config) PrintConfig() {
 	newYamlStr, err := yaml.Marshal(config)
 	if err != nil {
-		log.Fatalf("config: cannot encode yaml again:", err)
+		log.Fatalf("config: cannot encode yaml again: %s", err)
 	}
 
 	log.Print("config: use the following config:")
 	for _, line := range strings.Split(string(newYamlStr), "\n") {
 		log.Print("config: ", line)
 	}
-
-	return
 }
 
 func (i ConfigRead) TransformAndValidate() Config {
@@ -56,6 +58,18 @@ func (i ConfigRead) TransformAndValidate() Config {
 		if ret.Version != 0 {
 			log.Fatalf("config: Version=%d not supported", ret.Version)
 		}
+	}
+
+	if i.LogConfig != nil && *i.LogConfig {
+		ret.LogConfig = true
+	}
+
+	if i.LogWorkerStart != nil && *i.LogWorkerStart {
+		ret.LogWorkerStart = true
+	}
+
+	if i.LogMqttDebug != nil && *i.LogMqttDebug {
+		ret.LogMqttDebug = true
 	}
 
 	return ret
@@ -90,6 +104,10 @@ func (i *MqttClientConfigRead) TransformAndValidate(name string) MqttClientConfi
 		AvailabilityTopic: i.AvailabilityTopic,
 	}
 
+	if !nameMatcher.MatchString(ret.Name) {
+		log.Fatalf("config: MqttClientConfig->Name='%s' does not match %s", ret.Name, NameRegexp)
+	}
+
 	if len(ret.Broker) < 1 {
 		log.Fatalf("config: MqttClientConfig->Broker must not be empty")
 	}
@@ -106,8 +124,8 @@ func (i *MqttClientConfigRead) TransformAndValidate(name string) MqttClientConfi
 		ret.AvailabilityTopic = "%Prefix%tele/%ClientId%/LWT"
 	}
 
-	if i.DebugLog != nil && *i.DebugLog {
-		ret.DebugLog = true
+	if i.LogMessages != nil && *i.LogMessages {
+		ret.LogMessages = true
 	}
 
 	return ret
@@ -129,12 +147,15 @@ func (i InfluxDbClientConfigReadMap) TransformAndValidate() []InfluxDbClientConf
 
 func (i InfluxDbClientConfigRead) TransformAndValidate(name string) InfluxDbClientConfig {
 	ret := InfluxDbClientConfig{
-		Name:          name,
-		Address:       i.Address,
-		User:          i.User,
-		Password:      i.Password,
-		Database:      i.Database,
-		WriteInterval: 0,
+		Name:     name,
+		Address:  i.Address,
+		User:     i.User,
+		Password: i.Password,
+		Database: i.Database,
+	}
+
+	if !nameMatcher.MatchString(ret.Name) {
+		log.Fatalf("config: InfluxDbClientConfig->Name='%s' does not match %s", ret.Name, NameRegexp)
 	}
 
 	if len(ret.Address) < 1 {
@@ -147,10 +168,24 @@ func (i InfluxDbClientConfigRead) TransformAndValidate(name string) InfluxDbClie
 
 	if len(i.WriteInterval) < 1 {
 		// use default 0
+		ret.WriteInterval = 0
 	} else if writeInterval, err := time.ParseDuration(i.WriteInterval); err != nil {
-		log.Fatalf("config: InfluxDbClientConfig->WriteInterval parse error: %v", err)
+		log.Fatalf("config: InfluxDbClientConfig->WriteInterval parse error: %s", err)
 	} else {
 		ret.WriteInterval = writeInterval
+	}
+
+	if len(i.TimePrecision) < 1 {
+		// use default 1s
+		ret.TimePrecision = time.Second
+	} else if timePrecision, err := time.ParseDuration(i.TimePrecision); err != nil {
+		log.Fatalf("config: InfluxDbClientConfig->TimePrecision parse error: %s", err)
+	} else {
+		ret.TimePrecision = timePrecision
+	}
+
+	if i.LogLineProtocol != nil && *i.LogLineProtocol {
+		ret.LogLineProtocol = true
 	}
 
 	return ret
@@ -194,8 +229,12 @@ func (i ConverterConfigRead) TransformAndValidate(
 		InfluxDbClients:   i.InfluxDbClients,
 	}
 
+	if !nameMatcher.MatchString(ret.Name) {
+		log.Fatalf("config: Converters->Name='%s' does not match %s", ret.Name, NameRegexp)
+	}
+
 	if def, ok := implementationsAndDefaultMeaseurement[ret.Implementation]; !ok {
-		log.Fatalf("config:  Converters->%s->Implementation='%s' is unkown", name, ret.Implementation)
+		log.Fatalf("config: Converters->%s->Implementation='%s' is unkown", name, ret.Implementation)
 	} else if len(ret.TargetMeasurement) < 1 {
 		ret.TargetMeasurement = def
 	}
@@ -211,7 +250,7 @@ func (i ConverterConfigRead) TransformAndValidate(
 		}
 
 		if !found {
-			log.Fatalf("config: Converters->%s->MqttClient=%s is not defined", name, clientName)
+			log.Fatalf("config: Converters->%s->MqttClient='%s' is not defined", name, clientName)
 		}
 	}
 
@@ -226,12 +265,16 @@ func (i ConverterConfigRead) TransformAndValidate(
 		}
 
 		if !found {
-			log.Fatalf("config: Converters->%s->InfluxDbClient=%s is not defined", name, clientName)
+			log.Fatalf("config: Converters->%s->InfluxDbClient='%s' is not defined", name, clientName)
 		}
 	}
 
 	if len(ret.MqttTopics) < 1 {
 		log.Fatalf("config: Converters->%s->MqttTopics must not be empty", name)
+	}
+
+	if i.LogHandleOnce != nil && *i.LogHandleOnce {
+		ret.LogHandleOnce = true
 	}
 
 	return ret

@@ -10,11 +10,11 @@ import (
 
 var lwtTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/LWT$")
 
-func lwtHandler(converter Converter, msg mqtt.Message) {
+func lwtHandler(c *Converter, msg mqtt.Message) {
 	// parse topic
 	strings := lwtTopicMatcher.FindStringSubmatch(msg.Topic())
 	if len(strings) < 3 {
-		log.Printf("lwt: cannot extract device from topic='%s", msg.Topic())
+		log.Printf("lwt[%s]: cannot extract device from topic='%s", c.GetName(), msg.Topic())
 		return
 	}
 	device := strings[2]
@@ -27,7 +27,7 @@ func lwtHandler(converter Converter, msg mqtt.Message) {
 	case "Offline":
 		value = false;
 	default:
-		log.Printf("lwt: unknown LWT value='%s'", msg.Payload())
+		log.Printf("lwt[%s]: unknown LWT value='%s'", c.GetName(), msg.Payload())
 		return
 	}
 
@@ -44,10 +44,10 @@ func lwtHandler(converter Converter, msg mqtt.Message) {
 		},
 	}
 
-	converter.influxDbClientPoolInstance.WritePoints(
-		converter.config.TargetMeasurement,
+	c.influxDbClientPoolInstance.WritePoints(
+		c.config.TargetMeasurement,
 		points,
 		time.Now(),
-		converter.config.InfluxDbClients,
+		c.config.InfluxDbClients,
 	)
 }

@@ -31,7 +31,7 @@ func RunClient(config config.InfluxDbClientConfig) (client *InfluxDbClient) {
 		dbClient,
 
 		make(chan *influxClient.Point, 64),
-		getBatch(config.Database),
+		getBatch(config),
 	}
 
 	// start to send out points
@@ -60,7 +60,7 @@ func (ic *InfluxDbClient) pointsSender(writeInterval time.Duration) {
 			ic.currentBatch.AddPoint(point)
 
 			// if interval = 0 -> send immediately
-			if (writeInterval == 0) {
+			if writeInterval == 0 {
 				ic.sendBatch()
 			}
 		case <-writeTick:
@@ -69,13 +69,13 @@ func (ic *InfluxDbClient) pointsSender(writeInterval time.Duration) {
 	}
 }
 
-func getBatch(database string) (bp influxClient.BatchPoints) {
+func getBatch(config config.InfluxDbClientConfig) (bp influxClient.BatchPoints) {
 	bp, err := influxClient.NewBatchPoints(influxClient.BatchPointsConfig{
-		Database:  database,
-		Precision: "1s",
+		Database:  config.Database,
+		Precision: config.TimePrecision.String(),
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("influxDbClient[%s]: cannot create batch: %s", config.Name, err)
 	}
 	return
 }
@@ -86,11 +86,23 @@ func (ic *InfluxDbClient) sendBatch() {
 		return
 	}
 
+	if ic.config.LogLineProtocol {
+		points := ic.currentBatch.Points()
+		if len(points) == 1 {
+			log.Printf("influxDbClient[%s]: %s", ic.GetName(), points[0].String())
+		} else {
+			log.Printf("influxDbClient[%s]: write batch of %d points", ic.GetName(), len(points))
+			for _, p := range points {
+				log.Printf("influxDbClient[%s]:   %s", ic.GetName(), p.String())
+			}
+		}
+	}
+
 	if err := ic.client.Write(ic.currentBatch); err != nil {
-		log.Printf("cannot write to db, err=%v", err)
+		log.Printf("influxDbClient[%s]: cannot write to db: %s", ic.GetName(), err)
 		return
 	}
-	ic.currentBatch = getBatch(ic.config.Database)
+	ic.currentBatch = getBatch(ic.config)
 }
 
 func (ic *InfluxDbClient) WritePoints(
@@ -105,7 +117,7 @@ func (ic *InfluxDbClient) WriteRawPoints(rawPoints []RawPoint) {
 	for _, point := range rawPoints {
 		pt, err := influxClient.NewPoint(point.Measurement, point.Tags, point.Fields, point.Time)
 		if err != nil {
-			log.Printf("influxDbClient: error=%v", err)
+			log.Printf("influxDbClient[%s]: cannot create point: %s", ic.GetName(), err)
 			continue
 		}
 		ic.pointToSendChannel <- pt

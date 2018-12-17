@@ -8,7 +8,7 @@ import (
 	"github.com/koestler/go-mqtt-to-influxdb/mqttClient"
 )
 
-type ConverterHandleFunc func(converter Converter, msg mqtt.Message)
+type ConverterHandleFunc func(converter *Converter, msg mqtt.Message)
 
 type Converter struct {
 	config                     config.ConverterConfig
@@ -31,7 +31,7 @@ func RunConverter(
 
 	handleFunc, ok := converterImplementations[config.Implementation]
 	if !ok {
-		return fmt.Errorf("unknown implementation '%s'", config.Implementation)
+		return fmt.Errorf("unknown implementation='%s'", config.Implementation)
 	}
 
 	converter := Converter{
@@ -40,7 +40,7 @@ func RunConverter(
 	}
 
 	for _, mqttTopic := range config.MqttTopics {
-		if err := mqttClientInstance.Subscribe(mqttTopic, getMqttMessageHandler(converter, handleFunc)); err != nil {
+		if err := mqttClientInstance.Subscribe(mqttTopic, getMqttMessageHandler(&converter, handleFunc)); err != nil {
 			return err
 		}
 	}
@@ -48,9 +48,18 @@ func RunConverter(
 	return nil
 }
 
-func getMqttMessageHandler(converter Converter, handleFunc ConverterHandleFunc) (mqtt.MessageHandler) {
+func (c *Converter) GetName() string {
+	return c.config.Name
+}
+
+func getMqttMessageHandler(converter *Converter, handleFunc ConverterHandleFunc) (mqtt.MessageHandler) {
+	if converter.config.LogHandleOnce {
+		return func(client mqtt.Client, message mqtt.Message) {
+			logTopicOnce(converter.config.Name, message.Topic())
+			handleFunc(converter, message)
+		}
+	}
 	return func(client mqtt.Client, message mqtt.Message) {
-		logTopicOnce(converter.config.Name, message.Topic())
 		handleFunc(converter, message)
 	}
 }

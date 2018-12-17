@@ -42,11 +42,11 @@ type StateMessage struct {
 
 var tasmotaStateTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/STATE$")
 
-func tasmotaStateHandler(converter Converter, msg mqtt.Message) {
+func tasmotaStateHandler(c *Converter, msg mqtt.Message) {
 	// parse topic
 	strings := tasmotaStateTopicMatcher.FindStringSubmatch(msg.Topic())
 	if len(strings) < 3 {
-		log.Printf("tasmota-state: cannot extract device from topic='%s", msg.Topic())
+		log.Printf("tasmota-state[%s]: cannot extract device from topic='%s", c.GetName(), msg.Topic())
 		return
 	}
 	device := strings[2]
@@ -54,19 +54,19 @@ func tasmotaStateHandler(converter Converter, msg mqtt.Message) {
 	// parse payload
 	var message StateMessage
 	if err := json.Unmarshal(msg.Payload(), &message); err != nil {
-		log.Printf("tasmota-state: cannot json decode: %s", err)
+		log.Printf("tasmota-state[%s]: cannot json decode: %s", c.GetName(), err)
 		return
 	}
 
 	// create points
-	rawPoints := message.toPoints(device)
-	converter.influxDbClientPoolInstance.WriteRawPoints(
+	rawPoints := message.toPoints(c.GetName(), device)
+	c.influxDbClientPoolInstance.WriteRawPoints(
 		rawPoints,
-		converter.config.InfluxDbClients,
+		c.config.InfluxDbClients,
 	)
 }
 
-func (v StateMessage) toPoints(device string) []influxDbClient.RawPoint {
+func (v StateMessage) toPoints(converterName, device string) []influxDbClient.RawPoint {
 	ret := make([]influxDbClient.RawPoint, 0, 16)
 
 	// setup timestamps
@@ -103,7 +103,7 @@ func (v StateMessage) toPoints(device string) []influxDbClient.RawPoint {
 			Time: timeStamp,
 		})
 	} else {
-		log.Printf("tasmota-state: cannot parse uptime: %s", err)
+		log.Printf("tasmota-state[%s]: cannot parse uptime='%s': %s", converterName, v.Uptime, err)
 	}
 
 	// Vcc
@@ -121,6 +121,24 @@ func (v StateMessage) toPoints(device string) []influxDbClient.RawPoint {
 	})
 
 	// Power[1,2,3,4]?
+
+	powerToBoolean := func(power string) (res, ok bool) {
+		power = strings.ToUpper(power)
+		switch power {
+		case "":
+			return false, false
+		case "ON":
+			return true, true
+		case "OFF":
+			return false, true
+		default:
+			log.Printf("tasmota-state[%s]: cannot parse POWER='%s': only ON/OFF case-insentive known",
+				converterName, power,
+			)
+			return false, false
+		}
+	}
+
 	if value, ok := powerToBoolean(v.Power); ok {
 		ret = append(ret, powerPoint(device, value, timeStamp))
 	}
@@ -154,21 +172,6 @@ func (v StateMessage) toPoints(device string) []influxDbClient.RawPoint {
 	})
 
 	return ret
-}
-
-func powerToBoolean(power string) (res, ok bool) {
-	power = strings.ToUpper(power)
-	switch power {
-	case "":
-		return false, false
-	case "ON":
-		return true, true
-	case "OFF":
-		return false, true
-	default:
-		log.Printf("tasmota-state: cannot parse POWER='%s'", power)
-		return false, false
-	}
 }
 
 func powerPoint(device string, value bool, timeStamp time.Time) influxDbClient.RawPoint {

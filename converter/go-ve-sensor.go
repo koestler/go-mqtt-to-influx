@@ -22,11 +22,11 @@ type TelemetryMessage struct {
 
 var topicMatcher = regexp.MustCompile("^(.*)/([^/]*)$")
 
-func goVeSensorHandler(converter Converter, msg mqtt.Message) {
+func goVeSensorHandler(c *Converter, msg mqtt.Message) {
 	// parse topic
 	strings := topicMatcher.FindStringSubmatch(msg.Topic())
 	if len(strings) < 3 {
-		log.Printf("go-ve-sensor: cannot extract device from topic='%s", msg.Topic())
+		log.Printf("go-ve-sensor[%s]: cannot extract device from topic='%s", c.GetName(), msg.Topic())
 		return
 	}
 	device := strings[2]
@@ -34,7 +34,7 @@ func goVeSensorHandler(converter Converter, msg mqtt.Message) {
 	// parse payload
 	var message TelemetryMessage
 	if err := json.Unmarshal(msg.Payload(), &message); err != nil {
-		log.Printf("go-ve-sensor: cannot json decode: %s", err)
+		log.Printf("go-ve-sensor[%s]: cannot json decode: %s", c.GetName(), err)
 		return
 	}
 
@@ -57,7 +57,7 @@ func goVeSensorHandler(converter Converter, msg mqtt.Message) {
 	}
 
 	if message.TimeZone != "UTC" {
-		log.Printf("go-ve-sensor: TimeZone='%s' but only UTC is supported", message.TimeZone)
+		log.Printf("go-ve-sensor[%s]: TimeZone='%s' but only 'UTC' is supported", c.GetName(), message.TimeZone)
 	}
 
 	timeStamp, err := parseTime(message.Time)
@@ -65,10 +65,10 @@ func goVeSensorHandler(converter Converter, msg mqtt.Message) {
 		timeStamp = time.Now()
 	}
 
-	converter.influxDbClientPoolInstance.WritePoints(
-		converter.config.TargetMeasurement,
+	c.influxDbClientPoolInstance.WritePoints(
+		c.config.TargetMeasurement,
 		points,
 		timeStamp,
-		converter.config.InfluxDbClients,
+		c.config.InfluxDbClients,
 	)
 }
