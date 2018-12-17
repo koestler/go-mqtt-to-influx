@@ -24,12 +24,12 @@ var topicMatcher = regexp.MustCompile("^(.*)/([^/]*)$")
 
 func goVeSensorHandler(c *Converter, msg mqtt.Message) {
 	// parse topic
-	strings := topicMatcher.FindStringSubmatch(msg.Topic())
-	if len(strings) < 3 {
+	matches := topicMatcher.FindStringSubmatch(msg.Topic())
+	if len(matches) < 3 {
 		log.Printf("go-ve-sensor[%s]: cannot extract device from topic='%s", c.GetName(), msg.Topic())
 		return
 	}
-	device := strings[2]
+	device := matches[2]
 
 	// parse payload
 	var message TelemetryMessage

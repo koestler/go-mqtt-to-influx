@@ -44,12 +44,12 @@ var tasmotaStateTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/STATE$")
 
 func tasmotaStateHandler(c *Converter, msg mqtt.Message) {
 	// parse topic
-	strings := tasmotaStateTopicMatcher.FindStringSubmatch(msg.Topic())
-	if len(strings) < 3 {
+	matches := tasmotaStateTopicMatcher.FindStringSubmatch(msg.Topic())
+	if len(matches) < 3 {
 		log.Printf("tasmota-state[%s]: cannot extract device from topic='%s", c.GetName(), msg.Topic())
 		return
 	}
-	device := strings[2]
+	device := matches[2]
 
 	// parse payload
 	var message StateMessage

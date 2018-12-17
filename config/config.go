@@ -20,7 +20,7 @@ func ReadConfig(exe, source string) (config Config) {
 		log.Fatalf("config: cannot read configuration: %v; use see `%s --help`", err, exe)
 	}
 
-	var configRead ConfigRead
+	var configRead configRead
 
 	err = yaml.Unmarshal(yamlStr, &configRead)
 	if err != nil {
@@ -44,7 +44,7 @@ func (config Config) PrintConfig() {
 	}
 }
 
-func (i ConfigRead) TransformAndValidate() Config {
+func (i configRead) TransformAndValidate() Config {
 	ret := Config{
 		MqttClients:     i.MqttClients.TransformAndValidate(),
 		InfluxDbClients: i.InfluxDbClients.TransformAndValidate(),
@@ -75,7 +75,7 @@ func (i ConfigRead) TransformAndValidate() Config {
 	return ret
 }
 
-func (i MqttClientConfigReadMap) TransformAndValidate() []MqttClientConfig {
+func (i mqttClientConfigReadMap) TransformAndValidate() []MqttClientConfig {
 	if len(i) < 1 {
 		log.Fatalf("config: MqttClients section must no be empty")
 	}
@@ -89,7 +89,7 @@ func (i MqttClientConfigReadMap) TransformAndValidate() []MqttClientConfig {
 	return ret
 }
 
-func (i *MqttClientConfigRead) TransformAndValidate(name string) MqttClientConfig {
+func (i *mqttClientConfigRead) TransformAndValidate(name string) MqttClientConfig {
 	if i == nil {
 		log.Fatalf("config: MqttClientConfig section must be defined")
 	}
@@ -131,7 +131,7 @@ func (i *MqttClientConfigRead) TransformAndValidate(name string) MqttClientConfi
 	return ret
 }
 
-func (i InfluxDbClientConfigReadMap) TransformAndValidate() []InfluxDbClientConfig {
+func (i influxDbClientConfigReadMap) TransformAndValidate() []InfluxDbClientConfig {
 	if len(i) < 1 {
 		log.Fatalf("config: InfluxDbClients section must no be empty")
 	}
@@ -145,7 +145,7 @@ func (i InfluxDbClientConfigReadMap) TransformAndValidate() []InfluxDbClientConf
 	return ret
 }
 
-func (i InfluxDbClientConfigRead) TransformAndValidate(name string) InfluxDbClientConfig {
+func (i influxDbClientConfigRead) TransformAndValidate(name string) InfluxDbClientConfig {
 	ret := InfluxDbClientConfig{
 		Name:     name,
 		Address:  i.Address,
@@ -191,7 +191,7 @@ func (i InfluxDbClientConfigRead) TransformAndValidate(name string) InfluxDbClie
 	return ret
 }
 
-func (i ConverterReadMap) TransformAndValidate(
+func (i converterReadMap) TransformAndValidate(
 	mqttClients []MqttClientConfig,
 	influxDbClients []InfluxDbClientConfig,
 ) []ConverterConfig {
@@ -208,14 +208,14 @@ func (i ConverterReadMap) TransformAndValidate(
 	return ret
 }
 
-var implementationsAndDefaultMeaseurement = map[string]string{
+var implementationsAndDefaultMeasurement = map[string]string{
 	"go-ve-sensor":   "floatValue",
 	"lwt":            "boolValue",
 	"tasmota-state":  "boolValue",
 	"tasmota-sensor": "floatValue",
 }
 
-func (i ConverterConfigRead) TransformAndValidate(
+func (i converterConfigRead) TransformAndValidate(
 	name string,
 	mqttClients []MqttClientConfig,
 	influxDbClients []InfluxDbClientConfig,
@@ -233,7 +233,7 @@ func (i ConverterConfigRead) TransformAndValidate(
 		log.Fatalf("config: Converters->Name='%s' does not match %s", ret.Name, NameRegexp)
 	}
 
-	if def, ok := implementationsAndDefaultMeaseurement[ret.Implementation]; !ok {
+	if def, ok := implementationsAndDefaultMeasurement[ret.Implementation]; !ok {
 		log.Fatalf("config: Converters->%s->Implementation='%s' is unkown", name, ret.Implementation)
 	} else if len(ret.TargetMeasurement) < 1 {
 		ret.TargetMeasurement = def

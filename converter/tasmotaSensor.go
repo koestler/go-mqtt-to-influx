@@ -9,15 +9,15 @@ import (
 	"time"
 )
 
-type TemperaturHumidity struct {
+type TemperatureHumidity struct {
 	Temperature float64
 	Humidity    float64
 }
 
 type SensorMessage struct {
 	Time    string
-	AM2301  *TemperaturHumidity
-	SI7021  *TemperaturHumidity
+	AM2301  *TemperatureHumidity
+	SI7021  *TemperatureHumidity
 	DS18B20 *struct {
 		Temperature float64
 	}
@@ -28,12 +28,12 @@ var tasmotaSensorTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/SENSOR$"
 
 func tasmotaSensorHandler(c *Converter, msg mqtt.Message) {
 	// parse topic
-	strings := tasmotaSensorTopicMatcher.FindStringSubmatch(msg.Topic())
-	if len(strings) < 3 {
+	matches := tasmotaSensorTopicMatcher.FindStringSubmatch(msg.Topic())
+	if len(matches) < 3 {
 		log.Printf("tasmota-sensor[%s]: cannot extract device from topic='%s", c.GetName(), msg.Topic())
 		return
 	}
-	device := strings[2]
+	device := matches[2]
 
 	// parse payload
 	var message SensorMessage

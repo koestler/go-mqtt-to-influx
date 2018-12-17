@@ -18,7 +18,7 @@ type CmdOptions struct {
 var (
 	cmdOptions                 CmdOptions
 	mqttClientInstances        map[string]*mqttClient.MqttClient
-	influxDbClientPoolInstance *influxDbClient.InfluxDbClientPool
+	influxDbClientPoolInstance *influxDbClient.ClientPool
 	cfg                        config.Config
 )
 

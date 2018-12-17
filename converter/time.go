@@ -40,5 +40,5 @@ func parseUpTime(timeStr string) (res int, err error) {
 	minutes, _ := strconv.Atoi(parts[3])
 	seconds, _ := strconv.Atoi(parts[4])
 
-	return 24*60*60*days + 60*60*hours + 60*minutes + seconds, nil;
+	return 24*60*60*days + 60*60*hours + 60*minutes + seconds, nil
 }

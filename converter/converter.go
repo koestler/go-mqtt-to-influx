@@ -8,14 +8,14 @@ import (
 	"github.com/koestler/go-mqtt-to-influxdb/mqttClient"
 )
 
-type ConverterHandleFunc func(converter *Converter, msg mqtt.Message)
+type HandleFunc func(converter *Converter, msg mqtt.Message)
 
 type Converter struct {
 	config                     config.ConverterConfig
-	influxDbClientPoolInstance *influxDbClient.InfluxDbClientPool
+	influxDbClientPoolInstance *influxDbClient.ClientPool
 }
 
-var converterImplementations = map[string]ConverterHandleFunc{
+var converterImplementations = map[string]HandleFunc{
 	"go-ve-sensor":   goVeSensorHandler,
 	"lwt":            lwtHandler,
 	"tasmota-state":  tasmotaStateHandler,
@@ -25,9 +25,9 @@ var converterImplementations = map[string]ConverterHandleFunc{
 func RunConverter(
 	config config.ConverterConfig,
 	mqttClientInstance *mqttClient.MqttClient,
-	influxDbClientPoolInstance *influxDbClient.InfluxDbClientPool,
+	influxDbClientPoolInstance *influxDbClient.ClientPool,
 ) (err error) {
-	var handleFunc ConverterHandleFunc
+	var handleFunc HandleFunc
 
 	handleFunc, ok := converterImplementations[config.Implementation]
 	if !ok {
@@ -52,7 +52,7 @@ func (c *Converter) GetName() string {
 	return c.config.Name
 }
 
-func getMqttMessageHandler(converter *Converter, handleFunc ConverterHandleFunc) (mqtt.MessageHandler) {
+func getMqttMessageHandler(converter *Converter, handleFunc HandleFunc) mqtt.MessageHandler {
 	if converter.config.LogHandleOnce {
 		return func(client mqtt.Client, message mqtt.Message) {
 			logTopicOnce(converter.config.Name, message.Topic())

@@ -12,20 +12,20 @@ var lwtTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/LWT$")
 
 func lwtHandler(c *Converter, msg mqtt.Message) {
 	// parse topic
-	strings := lwtTopicMatcher.FindStringSubmatch(msg.Topic())
-	if len(strings) < 3 {
+	matches := lwtTopicMatcher.FindStringSubmatch(msg.Topic())
+	if len(matches) < 3 {
 		log.Printf("lwt[%s]: cannot extract device from topic='%s", c.GetName(), msg.Topic())
 		return
 	}
-	device := strings[2]
+	device := matches[2]
 
 	// parse payload
 	var value bool
 	switch string(msg.Payload()) {
 	case "Online":
-		value = true;
+		value = true
 	case "Offline":
-		value = false;
+		value = false
 	default:
 		log.Printf("lwt[%s]: unknown LWT value='%s'", c.GetName(), msg.Payload())
 		return

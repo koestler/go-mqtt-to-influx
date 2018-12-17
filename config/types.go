@@ -12,11 +12,11 @@ type Config struct {
 	LogMqttDebug    bool                   `yaml:"LogMqttDebug"`
 }
 
-type ConfigRead struct {
+type configRead struct {
 	Version         *int                        `yaml:"Version"`
-	MqttClients     MqttClientConfigReadMap     `yaml:"MqttClients"`
-	InfluxDbClients InfluxDbClientConfigReadMap `yaml:"InfluxDbClients"`
-	Converters      ConverterReadMap            `yaml:"Converters"`
+	MqttClients     mqttClientConfigReadMap     `yaml:"MqttClients"`
+	InfluxDbClients influxDbClientConfigReadMap `yaml:"InfluxDbClients"`
+	Converters      converterReadMap            `yaml:"Converters"`
 	LogConfig       *bool                       `yaml:"LogConfig"`
 	LogWorkerStart  *bool                       `yaml:"LogWorkerStart"`
 	LogMqttDebug    *bool                       `yaml:"LogMqttDebug"`
@@ -34,7 +34,7 @@ type MqttClientConfig struct {
 	LogMessages       bool   `yaml:"LogMessages"`
 }
 
-type MqttClientConfigRead struct {
+type mqttClientConfigRead struct {
 	Broker            string `yaml:"Broker"`
 	User              string `yaml:"User"`
 	Password          string `yaml:"Password"`
@@ -45,7 +45,7 @@ type MqttClientConfigRead struct {
 	LogMessages       *bool  `yaml:"LogMessages"`
 }
 
-type MqttClientConfigReadMap map[string]MqttClientConfigRead
+type mqttClientConfigReadMap map[string]mqttClientConfigRead
 
 type InfluxDbClientConfig struct {
 	Name            string        `yaml:"Name"`
@@ -58,7 +58,7 @@ type InfluxDbClientConfig struct {
 	LogLineProtocol bool          `yaml:"LogLineProtocol"`
 }
 
-type InfluxDbClientConfigRead struct {
+type influxDbClientConfigRead struct {
 	Address         string `yaml:"Address"`
 	User            string `yaml:"User"`
 	Password        string `yaml:"Password"`
@@ -68,7 +68,7 @@ type InfluxDbClientConfigRead struct {
 	LogLineProtocol *bool  `yaml:"LogLineProtocol"`
 }
 
-type InfluxDbClientConfigReadMap map[string]InfluxDbClientConfigRead
+type influxDbClientConfigReadMap map[string]influxDbClientConfigRead
 
 type ConverterConfig struct {
 	Name              string   `yaml:"Name"`
@@ -80,7 +80,7 @@ type ConverterConfig struct {
 	LogHandleOnce     bool     `yaml:"LogHandleOnce"`
 }
 
-type ConverterConfigRead struct {
+type converterConfigRead struct {
 	Implementation    string   `yaml:"Implementation"`
 	TargetMeasurement string   `yaml:"TargetMeasurement"`
 	MqttTopics        []string `yaml:"MqttTopics"`
@@ -89,4 +89,4 @@ type ConverterConfigRead struct {
 	LogHandleOnce     *bool    `yaml:"LogHandleOnce"`
 }
 
-type ConverterReadMap map[string]ConverterConfigRead
+type converterReadMap map[string]converterConfigRead

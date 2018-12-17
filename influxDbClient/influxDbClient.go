@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type InfluxDbClient struct {
+type Client struct {
 	config config.InfluxDbClientConfig
 	client influxClient.Client
 
@@ -15,7 +15,7 @@ type InfluxDbClient struct {
 	currentBatch       influxClient.BatchPoints
 }
 
-func RunClient(config config.InfluxDbClientConfig) (client *InfluxDbClient) {
+func RunClient(config config.InfluxDbClientConfig) (client *Client) {
 	// Create a new HTTPClient
 	dbClient, err := influxClient.NewHTTPClient(influxClient.HTTPConfig{
 		Addr:     config.Address,
@@ -26,7 +26,7 @@ func RunClient(config config.InfluxDbClientConfig) (client *InfluxDbClient) {
 		log.Fatal(err)
 	}
 
-	client = &InfluxDbClient{
+	client = &Client{
 		config,
 		dbClient,
 
@@ -40,18 +40,18 @@ func RunClient(config config.InfluxDbClientConfig) (client *InfluxDbClient) {
 	return
 }
 
-func (ic *InfluxDbClient) Stop() {
+func (ic *Client) Stop() {
 	// Close client resources
 	if err := ic.client.Close(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func (ic *InfluxDbClient) GetName() string {
+func (ic *Client) GetName() string {
 	return ic.config.Name
 }
 
-func (ic *InfluxDbClient) pointsSender(writeInterval time.Duration) {
+func (ic *Client) pointsSender(writeInterval time.Duration) {
 	writeTick := time.Tick(writeInterval)
 
 	for {
@@ -80,7 +80,7 @@ func getBatch(config config.InfluxDbClientConfig) (bp influxClient.BatchPoints) 
 	return
 }
 
-func (ic *InfluxDbClient) sendBatch() {
+func (ic *Client) sendBatch() {
 	if len(ic.currentBatch.Points()) < 1 {
 		// nothing to send
 		return
@@ -105,7 +105,7 @@ func (ic *InfluxDbClient) sendBatch() {
 	ic.currentBatch = getBatch(ic.config)
 }
 
-func (ic *InfluxDbClient) WritePoints(
+func (ic *Client) WritePoints(
 	measurement string,
 	points Points,
 	time time.Time,
@@ -113,7 +113,7 @@ func (ic *InfluxDbClient) WritePoints(
 	ic.WriteRawPoints(points.ToRaw(measurement, time))
 }
 
-func (ic *InfluxDbClient) WriteRawPoints(rawPoints []RawPoint) {
+func (ic *Client) WriteRawPoints(rawPoints []RawPoint) {
 	for _, point := range rawPoints {
 		pt, err := influxClient.NewPoint(point.Measurement, point.Tags, point.Fields, point.Time)
 		if err != nil {

@@ -7,20 +7,20 @@ import (
 	"time"
 )
 
-type InfluxDbClientPool struct {
-	clients      map[string]*InfluxDbClient
+type ClientPool struct {
+	clients      map[string]*Client
 	clientsMutex sync.RWMutex
 }
 
-func RunPool() (pool *InfluxDbClientPool) {
-	pool = &InfluxDbClientPool{
-		clients: make(map[string]*InfluxDbClient),
+func RunPool() (pool *ClientPool) {
+	pool = &ClientPool{
+		clients: make(map[string]*Client),
 	}
 
 	return
 }
 
-func (p *InfluxDbClientPool) Stop() {
+func (p *ClientPool) Stop() {
 	p.clientsMutex.RLock()
 	defer p.clientsMutex.RUnlock()
 	for _, c := range p.clients {
@@ -28,24 +28,24 @@ func (p *InfluxDbClientPool) Stop() {
 	}
 }
 
-func (p *InfluxDbClientPool) AddClient(client *InfluxDbClient) {
+func (p *ClientPool) AddClient(client *Client) {
 	p.clientsMutex.Lock()
 	defer p.clientsMutex.Unlock()
 	p.clients[client.GetName()] = client
 }
 
-func (p *InfluxDbClientPool) RemoveClient(client *InfluxDbClient) {
+func (p *ClientPool) RemoveClient(client *Client) {
 	p.clientsMutex.Lock()
 	defer p.clientsMutex.Unlock()
 	delete(p.clients, client.GetName())
 }
 
-func (p *InfluxDbClientPool) getReceiverClients(receiversNames []string) (receivers []*InfluxDbClient) {
+func (p *ClientPool) getReceiverClients(receiversNames []string) (receivers []*Client) {
 	p.clientsMutex.RLock()
 	defer p.clientsMutex.RUnlock()
 
 	if len(receiversNames) < 1 {
-		receivers = make([]*InfluxDbClient, len(p.clients))
+		receivers = make([]*Client, len(p.clients))
 		i := 0
 		for _, c := range p.clients {
 			receivers[i] = c
@@ -63,7 +63,7 @@ func (p *InfluxDbClientPool) getReceiverClients(receiversNames []string) (receiv
 	return
 }
 
-func (p *InfluxDbClientPool) WritePoints(
+func (p *ClientPool) WritePoints(
 	measurement string,
 	points Points,
 	time time.Time,
@@ -72,11 +72,11 @@ func (p *InfluxDbClientPool) WritePoints(
 	p.WriteRawPoints(points.ToRaw(measurement, time), receiverNames)
 }
 
-func (p *InfluxDbClientPool) WriteRawPoints(rawPoints []RawPoint, receiverNames []string) {
+func (p *ClientPool) WriteRawPoints(rawPoints []RawPoint, receiverNames []string) {
 	for _, point := range rawPoints {
 		pt, err := influxClient.NewPoint(point.Measurement, point.Tags, point.Fields, point.Time)
 		if err != nil {
-			log.Printf("InfluxDbClientPool: error creating a point: %s", err)
+			log.Printf("ClientPool: error creating a point: %s", err)
 			continue
 		}
 

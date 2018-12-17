@@ -14,7 +14,7 @@ type MqttClient struct {
 
 const (
 	OfflinePayload string = "Offline"
-	OnlinePayloapd string = "Online"
+	OnlinePayload  string = "Online"
 )
 
 func Run(config config.MqttClientConfig) (mqttClient *MqttClient) {
@@ -43,9 +43,9 @@ func Run(config config.MqttClientConfig) (mqttClient *MqttClient) {
 
 	// public availability
 	log.Printf("mqttClient[%s]: set availability to topic='%s', payload='%s'",
-		config.Name, availableTopic, OnlinePayloapd,
+		config.Name, availableTopic, OnlinePayload,
 	)
-	client.Publish(availableTopic, config.Qos, true, OnlinePayloapd)
+	client.Publish(availableTopic, config.Qos, true, OnlinePayload)
 
 	return &MqttClient{
 		config: config,
@@ -59,7 +59,7 @@ func replaceTemplate(template string, config config.MqttClientConfig) (r string)
 	return
 }
 
-func (mq *MqttClient) wrapCallBack(callback mqtt.MessageHandler) (mqtt.MessageHandler) {
+func (mq *MqttClient) wrapCallBack(callback mqtt.MessageHandler) mqtt.MessageHandler {
 	if !mq.config.LogMessages {
 		return callback
 	}
@@ -73,7 +73,7 @@ func (mq *MqttClient) wrapCallBack(callback mqtt.MessageHandler) (mqtt.MessageHa
 	}
 }
 
-func (mq *MqttClient) Subscribe(topic string, callback mqtt.MessageHandler) (error) {
+func (mq *MqttClient) Subscribe(topic string, callback mqtt.MessageHandler) error {
 	log.Printf("mqttClient[%s]: subscribe to topic='%s'", mq.GetName(), topic)
 	if token := mq.client.Subscribe(topic, mq.config.Qos, mq.wrapCallBack(callback));
 		token.Wait() && token.Error() != nil {
