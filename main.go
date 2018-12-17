@@ -53,7 +53,7 @@ func setupConfig() {
 	}
 
 	// read, transform and validate configuration
-	cfg = config.ReadConfig(parser.Name, string(cmdOptions.Config))
+	cfg = config.ReadConfigFile(parser.Name, string(cmdOptions.Config))
 	if cfg.LogConfig {
 		cfg.PrintConfig()
 	}

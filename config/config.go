@@ -13,16 +13,20 @@ const NameRegexp = "^[a-zA-Z0-9\\-]{1,32}$"
 
 var nameMatcher = regexp.MustCompile(NameRegexp)
 
-func ReadConfig(exe, source string) (config Config) {
+func ReadConfigFile(exe, source string) (config Config) {
 	var err error
 	yamlStr, err := ioutil.ReadFile(source)
 	if err != nil {
 		log.Fatalf("config: cannot read configuration: %v; use see `%s --help`", err, exe)
 	}
 
+	return ReadConfig(exe, yamlStr)
+}
+
+func ReadConfig(exe string, yamlStr []byte) (config Config) {
 	var configRead configRead
 
-	err = yaml.Unmarshal(yamlStr, &configRead)
+	err := yaml.Unmarshal(yamlStr, &configRead)
 	if err != nil {
 		log.Fatalf("config: cannot parse yaml: %s", err)
 	}
