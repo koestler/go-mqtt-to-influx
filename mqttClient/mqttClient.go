@@ -9,11 +9,11 @@ import (
 )
 
 type MqttClient struct {
-	config *config.MqttClientConfig
+	config config.MqttClientConfig
 	client mqtt.Client
 }
 
-func Run(config *config.MqttClientConfig) (mqttClient *MqttClient) {
+func Run(config config.MqttClientConfig) (mqttClient *MqttClient) {
 	// configure client and start connection
 	opts := mqtt.NewClientOptions().AddBroker(config.Broker).SetClientID(config.ClientId)
 	if len(config.User) > 0 {
@@ -50,7 +50,7 @@ func Run(config *config.MqttClientConfig) (mqttClient *MqttClient) {
 	}
 }
 
-func replaceTemplate(template string, config *config.MqttClientConfig) (r string) {
+func replaceTemplate(template string, config config.MqttClientConfig) (r string) {
 	r = strings.Replace(template, "%Prefix%", config.TopicPrefix, 1)
 	r = strings.Replace(r, "%ClientId%", config.ClientId, 1)
 	return
@@ -63,4 +63,8 @@ func (mq *MqttClient) Subscribe(topic string, callback mqtt.MessageHandler) (err
 		return token.Error()
 	}
 	return nil
+}
+
+func (mq *MqttClient) GetName() string {
+	return mq.config.Name
 }

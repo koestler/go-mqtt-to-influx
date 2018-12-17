@@ -7,27 +7,15 @@ import (
 	"time"
 )
 
-type RawPoint struct {
-	Measurement string
-	Tags        map[string]string
-	Fields      map[string]interface{}
-	Time        time.Time
-}
-
-type Point struct {
-	Tags   map[string]string
-	Fields map[string]interface{}
-}
-
 type InfluxDbClient struct {
-	config *config.InfluxDbClientConfig
+	config config.InfluxDbClientConfig
 	client influxClient.Client
 
 	pointToSendChannel chan *influxClient.Point
 	currentBatch       influxClient.BatchPoints
 }
 
-func Run(config *config.InfluxDbClientConfig) (influxDbClient *InfluxDbClient) {
+func RunClient(config config.InfluxDbClientConfig) (client *InfluxDbClient) {
 	// Create a new HTTPClient
 	dbClient, err := influxClient.NewHTTPClient(influxClient.HTTPConfig{
 		Addr:     config.Address,
@@ -38,15 +26,16 @@ func Run(config *config.InfluxDbClientConfig) (influxDbClient *InfluxDbClient) {
 		log.Fatal(err)
 	}
 
-	influxDbClient = &InfluxDbClient{
+	client = &InfluxDbClient{
 		config,
 		dbClient,
+
 		make(chan *influxClient.Point, 64),
 		getBatch(config.Database),
 	}
 
 	// start to send out points
-	go influxDbClient.pointsSender(config.WriteInterval)
+	go client.pointsSender(config.WriteInterval)
 
 	return
 }
@@ -56,6 +45,10 @@ func (ic *InfluxDbClient) Stop() {
 	if err := ic.client.Close(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (ic *InfluxDbClient) GetName() string {
+	return ic.config.Name
 }
 
 func (ic *InfluxDbClient) pointsSender(writeInterval time.Duration) {
@@ -100,6 +93,14 @@ func (ic *InfluxDbClient) sendBatch() {
 	ic.currentBatch = getBatch(ic.config.Database)
 }
 
+func (ic *InfluxDbClient) WritePoints(
+	measurement string,
+	points Points,
+	time time.Time,
+) {
+	ic.WriteRawPoints(points.ToRaw(measurement, time))
+}
+
 func (ic *InfluxDbClient) WriteRawPoints(rawPoints []RawPoint) {
 	for _, point := range rawPoints {
 		pt, err := influxClient.NewPoint(point.Measurement, point.Tags, point.Fields, point.Time)
@@ -109,22 +110,4 @@ func (ic *InfluxDbClient) WriteRawPoints(rawPoints []RawPoint) {
 		}
 		ic.pointToSendChannel <- pt
 	}
-}
-
-func (ic *InfluxDbClient) WritePoints(
-	measurement string,
-	points []Point,
-	time time.Time,
-) {
-	rawPoints := make([]RawPoint, len(points))
-
-	for i, point := range points {
-		rawPoints[i] = RawPoint{
-			Measurement: measurement,
-			Tags:        point.Tags,
-			Fields:      point.Fields,
-			Time:        time,
-		}
-	}
-	ic.WriteRawPoints(rawPoints)
 }

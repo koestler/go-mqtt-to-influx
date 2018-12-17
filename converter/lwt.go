@@ -44,9 +44,10 @@ func lwtHandler(converter Converter, msg mqtt.Message) {
 		},
 	}
 
-	converter.influxDbClientInstance.WritePoints(
+	converter.influxDbClientPoolInstance.WritePoints(
 		converter.config.TargetMeasurement,
 		points,
 		time.Now(),
+		converter.config.InfluxDbClients,
 	)
 }

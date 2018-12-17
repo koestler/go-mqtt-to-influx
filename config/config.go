@@ -44,10 +44,10 @@ func ReadConfig(source string) (config Config) {
 
 func (i ConfigRead) TransformAndValidate() Config {
 	ret := Config{
-		MqttClient:     i.MqttClient.TransformAndValidate(),
-		InfluxDbClient: i.InfluxDbClient.TransformAndValidate(),
-		Converters:     i.Converters.TransformAndValidate(),
+		MqttClients:     i.MqttClients.TransformAndValidate(),
+		InfluxDbClients: i.InfluxDbClients.TransformAndValidate(),
 	}
+	ret.Converters = i.Converters.TransformAndValidate(ret.MqttClients, ret.InfluxDbClients)
 
 	if i.Version == nil {
 		log.Fatalf("config: Version must be defined; use Version=0")
@@ -61,12 +61,27 @@ func (i ConfigRead) TransformAndValidate() Config {
 	return ret
 }
 
-func (i *MqttClientConfigRead) TransformAndValidate() MqttClientConfig {
+func (i MqttClientConfigReadMap) TransformAndValidate() []MqttClientConfig {
+	if len(i) < 1 {
+		log.Fatalf("config: MqttClients section must no be empty")
+	}
+
+	ret := make([]MqttClientConfig, len(i))
+	j := 0
+	for name, client := range i {
+		ret[j] = client.TransformAndValidate(name)
+		j += 1
+	}
+	return ret
+}
+
+func (i *MqttClientConfigRead) TransformAndValidate(name string) MqttClientConfig {
 	if i == nil {
 		log.Fatalf("config: MqttClientConfig section must be defined")
 	}
 
 	ret := MqttClientConfig{
+		Name:              name,
 		Broker:            i.Broker,
 		User:              i.User,
 		Password:          i.Password,
@@ -98,12 +113,23 @@ func (i *MqttClientConfigRead) TransformAndValidate() MqttClientConfig {
 	return ret
 }
 
-func (i *InfluxDbClientConfigRead) TransformAndValidate() InfluxDbClientConfig {
-	if i == nil {
-		log.Fatalf("config: InfluxDbClient section best be defined")
+func (i InfluxDbClientConfigReadMap) TransformAndValidate() []InfluxDbClientConfig {
+	if len(i) < 1 {
+		log.Fatalf("config: InfluxDbClients section must no be empty")
 	}
 
+	ret := make([]InfluxDbClientConfig, len(i))
+	j := 0
+	for name, client := range i {
+		ret[j] = client.TransformAndValidate(name)
+		j += 1
+	}
+	return ret
+}
+
+func (i InfluxDbClientConfigRead) TransformAndValidate(name string) InfluxDbClientConfig {
 	ret := InfluxDbClientConfig{
+		Name:          name,
 		Address:       i.Address,
 		User:          i.User,
 		Password:      i.Password,
@@ -130,11 +156,18 @@ func (i *InfluxDbClientConfigRead) TransformAndValidate() InfluxDbClientConfig {
 	return ret
 }
 
-func (i ConverterReadMap) TransformAndValidate() []ConverterConfig {
+func (i ConverterReadMap) TransformAndValidate(
+	mqttClients []MqttClientConfig,
+	influxDbClients []InfluxDbClientConfig,
+) []ConverterConfig {
+	if len(i) < 1 {
+		log.Fatalf("config: Converters section must no be empty")
+	}
+
 	ret := make([]ConverterConfig, len(i))
 	j := 0
 	for name, converter := range i {
-		ret[j] = converter.TransformAndValidate(name)
+		ret[j] = converter.TransformAndValidate(name, mqttClients, influxDbClients)
 		j += 1
 	}
 	return ret
@@ -147,18 +180,54 @@ var implementationsAndDefaultMeaseurement = map[string]string{
 	"tasmota-sensor": "floatValue",
 }
 
-func (i ConverterConfigRead) TransformAndValidate(name string) ConverterConfig {
+func (i ConverterConfigRead) TransformAndValidate(
+	name string,
+	mqttClients []MqttClientConfig,
+	influxDbClients []InfluxDbClientConfig,
+) ConverterConfig {
 	ret := ConverterConfig{
 		Name:              name,
 		Implementation:    i.Implementation,
 		TargetMeasurement: i.TargetMeasurement,
 		MqttTopics:        i.MqttTopics,
+		MqttClients:       i.MqttClients,
+		InfluxDbClients:   i.InfluxDbClients,
 	}
 
 	if def, ok := implementationsAndDefaultMeaseurement[ret.Implementation]; !ok {
 		log.Fatalf("config:  Converters->%s->Implementation='%s' is unkown", name, ret.Implementation)
 	} else if len(ret.TargetMeasurement) < 1 {
 		ret.TargetMeasurement = def
+	}
+
+	// validate that all listed MqttClients exist
+	for _, clientName := range ret.MqttClients {
+		found := false
+		for _, client := range mqttClients {
+			if clientName == client.Name {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			log.Fatalf("config: Converters->%s->MqttClient=%s is not defined", name, clientName)
+		}
+	}
+
+	// validate that all listed InfluxDbClients exist
+	for _, clientName := range ret.InfluxDbClients {
+		found := false
+		for _, client := range influxDbClients {
+			if clientName == client.Name {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			log.Fatalf("config: Converters->%s->InfluxDbClient=%s is not defined", name, clientName)
+		}
 	}
 
 	if len(ret.MqttTopics) < 1 {

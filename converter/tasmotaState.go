@@ -60,7 +60,10 @@ func tasmotaStateHandler(converter Converter, msg mqtt.Message) {
 
 	// create points
 	rawPoints := message.toPoints(device)
-	converter.influxDbClientInstance.WriteRawPoints(rawPoints)
+	converter.influxDbClientPoolInstance.WriteRawPoints(
+		rawPoints,
+		converter.config.InfluxDbClients,
+	)
 }
 
 func (v StateMessage) toPoints(device string) []influxDbClient.RawPoint {

@@ -2,45 +2,47 @@ package config
 
 import "time"
 
-type ConverterReadMap map[string]ConverterConfigRead
-
 type Config struct {
-	Version        int                  `yaml:"Version"`
-	MqttClient     MqttClientConfig     `yaml:"MqttClient,omitempty"`
-	InfluxDbClient InfluxDbClientConfig `yaml:"InfluxDbClient,omitempty"`
-	Converters     []ConverterConfig    `yaml:"Converters"`
+	Version         int                    `yaml:"Version"`
+	MqttClients     []MqttClientConfig     `yaml:"MqttClient"`
+	InfluxDbClients []InfluxDbClientConfig `yaml:"InfluxDbClients"`
+	Converters      []ConverterConfig      `yaml:"Converters"`
 }
 
 type ConfigRead struct {
-	Version        *int                      `yaml:"Version"`
-	MqttClient     *MqttClientConfigRead     `yaml:"MqttClient,omitempty"`
-	InfluxDbClient *InfluxDbClientConfigRead `yaml:"InfluxDbClient,omitempty"`
-	Converters     ConverterReadMap          `yaml:"Converters"`
+	Version         *int                        `yaml:"Version"`
+	MqttClients     MqttClientConfigReadMap     `yaml:"MqttClients"`
+	InfluxDbClients InfluxDbClientConfigReadMap `yaml:"InfluxDbClients"`
+	Converters      ConverterReadMap            `yaml:"Converters"`
 }
 
 type MqttClientConfig struct {
+	Name              string `yaml:"Name"`
 	Broker            string `yaml:"Broker"`
-	User              string `yaml:"User,omitempty"`
-	Password          string `yaml:"Password,omitempty"`
+	User              string `yaml:"User"`
+	Password          string `yaml:"Password"`
 	ClientId          string `yaml:"ClientId"`
 	Qos               byte   `yaml:"Qos"`
 	DebugLog          bool   `yaml:"DebugLog"`
-	TopicPrefix       string `yaml:"TopicPrefix,omitempty"`
+	TopicPrefix       string `yaml:"TopicPrefix"`
 	AvailabilityTopic string `yaml:"AvailabilityTopic"`
 }
 
 type MqttClientConfigRead struct {
 	Broker            string `yaml:"Broker"`
-	User              string `yaml:"User,omitempty"`
-	Password          string `yaml:"Password,omitempty"`
+	User              string `yaml:"User"`
+	Password          string `yaml:"Password"`
 	ClientId          string `yaml:"ClientId"`
 	Qos               *byte  `yaml:"Qos"`
 	DebugLog          *bool  `yaml:"DebugLog"`
-	TopicPrefix       string `yaml:"TopicPrefix,omitempty"`
-	AvailabilityTopic string `yaml:"AvailabilityTopic,omitempty"`
+	TopicPrefix       string `yaml:"TopicPrefix"`
+	AvailabilityTopic string `yaml:"AvailabilityTopic"`
 }
 
+type MqttClientConfigReadMap map[string]MqttClientConfigRead
+
 type InfluxDbClientConfig struct {
+	Name          string        `yaml:"Name"`
 	Address       string        `yaml:"Address"`
 	User          string        `yaml:"User"`
 	Password      string        `yaml:"Password"`
@@ -56,15 +58,23 @@ type InfluxDbClientConfigRead struct {
 	WriteInterval string `yaml:"WriteInterval"`
 }
 
+type InfluxDbClientConfigReadMap map[string]InfluxDbClientConfigRead
+
 type ConverterConfig struct {
 	Name              string   `yaml:"Name"`
 	Implementation    string   `yaml:"Implementation"`
 	TargetMeasurement string   `yaml:"TargetMeasurement"`
 	MqttTopics        []string `yaml:"MqttTopics"`
+	MqttClients       []string `yaml:"MqttClients"`
+	InfluxDbClients   []string `yaml:"InfluxDbClients"`
 }
 
 type ConverterConfigRead struct {
 	Implementation    string   `yaml:"Implementation"`
 	TargetMeasurement string   `yaml:"TargetMeasurement"`
 	MqttTopics        []string `yaml:"MqttTopics"`
+	MqttClients       []string `yaml:"MqttClients"`
+	InfluxDbClients   []string `yaml:"InfluxDbClients"`
 }
+
+type ConverterReadMap map[string]ConverterConfigRead

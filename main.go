@@ -15,10 +15,10 @@ type CmdOptions struct {
 }
 
 var (
-	cmdOptions             CmdOptions
-	mqttClientInstance     *mqttClient.MqttClient
-	influxDbClientInstance *influxDbClient.InfluxDbClient
-	configInstance         config.Config
+	cmdOptions                 CmdOptions
+	mqttClientInstances        map[string]*mqttClient.MqttClient
+	influxDbClientPoolInstance *influxDbClient.InfluxDbClientPool
+	configInstance             config.Config
 )
 
 func main() {
@@ -50,30 +50,66 @@ func setupConfig() {
 }
 
 func setupMqttClient() {
-	log.Printf(
-		"main: start mqtt client, broker=%v, clientId=%v",
-		configInstance.MqttClient.Broker, configInstance.MqttClient.ClientId,
-	)
-	mqttClientInstance = mqttClient.Run(&configInstance.MqttClient)
+	mqttClientInstances = make(map[string]*mqttClient.MqttClient)
+
+	for _, mqttClientConfig := range configInstance.MqttClients {
+		log.Printf(
+			"main: start mqtt client, name=%s, broker=%s, clientId=%s",
+			mqttClientConfig.Name, mqttClientConfig.Broker, mqttClientConfig.ClientId,
+		)
+		mqttClientInstances[mqttClientConfig.Name] = mqttClient.Run(mqttClientConfig)
+	}
 }
 
 func setupInfluxDbClient() {
-	log.Printf(
-		"main: start influxDB client, addr=%v",
-		configInstance.InfluxDbClient.Address,
-	)
-	influxDbClientInstance = influxDbClient.Run(&configInstance.InfluxDbClient)
+	influxDbClientPoolInstance = influxDbClient.RunPool()
+
+	for _, influxDbClientConfig := range configInstance.InfluxDbClients {
+		log.Printf(
+			"main: start influxDB client, name=%s addr=%v",
+			influxDbClientConfig.Name,
+			influxDbClientConfig.Address,
+		)
+		influxDbClientPoolInstance.AddClient(
+			influxDbClient.RunClient(influxDbClientConfig),
+		)
+	}
 }
 
 func setupConverters() {
 	for _, convertConfig := range configInstance.Converters {
-		log.Printf(
-			"main: start converter name=%s implementation=%s",
-			convertConfig.Name,
-			convertConfig.Implementation,
-		)
-		if err := converter.RunConverter(convertConfig, mqttClientInstance, influxDbClientInstance); err != nil {
-			log.Fatalf("main: cannot get converter; err=%s", err)
+		for _, clientInstance := range getMqttClient(convertConfig.MqttClients) {
+			log.Printf(
+				"main: start converter name=%s, implementation=%s, mqttClient=%s, influxDbClients=%v",
+				convertConfig.Name,
+				convertConfig.Implementation,
+				clientInstance.GetName(),
+				convertConfig.InfluxDbClients,
+			)
+
+			if err := converter.RunConverter(convertConfig, clientInstance, influxDbClientPoolInstance); err != nil {
+				log.Fatalf("main: cannot start converter; err=%s", err)
+			}
 		}
 	}
+}
+
+func getMqttClient(clientNames []string) (clients []*mqttClient.MqttClient) {
+	if len(clientNames) < 1 {
+		clients = make([]*mqttClient.MqttClient, len(mqttClientInstances))
+		i := 0
+		for _, c := range mqttClientInstances {
+			clients[i] = c
+			i += 1
+		}
+		return
+	}
+
+	for _, clientName := range clientNames {
+		if receiver, ok := mqttClientInstances[clientName]; ok {
+			clients = append(clients, receiver)
+		}
+	}
+
+	return
 }

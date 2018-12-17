@@ -65,9 +65,10 @@ func goVeSensorHandler(converter Converter, msg mqtt.Message) {
 		timeStamp = time.Now()
 	}
 
-	converter.influxDbClientInstance.WritePoints(
+	converter.influxDbClientPoolInstance.WritePoints(
 		converter.config.TargetMeasurement,
 		points,
 		timeStamp,
+		converter.config.InfluxDbClients,
 	)
 }
