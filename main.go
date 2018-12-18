@@ -53,7 +53,14 @@ func setupConfig() {
 	}
 
 	// read, transform and validate configuration
-	cfg = config.ReadConfigFile(parser.Name, string(cmdOptions.Config))
+	cfg, err := config.ReadConfigFile(parser.Name, string(cmdOptions.Config))
+	if len(err) > 0 {
+		for _, e := range err {
+			log.Printf("config: error: %v", e)
+		}
+		os.Exit(2)
+	}
+
 	if cfg.LogConfig {
 		cfg.PrintConfig()
 	}
