@@ -65,41 +65,41 @@ LogConfig: True
 LogWorkerStart: True
 LogMqttDebug: True
 MqttClients:
-  piegn-mosquitto:
+  0-piegn-mosquitto:
     Broker: "tcp://example.com:1883"
     User: Bob
     Password: Jeir2Jie4zee
     TopicPrefix: piegn/
     LogMessages: False
 
-  local-moquitto:
+  1-local-moquitto:
     Broker: "tcp://172.17.0.5:1883"
     TopicPrefix: wiedikon/
     LogMessages: True
 
 InfluxDbClients:
-  piegn:
+  0-piegn:
     Address: http://172.17.0.2:8086
     User: Alice
     Password: An2iu2egheijeG
     WriteInterval: 200ms
     LogLineProtocol: False
     LogMessages: True
-  local:
+  1-local:
     Address: http://172.17.0.4:8086
     WriteInterval: 0ms
     LogLineProtocol: False
     LogMessages: False
 
 Converters:
-  piegn-ve-sensor:
+  0-piegn-ve-sensor:
     Implementation: go-ve-sensor
     TargetMeasurement: floatValue
     LogHandleOnce: True
     MqttTopics:
       - piegn/tele/ve/#
 
-  piegn-tasmota-lwt:
+  1-piegn-tasmota-lwt:
     Implementation: lwt
     TargetMeasurement: boolValue
     MqttTopics:
@@ -107,7 +107,7 @@ Converters:
       - piegn/tele/+/+/LWT
       - piegn/tele/+/+/+/LWT
 
-  piegn-tasmota-state:
+  2-piegn-tasmota-state:
     Implementation: tasmota-state
     TargetMeasurement: tasmotaState
     MqttTopics:
@@ -115,7 +115,7 @@ Converters:
       - piegn/tele/+/+/STATE
       - piegn/tele/+/+/+/STATE
 
-  piegn-tasmota-sensor:
+  3-piegn-tasmota-sensor:
     Implementation: tasmota-sensor
     TargetMeasurement: floatValue
     MqttTopics:
@@ -186,8 +186,8 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect len(config.MqttClients) == 2")
 	}
 
-	if config.MqttClients[0].Name != "piegn-mosquitto" {
-		t.Errorf("expected Name of first MqttClient to be 'piegn-mosquitto' but got '%s'",
+	if config.MqttClients[0].Name != "0-piegn-mosquitto" {
+		t.Errorf("expected Name of first MqttClient to be '0-piegn-mosquitto' but got '%s'",
 			config.MqttClients[0].Name,
 		)
 	}
@@ -208,8 +208,8 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expected LogMessages of first MqttClient to be False")
 	}
 
-	if config.MqttClients[1].Name != "local-moquitto" {
-		t.Errorf("expected Name of second MqttClient to be 'local-moquitto' but got '%s'",
+	if config.MqttClients[1].Name != "1-local-moquitto" {
+		t.Errorf("expected Name of second MqttClient to be '1-local-moquitto' but got '%s'",
 			config.MqttClients[1].Name,
 		)
 	}
@@ -223,8 +223,8 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect len(config.InfluxDbClients) == 2")
 	}
 
-	if config.InfluxDbClients[0].Name != "piegn" {
-		t.Errorf("expected Name of first InfluxDbClient to be 'piegn' but got '%s'",
+	if config.InfluxDbClients[0].Name != "0-piegn" {
+		t.Errorf("expected Name of first InfluxDbClient to be '0-piegn' but got '%s'",
 			config.InfluxDbClients[0].Name,
 		)
 	}
@@ -241,8 +241,8 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expected WriteInterval of first InfluxDbClient to be '200ms'")
 	}
 
-	if config.InfluxDbClients[1].Name != "local" {
-		t.Errorf("expected Name of first InfluxDbClient to be 'local' but got '%s'",
+	if config.InfluxDbClients[1].Name != "1-local" {
+		t.Errorf("expected Name of first InfluxDbClient to be '1-local' but got '%s'",
 			config.InfluxDbClients[1].Name,
 		)
 	}

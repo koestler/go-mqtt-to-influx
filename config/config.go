@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 )
@@ -82,6 +83,17 @@ func (i configRead) TransformAndValidate() (ret Config, err []error) {
 	return
 }
 
+func (m mqttClientConfigReadMap) getOrderedKeys() (ret []string) {
+	ret = make([]string, len(m))
+	i := 0
+	for k, _ := range (m) {
+		ret[i] = k
+		i++
+	}
+	sort.Strings(ret)
+	return
+}
+
 func (i mqttClientConfigReadMap) TransformAndValidate() (ret []MqttClientConfig, err []error) {
 	if len(i) < 1 {
 		return ret, []error{fmt.Errorf("MqttClients section must no be empty")}
@@ -89,11 +101,11 @@ func (i mqttClientConfigReadMap) TransformAndValidate() (ret []MqttClientConfig,
 
 	ret = make([]MqttClientConfig, len(i))
 	j := 0
-	for name, client := range i {
+	for _, name := range i.getOrderedKeys() {
 		var e []error
-		ret[j], e = client.TransformAndValidate(name)
+		ret[j], e = i[name].TransformAndValidate(name)
 		err = append(err, e...)
-		j += 1
+		j++
 	}
 	return ret, nil
 }
@@ -136,6 +148,17 @@ func (i mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 	return
 }
 
+func (m influxDbClientConfigReadMap) getOrderedKeys() (ret []string) {
+	ret = make([]string, len(m))
+	i := 0
+	for k, _ := range (m) {
+		ret[i] = k
+		i++
+	}
+	sort.Strings(ret)
+	return
+}
+
 func (i influxDbClientConfigReadMap) TransformAndValidate() (ret []InfluxDbClientConfig, err []error) {
 	if len(i) < 1 {
 		return ret, []error{fmt.Errorf("InfluxDbClients section must no be empty")}
@@ -143,11 +166,11 @@ func (i influxDbClientConfigReadMap) TransformAndValidate() (ret []InfluxDbClien
 
 	ret = make([]InfluxDbClientConfig, len(i))
 	j := 0
-	for name, client := range i {
+	for _, name := range i.getOrderedKeys() {
 		var e []error
-		ret[j], e = client.TransformAndValidate(name)
+		ret[j], e = i[name].TransformAndValidate(name)
 		err = append(err, e...)
-		j += 1
+		j++
 	}
 	return
 }
@@ -198,6 +221,17 @@ func (i influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxD
 	return
 }
 
+func (m converterReadMap) getOrderedKeys() (ret []string) {
+	ret = make([]string, len(m))
+	i := 0
+	for k, _ := range (m) {
+		ret[i] = k
+		i++
+	}
+	sort.Strings(ret)
+	return
+}
+
 func (i converterReadMap) TransformAndValidate(
 	mqttClients []MqttClientConfig,
 	influxDbClients []InfluxDbClientConfig,
@@ -208,11 +242,11 @@ func (i converterReadMap) TransformAndValidate(
 
 	ret = make([]ConverterConfig, len(i))
 	j := 0
-	for name, converter := range i {
+	for _, name := range i.getOrderedKeys() {
 		var e []error
-		ret[j], e = converter.TransformAndValidate(name, mqttClients, influxDbClients)
+		ret[j], e = i[name].TransformAndValidate(name, mqttClients, influxDbClients)
 		err = append(err, e...)
-		j += 1
+		j++
 	}
 	return
 }
