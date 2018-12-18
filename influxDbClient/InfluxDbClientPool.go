@@ -49,7 +49,7 @@ func (p *ClientPool) getReceiverClients(receiversNames []string) (receivers []*C
 		i := 0
 		for _, c := range p.clients {
 			receivers[i] = c
-			i += 1
+			i++
 		}
 		return
 	}

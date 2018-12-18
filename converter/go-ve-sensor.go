@@ -53,7 +53,7 @@ func goVeSensorHandler(c *Converter, msg mqtt.Message) {
 				"value": value.Value,
 			},
 		}
-		i += 1
+		i++
 	}
 
 	if message.TimeZone != "UTC" {

@@ -128,7 +128,7 @@ func getMqttClient(clientNames []string) (clients []*mqttClient.MqttClient) {
 		i := 0
 		for _, c := range mqttClientInstances {
 			clients[i] = c
-			i += 1
+			i++
 		}
 		return
 	}
