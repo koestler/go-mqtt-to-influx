@@ -107,18 +107,17 @@ func (i mqttClientConfigReadMap) TransformAndValidate() (ret []MqttClientConfig,
 		err = append(err, e...)
 		j++
 	}
-	return ret, nil
+	return
 }
 
 func (i mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientConfig, err []error) {
 	ret = MqttClientConfig{
-		Name:              name,
-		Broker:            i.Broker,
-		User:              i.User,
-		Password:          i.Password,
-		ClientId:          i.ClientId,
-		TopicPrefix:       i.TopicPrefix,
-		AvailabilityTopic: i.AvailabilityTopic,
+		Name:        name,
+		Broker:      i.Broker,
+		User:        i.User,
+		Password:    i.Password,
+		ClientId:    i.ClientId,
+		TopicPrefix: i.TopicPrefix,
 	}
 
 	if !nameMatcher.MatchString(ret.Name) {
@@ -132,13 +131,18 @@ func (i mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 		ret.ClientId = "go-mqtt-to-influxdb"
 	}
 	if i.Qos == nil {
-		ret.Qos = 1
-	} else if *i.Qos == 1 || *i.Qos == 2 {
+		ret.Qos = 0
+	} else if *i.Qos == 0 || *i.Qos == 1 || *i.Qos == 2 {
 		ret.Qos = *i.Qos
+	} else {
+		err = append(err, fmt.Errorf("MqttClientConfig->%s->Qos=%d but must be 0, 1 or 2", name, *i.Qos))
 	}
 
-	if len(ret.AvailabilityTopic) < 1 {
+	if i.AvailabilityTopic == nil {
+		// use default
 		ret.AvailabilityTopic = "%Prefix%tele/%ClientId%/LWT"
+	} else {
+		ret.AvailabilityTopic = *i.AvailabilityTopic
 	}
 
 	if i.LogMessages != nil && *i.LogMessages {
@@ -198,9 +202,15 @@ func (i influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxD
 
 	if len(i.WriteInterval) < 1 {
 		// use default 0
-		ret.WriteInterval = 0
+		ret.WriteInterval = 200 * time.Millisecond
 	} else if writeInterval, e := time.ParseDuration(i.WriteInterval); e != nil {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->WriteInterval parse error: %s", name, e))
+		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->WriteInterval='%s' parse error: %s",
+			name, i.WriteInterval, e,
+		))
+	} else if writeInterval < 0 {
+		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->WriteInterval='%s' must be positive",
+			name, i.WriteInterval,
+		))
 	} else {
 		ret.WriteInterval = writeInterval
 	}
@@ -209,7 +219,13 @@ func (i influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxD
 		// use default 1s
 		ret.TimePrecision = time.Second
 	} else if timePrecision, e := time.ParseDuration(i.TimePrecision); e != nil {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->TimePrecision parse error: %s", name, e))
+		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->TimePrecision='%s' parse error: %s",
+			name, i.TimePrecision, e,
+		))
+	} else if timePrecision < 0 {
+		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->TimePrecision='%s' must be positive",
+			name, i.TimePrecision,
+		))
 	} else {
 		ret.TimePrecision = timePrecision
 	}

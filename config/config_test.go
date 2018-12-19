@@ -1,6 +1,10 @@
 package config
 
 import (
+	"bytes"
+	"log"
+	"os"
+	"strings"
 	"testing"
 )
 
@@ -16,9 +20,13 @@ Version: 42
 MqttClients:
   m0:
     Broker: "tcp://example.com:1883"
+  m1:
+    Broker: "tcp://example.com:1883"
 
 InfluxDbClients:
   i0:
+    Address: http://172.17.0.2:8086
+  i1:
     Address: http://172.17.0.2:8086
 
 Converters:
@@ -28,18 +36,41 @@ Converters:
      - t0
 `
 
-	InvalidMqttIncompleteConfig = `
+	InvalidMandatoryFieldsMissingConfig = `
 Version: 0
 MqttClients:
   m0:
-    Broker: "tcp://example.com:1883"
-
 InfluxDbClients:
   i0:
-    Address: http://172.17.0.2:8086
-
 Converters:
   c0:
+`
+	InvalidValuesConfig = `
+Version: 0
+MqttClients:
+  piegn mosquitto:
+    Broker: "tcp://example.com:1883"
+    Qos: 4
+
+InfluxDbClients:
+  piegn_foo:
+    Address: http://172.17.0.2:8086
+    WriteInterval: hello
+    TimePrecision: x
+  negative:
+    Address: http://172.17.0.2:8086
+    WriteInterval: -1s
+    TimePrecision: -5ms
+
+Converters:
+  äöü:
+    Implementation: go-ve-sensor
+    MqttTopics:
+      - x
+    MqttClients:
+      - inexistant-mqtt-client
+    InfluxDbClients:
+      - inexistant-influx-db-client
 `
 
 	ValidDefaultConfig = `
@@ -69,10 +100,13 @@ MqttClients:
     Broker: "tcp://example.com:1883"
     User: Bob
     Password: Jeir2Jie4zee
+    ClientId: "config-tester"
+    Qos: 2
+    AvailabilityTopic: test/%Prefix%tele/%ClientId%/LWT
     TopicPrefix: piegn/
     LogMessages: False
 
-  1-local-moquitto:
+  1-local-mosquitto:
     Broker: "tcp://172.17.0.5:1883"
     TopicPrefix: wiedikon/
     LogMessages: True
@@ -82,22 +116,28 @@ InfluxDbClients:
     Address: http://172.17.0.2:8086
     User: Alice
     Password: An2iu2egheijeG
-    WriteInterval: 200ms
-    LogLineProtocol: False
-    LogMessages: True
+    Database: test-database
+    WriteInterval: 400ms
+    TimePrecision: 1ms
+    LogLineProtocol: True
   1-local:
     Address: http://172.17.0.4:8086
     WriteInterval: 0ms
     LogLineProtocol: False
-    LogMessages: False
 
 Converters:
   0-piegn-ve-sensor:
     Implementation: go-ve-sensor
-    TargetMeasurement: floatValue
-    LogHandleOnce: True
+    TargetMeasurement: testfloatValue
     MqttTopics:
       - piegn/tele/ve/#
+    MqttClients:
+      - 0-piegn-mosquitto
+      - 1-local-mosquitto
+    InfluxDbClients:
+      - 0-piegn
+      - 1-local
+    LogHandleOnce: True
 
   1-piegn-tasmota-lwt:
     Implementation: lwt
@@ -125,37 +165,101 @@ Converters:
 `
 )
 
+func containsError(needle string, err []error) bool {
+	for _, e := range err {
+		if strings.Contains(e.Error(), needle) {
+			return true
+		}
+	}
+	return false
+}
+
 func TestReadConfig_InvalidSyntax(t *testing.T) {
 	_, err := ReadConfig([]byte(InvalidSyntaxConfig))
 	if len(err) != 1 {
-		t.Error("expected one error for invalid file")
+		t.Error("expect one error for invalid file")
 	}
 }
 
-func TestReadConfig_Empty(t *testing.T) {
+func TestReadConfig_NoVersion(t *testing.T) {
+	_, err := ReadConfig([]byte(""))
+
+	if !containsError("Version must be defined", err) {
+		t.Error("no version given; expect 'Version must be defined'")
+	}
+}
+
+func TestReadConfig_InvalidEmpty(t *testing.T) {
 	_, err := ReadConfig([]byte(InvalidEmptyConfig))
 	if len(err) != 3 {
-		t.Error("expected 3 errors; for empty MqttClients, empty InfluxDbClients, and empty Converters")
+		t.Error("expect 3 errors; for empty MqttClients, empty InfluxDbClients, and empty Converters")
 	}
 }
 
-func TestReadConfig_UnknownVersion(t *testing.T) {
+func TestReadConfig_InvalidUnknownVersion(t *testing.T) {
 	_, err := ReadConfig([]byte(InvalidUnknownVersionConfig))
 	if len(err) != 1 || err[0].Error() != "Version=42 not supported" {
-		t.Errorf("expected 1 error: 'Version=42 not supported' but got: %v", err)
+		t.Errorf("expect 1 error: 'Version=42 not supported' but got: %v", err)
 	}
 }
 
-func TestReadConfig_MqttIncompleteConfig(t *testing.T) {
-	_, err := ReadConfig([]byte(InvalidMqttIncompleteConfig))
-	if len(err) != 2 ||
-		err[0].Error() != "Converters->c0->Implementation='' is unkown" ||
-		err[1].Error() != "Converters->c0->MqttTopics must not be empty" {
+func TestReadConfig_InvalidMandatoryFieldsMissing(t *testing.T) {
+	_, err := ReadConfig([]byte(InvalidMandatoryFieldsMissingConfig))
 
-		t.Errorf("expected 2 errors for missing Implementation / MqttTopics but got: %v", err)
+	t.Logf("InvalidMandatoryFieldsMissingConfig returned err=%v", err)
+
+	if !containsError("Broker", err) {
+		t.Error("expect an error for missing Broker")
+	}
+
+	if !containsError("Address", err) {
+		t.Error("expect an error for missing Address")
+	}
+
+	if !containsError("Implementation", err) {
+		t.Error("expect an error for missing Implementation")
+	}
+
+	if !containsError("MqttTopics", err) {
+		t.Error("expect an error for missing MqttTopics")
 	}
 }
 
+func TestReadConfig_InvalidValues(t *testing.T) {
+	_, err := ReadConfig([]byte(InvalidValuesConfig))
+
+	t.Logf("InvalidValuesConfig returned err=%v", err)
+
+	for _, name := range []string{"piegn mosquitto", "piegn_foo", "äöü"} {
+		if !containsError(name, err) {
+			t.Errorf("expect invalid name '%s' to be returned as error", name)
+		}
+	}
+
+	for _, name := range []string{"inexistant-mqtt-client", "inexistant-influx-db-client"} {
+		if !containsError(name, err) {
+			t.Errorf("expect inexistant name reference '%s' to be returned as error", name)
+		}
+	}
+
+	if !containsError("Qos", err) {
+		t.Error("expect invalid Qos value of 4 to be returned as error")
+	}
+
+	if !containsError("hello", err) {
+		t.Error("expect invalid WriteInterval='hello' to be returned as error")
+	}
+
+	if !containsError("-1s", err) {
+		t.Error("expect invalid WriteInterval='-1s' to be returned as error")
+	}
+
+	if !containsError("-5ms", err) {
+		t.Error("expect invalid TimePrecision='-5ms' to be returned as error")
+	}
+}
+
+// check that a complex example setting all available options is correctly read
 func TestReadConfig_Complex(t *testing.T) {
 	config, err := ReadConfig([]byte(ValidComplexConfig))
 	if len(err) > 0 {
@@ -170,15 +274,15 @@ func TestReadConfig_Complex(t *testing.T) {
 	}
 
 	if !config.LogConfig {
-		t.Errorf("expect config.LogConfig to be True as configured")
+		t.Errorf("expect LogConfig to be True as configured")
 	}
 
 	if !config.LogWorkerStart {
-		t.Errorf("expect config.LogWorkerStart to be True as configured")
+		t.Errorf("expect LogWorkerStart to be True as configured")
 	}
 
 	if !config.LogMqttDebug {
-		t.Errorf("expect config.LogMqttDebug to be True as configured")
+		t.Errorf("expect LogMqttDebug to be True as configured")
 	}
 
 	// MqttClients section
@@ -187,35 +291,52 @@ func TestReadConfig_Complex(t *testing.T) {
 	}
 
 	if config.MqttClients[0].Name != "0-piegn-mosquitto" {
-		t.Errorf("expected Name of first MqttClient to be '0-piegn-mosquitto' but got '%s'",
+		t.Errorf("expect Name of first MqttClient to be '0-piegn-mosquitto' but got '%s'",
 			config.MqttClients[0].Name,
 		)
 	}
 
-	if config.MqttClients[0].User != "Bob" {
-		t.Error("expected User of first MqttClient to be 'Bob'")
-	}
-
-	if config.MqttClients[0].Password != "Jeir2Jie4zee" {
-		t.Error("expected Password of first MqttClient to be 'Jeir2Jie4zee'")
-	}
-
-	if config.MqttClients[0].TopicPrefix != "piegn/" {
-		t.Error("expected TopicPrefix of first MqttClient to be 'piegn/")
-	}
-
-	if config.MqttClients[0].LogMessages {
-		t.Error("expected LogMessages of first MqttClient to be False")
-	}
-
-	if config.MqttClients[1].Name != "1-local-moquitto" {
-		t.Errorf("expected Name of second MqttClient to be '1-local-moquitto' but got '%s'",
+	if config.MqttClients[1].Name != "1-local-mosquitto" {
+		t.Errorf("expect Name of second MqttClient to be '1-local-mosquitto' but got '%s'",
 			config.MqttClients[1].Name,
 		)
 	}
 
+	if config.MqttClients[0].Broker != "tcp://example.com:1883" {
+		t.Error("expect Broker of first MqttClient to be 'tcp://example.com:1883'")
+	}
+
+	if config.MqttClients[0].User != "Bob" {
+		t.Error("expect User of first MqttClient to be 'Bob'")
+	}
+
+	if config.MqttClients[0].Password != "Jeir2Jie4zee" {
+		t.Error("expect Password of first MqttClient to be 'Jeir2Jie4zee'")
+	}
+
+	if config.MqttClients[0].ClientId != "config-tester" {
+		t.Error("expect Password of first MqttClient to be 'config-tester'")
+	}
+
+	if config.MqttClients[0].Qos != 2 {
+		t.Error("expect Qos of first MqttClient to be 2")
+	}
+
+	expectedTopic := "test/%Prefix%tele/%ClientId%/LWT"
+	if config.MqttClients[0].AvailabilityTopic != expectedTopic {
+		t.Errorf("expect AvailabilityTopic of first MqttClient to be '%s'", expectedTopic)
+	}
+
+	if config.MqttClients[0].TopicPrefix != "piegn/" {
+		t.Error("expect TopicPrefix of first MqttClient to be 'piegn/'")
+	}
+
+	if config.MqttClients[0].LogMessages {
+		t.Error("expect LogMessages of first MqttClient to be False")
+	}
+
 	if !config.MqttClients[1].LogMessages {
-		t.Error("expected LogMessages of second MqttClient to be True")
+		t.Error("expect LogMessages of second MqttClient to be True")
 	}
 
 	// InfluxDbClients section
@@ -224,55 +345,185 @@ func TestReadConfig_Complex(t *testing.T) {
 	}
 
 	if config.InfluxDbClients[0].Name != "0-piegn" {
-		t.Errorf("expected Name of first InfluxDbClient to be '0-piegn' but got '%s'",
+		t.Errorf("expect Name of first InfluxDbClient to be '0-piegn' but got '%s'",
 			config.InfluxDbClients[0].Name,
 		)
 	}
 
-	if config.InfluxDbClients[0].User != "Alice" {
-		t.Error("expected User of first InfluxdbClient to be 'Alice'")
-	}
-
-	if config.InfluxDbClients[0].Password != "An2iu2egheijeG" {
-		t.Error("expected Password of first InfluxDbClient to be 'An2iu2egheijeG'")
-	}
-
-	if config.InfluxDbClients[0].WriteInterval.String() != "200ms" {
-		t.Error("expected WriteInterval of first InfluxDbClient to be '200ms'")
-	}
-
 	if config.InfluxDbClients[1].Name != "1-local" {
-		t.Errorf("expected Name of first InfluxDbClient to be '1-local' but got '%s'",
+		t.Errorf("expect Name of first InfluxDbClient to be '1-local' but got '%s'",
 			config.InfluxDbClients[1].Name,
 		)
 	}
 
+	if config.InfluxDbClients[0].Address != "http://172.17.0.2:8086" {
+		t.Error("expect Address of first InfluxdbClient to be 'http://172.17.0.2:8086'")
+	}
+
+	if config.InfluxDbClients[0].User != "Alice" {
+		t.Error("expect User of first InfluxdbClient to be 'Alice'")
+	}
+
+	if config.InfluxDbClients[0].Password != "An2iu2egheijeG" {
+		t.Error("expect Password of first InfluxDbClient to be 'An2iu2egheijeG'")
+	}
+
+	if config.InfluxDbClients[0].Database != "test-database" {
+		t.Error("expect Database of first InfluxDbClient to be 'test-database'")
+	}
+
+	if config.InfluxDbClients[0].WriteInterval.String() != "400ms" {
+		t.Error("expect WriteInterval of first InfluxDbClient to be '400ms'")
+	}
+
+	if config.InfluxDbClients[0].TimePrecision.String() != "1ms" {
+		t.Error("expect TimePrecision of first InfluxDbClient to be '1ms'")
+	}
+
+	if !config.InfluxDbClients[0].LogLineProtocol {
+		t.Error("expect LogLineProtocol of first InfluxDbClient to be True")
+	}
 
 	// Converters section
 	if len(config.Converters) != 4 {
 		t.Errorf("expect len(config.Converters) == 4")
 	}
+
+	if config.Converters[0].Name != "0-piegn-ve-sensor" {
+		t.Errorf("expect Name of first Converter to be '0-piegn-ve-sensor' but got '%s'",
+			config.Converters[0].Name,
+		)
+	}
+
+	if config.Converters[0].Implementation != "go-ve-sensor" {
+		t.Error("expect Implementation of first Converter to be 'go-ve-sensor'")
+	}
+
+	if config.Converters[0].TargetMeasurement != "testfloatValue" {
+		t.Error("expect TargetMeasurement of first Converter to be 'testfloatValue'")
+	}
+
+	if len(config.Converters[0].MqttTopics) != 1 || config.Converters[0].MqttTopics[0] != "piegn/tele/ve/#" {
+		t.Errorf("expect MqttTopics of first Converter to be ['piegn/tele/ve/#'] got %v",
+			config.Converters[0].MqttTopics,
+		)
+	}
+
+	if len(config.Converters[0].MqttClients) != 2 ||
+		config.Converters[0].MqttClients[0] != "0-piegn-mosquitto" ||
+		config.Converters[0].MqttClients[1] != "1-local-mosquitto" {
+		t.Errorf("expect MqttClients of first Converter to be ['0-piegn-mosquitto', '1-local-mosquitto'] got %v",
+			config.Converters[0].MqttClients,
+		)
+	}
+
+	if len(config.Converters[0].InfluxDbClients) != 2 ||
+		config.Converters[0].InfluxDbClients[0] != "0-piegn" ||
+		config.Converters[0].InfluxDbClients[1] != "1-local" {
+		t.Errorf("expect InfluxDbClients of first Converter to be ['0-piegn', '1-local'] got %v",
+			config.Converters[0].InfluxDbClients,
+		)
+	}
+
+	if !config.Converters[0].LogHandleOnce {
+		t.Error("expect LogHandleOnce of first Converter to be True")
+	}
+
+	// test config output does not crash
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer func() {
+		log.SetOutput(os.Stderr)
+	}()
+	config.PrintConfig()
+	t.Log(buf.String())
 }
 
+// check that default values are set as documented in types.go
 func TestReadConfig_Default(t *testing.T) {
 	config, err := ReadConfig([]byte(ValidDefaultConfig))
 	if len(err) > 0 {
 		t.Error("did not expect any errors")
 	}
 
-	// check default avlues
-
+	// General Section
 	if config.LogConfig {
-		t.Errorf("expect config.LogConfig to be False by default")
+		t.Error("expect LogConfig to be False by default")
 	}
 
 	if config.LogWorkerStart {
-		t.Errorf("expect config.LogWorkerStart to be False by default")
+		t.Error("expect LogWorkerStart to be False by default")
 	}
 
 	if config.LogMqttDebug {
-		t.Errorf("expect config.LogMqttDebug to be False by default")
+		t.Error("expect LogMqttDebug to be False by default")
 	}
 
-	// todo: trigger errors
+	// InfluxDbClients section
+	if config.MqttClients[0].User != "" {
+		t.Error("expect default MqttClient->User to be empty")
+	}
+
+	if config.MqttClients[0].Password != "" {
+		t.Error("expect default MqttClient->Password to be empty")
+	}
+
+	if config.MqttClients[0].ClientId != "go-mqtt-to-influxdb" {
+		t.Error("expect default MqttClient->ClientId to be 'go-mqtt-to-influxdb'")
+	}
+
+	if config.MqttClients[0].Qos != 0 {
+		t.Error("expect default MqttClient->Qos to be 0")
+	}
+
+	expectedAvailabilityTopic := "%Prefix%tele/%ClientId%/LWT"
+	if config.MqttClients[0].AvailabilityTopic != expectedAvailabilityTopic {
+		t.Errorf("expect default MqttClient->AvailabilityTopic to be '%s'", expectedAvailabilityTopic)
+	}
+
+	if config.MqttClients[0].TopicPrefix != "" {
+		t.Error("expect default MqttClient->TopicPrefix to be empty")
+	}
+
+	if config.MqttClients[0].LogMessages {
+		t.Error("expect default MqttClient->LogMessages to be False")
+	}
+
+	// InfluxDbClients section
+	if config.InfluxDbClients[0].User != "" {
+		t.Error("expect default InfluxDbClient->User to be empty")
+	}
+
+	if config.InfluxDbClients[0].Password != "" {
+		t.Error("expect default InfluxDbClient->Password to be empty")
+	}
+
+	if config.InfluxDbClients[0].Database != "go-mqtt-to-influxdb" {
+		t.Error("expect default InfluxDbClient->Database to be 'go-mqtt-to-influxdb'")
+	}
+
+	if config.InfluxDbClients[0].WriteInterval.String() != "200ms" {
+		t.Error("expect default InfluxDbClient->WriteInterval to be 200ms")
+	}
+
+	if config.InfluxDbClients[0].TimePrecision.String() != "1s" {
+		t.Error("expect default InfluxDbClient->TimePrecision to be 1s")
+	}
+
+	if config.InfluxDbClients[0].LogLineProtocol {
+		t.Error("expect default InfluxDbClient->LogLineProtocol to be False")
+	}
+
+	// Converters section
+	if config.Converters[0].TargetMeasurement != "floatValue" {
+		t.Error("expect default Converter->TargetMeasurement to be 'floatValue'")
+	}
+
+	if len(config.Converters[0].MqttClients) != 0 {
+		t.Error("expec default Converter->MqttClients to be empty")
+	}
+
+	if len(config.Converters[0].InfluxDbClients) != 0 {
+		t.Error("expec default Converter->InfluxDbClients to be empty")
+	}
 }
