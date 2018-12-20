@@ -28,8 +28,6 @@ var uptimeParser = regexp.MustCompile(uptimeFormat)
 func parseUpTime(timeStr string) (res int, err error) {
 	parts := uptimeParser.FindStringSubmatch(timeStr)
 
-	log.Print(parts)
-
 	var days, hours, minutes, seconds int
 
 	if len(parts) == 6 {
