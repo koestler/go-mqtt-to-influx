@@ -2,6 +2,7 @@ package converter
 
 import (
 	"github.com/eclipse/paho.mqtt.golang"
+	"github.com/koestler/go-mqtt-to-influxdb/config"
 	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"log"
 	"regexp"
@@ -10,11 +11,11 @@ import (
 
 var lwtTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/LWT$")
 
-func lwtHandler(c *Converter, msg mqtt.Message) {
+func lwtHandler(c *config.ConverterConfig, oup Output, msg mqtt.Message) {
 	// parse topic
 	matches := lwtTopicMatcher.FindStringSubmatch(msg.Topic())
 	if len(matches) < 3 {
-		log.Printf("lwt[%s]: cannot extract device from topic='%s", c.GetName(), msg.Topic())
+		log.Printf("lwt[%s]: cannot extract device from topic='%s", c.Name, msg.Topic())
 		return
 	}
 	device := matches[2]
@@ -27,13 +28,14 @@ func lwtHandler(c *Converter, msg mqtt.Message) {
 	case "Offline":
 		value = false
 	default:
-		log.Printf("lwt[%s]: unknown LWT value='%s'", c.GetName(), msg.Payload())
+		log.Printf("lwt[%s]: unknown LWT value='%s'", c.Name, msg.Payload())
 		return
 	}
 
 	// create points
-	points := []influxDbClient.Point{
+	points := []influxDbClient.RawPoint{
 		{
+			Measurement: c.TargetMeasurement,
 			Tags: map[string]string{
 				"device": device,
 				"field":  "Available",
@@ -41,13 +43,9 @@ func lwtHandler(c *Converter, msg mqtt.Message) {
 			Fields: map[string]interface{}{
 				"value": value,
 			},
+			Time: time.Now(),
 		},
 	}
 
-	c.influxDbClientPoolInstance.WritePoints(
-		c.config.TargetMeasurement,
-		points,
-		time.Now(),
-		c.config.InfluxDbClients,
-	)
+	oup.WriteRawPoints(points, c.InfluxDbClients)
 }

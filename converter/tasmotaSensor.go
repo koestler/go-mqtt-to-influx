@@ -3,6 +3,7 @@ package converter
 import (
 	"encoding/json"
 	"github.com/eclipse/paho.mqtt.golang"
+	"github.com/koestler/go-mqtt-to-influxdb/config"
 	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"log"
 	"regexp"
@@ -26,11 +27,11 @@ type SensorMessage struct {
 
 var tasmotaSensorTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/SENSOR$")
 
-func tasmotaSensorHandler(c *Converter, msg mqtt.Message) {
+func tasmotaSensorHandler(c *config.ConverterConfig, oup Output, msg mqtt.Message) {
 	// parse topic
 	matches := tasmotaSensorTopicMatcher.FindStringSubmatch(msg.Topic())
 	if len(matches) < 3 {
-		log.Printf("tasmota-sensor[%s]: cannot extract device from topic='%s", c.GetName(), msg.Topic())
+		log.Printf("tasmota-sensor[%s]: cannot extract device from topic='%s", c.Name, msg.Topic())
 		return
 	}
 	device := matches[2]
@@ -38,7 +39,7 @@ func tasmotaSensorHandler(c *Converter, msg mqtt.Message) {
 	// parse payload
 	var message SensorMessage
 	if err := json.Unmarshal(msg.Payload(), &message); err != nil {
-		log.Printf("tasmota-sensor[%s]: cannot json decode: %s", c.GetName(), err)
+		log.Printf("tasmota-sensor[%s]: cannot json decode: %s", c.Name, err)
 		return
 	}
 
@@ -48,7 +49,7 @@ func tasmotaSensorHandler(c *Converter, msg mqtt.Message) {
 		log.Printf(
 			"tasmota-sensor[%s]: could not extract any sensor data; "+
 				"sensor type is probably unknown; known sensors are AM2301, SI7021, DS18B20; payload='%s'",
-			c.GetName(), msg.Payload(),
+			c.Name, msg.Payload(),
 		)
 		return
 	}
@@ -58,16 +59,11 @@ func tasmotaSensorHandler(c *Converter, msg mqtt.Message) {
 		timeStamp = time.Now()
 	}
 
-	c.influxDbClientPoolInstance.WritePoints(
-		c.config.TargetMeasurement,
-		points,
-		timeStamp,
-		c.config.InfluxDbClients,
-	)
+	oup.WriteRawPoints(points.ToRaw(c.TargetMeasurement, timeStamp), c.InfluxDbClients)
 }
 
-func (v SensorMessage) toPoints(device string) []influxDbClient.Point {
-	ret := make([]influxDbClient.Point, 0, 2)
+func (v SensorMessage) toPoints(device string) influxDbClient.Points {
+	ret := make(influxDbClient.Points, 0, 2)
 
 	if v.AM2301 != nil {
 		ret = append(ret, influxDbClient.Point{

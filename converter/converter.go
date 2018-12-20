@@ -8,11 +8,15 @@ import (
 	"github.com/koestler/go-mqtt-to-influxdb/mqttClient"
 )
 
-type HandleFunc func(converter *Converter, msg mqtt.Message)
+type HandleFunc func(c *config.ConverterConfig, oup Output, msg mqtt.Message)
 
 type Converter struct {
 	config                     config.ConverterConfig
 	influxDbClientPoolInstance *influxDbClient.ClientPool
+}
+
+type Output interface {
+	WriteRawPoints(rawPoints []influxDbClient.RawPoint, receiverNames []string)
 }
 
 var converterImplementations = map[string]HandleFunc{
@@ -56,10 +60,10 @@ func getMqttMessageHandler(converter *Converter, handleFunc HandleFunc) mqtt.Mes
 	if converter.config.LogHandleOnce {
 		return func(client mqtt.Client, message mqtt.Message) {
 			logTopicOnce(converter.config.Name, message.Topic())
-			handleFunc(converter, message)
+			handleFunc(&converter.config, converter.influxDbClientPoolInstance, message)
 		}
 	}
 	return func(client mqtt.Client, message mqtt.Message) {
-		handleFunc(converter, message)
+		handleFunc(&converter.config, converter.influxDbClientPoolInstance, message)
 	}
 }
