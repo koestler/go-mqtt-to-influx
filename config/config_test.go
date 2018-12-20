@@ -95,6 +95,12 @@ Version: 0
 LogConfig: True
 LogWorkerStart: True
 LogMqttDebug: True
+HttpServer:
+  Bind: 0.0.0.0
+  Port: 80
+  LogRequests: True
+Statistics:
+  Enabled: True
 MqttClients:
   0-piegn-mosquitto:
     Broker: "tcp://example.com:1883"
@@ -429,6 +435,28 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect LogHandleOnce of first Converter to be True")
 	}
 
+	// HttpServer
+	if !config.HttpServer.Enabled {
+		t.Error("expect HttpServer->Enabled to be True")
+	}
+
+	if config.HttpServer.Bind != "0.0.0.0" {
+		t.Error("expect HttpServer->Bind to be '0.0.0.0'")
+	}
+
+	if config.HttpServer.Port != 80 {
+		t.Error("expect HttpServer->Port to be 80")
+	}
+
+	if !config.HttpServer.LogRequests {
+		t.Error("expect HttpServer->LogRequests to be True")
+	}
+
+	// Statistics
+	if !config.Statistics.Enabled {
+		t.Error("expect Statistics->Enabled to be True")
+	}
+
 	// test config output does not crash
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
@@ -520,10 +548,32 @@ func TestReadConfig_Default(t *testing.T) {
 	}
 
 	if len(config.Converters[0].MqttClients) != 0 {
-		t.Error("expec default Converter->MqttClients to be empty")
+		t.Error("expect default Converter->MqttClients to be empty")
 	}
 
 	if len(config.Converters[0].InfluxDbClients) != 0 {
-		t.Error("expec default Converter->InfluxDbClients to be empty")
+		t.Error("expect default Converter->InfluxDbClients to be empty")
+	}
+
+	// HttpServer
+	if config.HttpServer.Enabled {
+		t.Error("expect default HttpServer->Enabled to be False")
+	}
+
+	if config.HttpServer.Bind != "[::1]" {
+		t.Error("expect default HttpServer->Bind to be '[::1]'")
+	}
+
+	if config.HttpServer.Port != 8042 {
+		t.Error("expect default HttpServer->Port to be 8042")
+	}
+
+	if config.HttpServer.LogRequests {
+		t.Error("expect default HttpServer->LogRequests to be False")
+	}
+
+	// Statistics
+	if config.Statistics.Enabled {
+		t.Error("expect default Statistics->Enabled to be False")
 	}
 }

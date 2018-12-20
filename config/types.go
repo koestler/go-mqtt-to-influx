@@ -7,6 +7,8 @@ type Config struct {
 	MqttClients     []MqttClientConfig     `yaml:"MqttClient"`      // mandatory: at least 1 must be defined
 	InfluxDbClients []InfluxDbClientConfig `yaml:"InfluxDbClients"` // mandatory: at least 1 must be defined
 	Converters      []ConverterConfig      `yaml:"Converters"`      // mandatory: at least 1 must be defined
+	HttpServer      HttpServerConfig       `yaml:"HttpServer"`      // optional: default Disabled
+	Statistics      StatisticsConfig       `yaml:"Statistics"`      // optional: default Disabled
 	LogConfig       bool                   `yaml:"LogConfig"`       // optional: default False
 	LogWorkerStart  bool                   `yaml:"LogWorkerStart"`  // optional: default False
 	LogMqttDebug    bool                   `yaml:"LogMqttDebug"`    // optional: default False
@@ -45,12 +47,25 @@ type ConverterConfig struct {
 	LogHandleOnce     bool     `yaml:"LogHandleOnce"`     // optional: default False
 }
 
+type HttpServerConfig struct {
+	Enabled     bool   `yaml:"Enabled"`     // defined automatically if HttpServer section exists
+	Bind        string `yaml:"Bind"`        // optional: defaults to ::1 (ipv6 loopback)
+	Port        int    `yaml:"Port"`        // optional: defaults to 8042
+	LogRequests bool   `yaml:"LogRequests"` // optional:  default False
+}
+
+type StatisticsConfig struct {
+	Enabled bool `yaml:"Enabled"` // defined automatically if Statistics section exists
+}
+
 // Read structs are given to yaml for decoding and are slightly less exact in types
 type configRead struct {
 	Version         *int                        `yaml:"Version"`
 	MqttClients     mqttClientConfigReadMap     `yaml:"MqttClients"`
 	InfluxDbClients influxDbClientConfigReadMap `yaml:"InfluxDbClients"`
 	Converters      converterReadMap            `yaml:"Converters"`
+	HttpServer      *httpServerConfigRead       `yaml:"HttpServer"`
+	Statistics      *statisticsConfigRead       `yaml:"Statistics"`
 	LogConfig       *bool                       `yaml:"LogConfig"`
 	LogWorkerStart  *bool                       `yaml:"LogWorkerStart"`
 	LogMqttDebug    *bool                       `yaml:"LogMqttDebug"`
@@ -91,3 +106,13 @@ type converterConfigRead struct {
 }
 
 type converterReadMap map[string]converterConfigRead
+
+type httpServerConfigRead struct {
+	Bind        string `yaml:"Bind"`
+	Port        *int   `yaml:"Port"`
+	LogRequests *bool  `yaml:"LogRequests"`
+}
+
+type statisticsConfigRead struct {
+	HttpServer *httpServerConfigRead `yaml:"HttpServer"`
+}

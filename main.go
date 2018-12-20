@@ -5,8 +5,10 @@ import (
 	"github.com/jessevdk/go-flags"
 	"github.com/koestler/go-mqtt-to-influxdb/config"
 	"github.com/koestler/go-mqtt-to-influxdb/converter"
+	"github.com/koestler/go-mqtt-to-influxdb/httpServer"
 	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"github.com/koestler/go-mqtt-to-influxdb/mqttClient"
+	"github.com/koestler/go-mqtt-to-influxdb/statistics"
 	"log"
 	"os"
 )
@@ -19,7 +21,10 @@ var (
 	cmdOptions                 CmdOptions
 	mqttClientInstances        map[string]*mqttClient.MqttClient
 	influxDbClientPoolInstance *influxDbClient.ClientPool
-	cfg                        config.Config
+	httpServerInstance         *httpServer.HttpServer
+	statisticsInstance         *statistics.Statistics
+
+	cfg config.Config
 )
 
 func main() {
@@ -32,6 +37,8 @@ func main() {
 	setupMqttClient()
 	setupInfluxDbClient()
 	setupConverters()
+	setupStatistics()
+	setupHttpServer()
 
 	if cfg.LogWorkerStart {
 		log.Print("main: start completed; run until kill signal is received")
@@ -141,4 +148,33 @@ func getMqttClient(clientNames []string) (clients []*mqttClient.MqttClient) {
 	}
 
 	return
+}
+
+func setupStatistics() {
+	if !cfg.Statistics.Enabled {
+		return
+	}
+
+	if cfg.LogWorkerStart {
+		log.Printf("main: start Statistisc module")
+	}
+
+	statisticsInstance = statistics.Run()
+}
+
+func setupHttpServer() {
+	if !cfg.HttpServer.Enabled {
+		return
+	}
+
+	if cfg.LogWorkerStart {
+		log.Printf("main: start Http server, bind=%s, port=%d", cfg.HttpServer.Bind, cfg.HttpServer.Port)
+	}
+
+	httpServerInstance = httpServer.Run(
+		cfg.HttpServer,
+		&httpServer.Environment{
+			Statistics: statisticsInstance,
+		},
+	)
 }

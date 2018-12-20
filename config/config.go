@@ -59,6 +59,12 @@ func (i configRead) TransformAndValidate() (ret Config, err []error) {
 	ret.Converters, e = i.Converters.TransformAndValidate(ret.MqttClients, ret.InfluxDbClients)
 	err = append(err, e...)
 
+	ret.HttpServer, e = i.HttpServer.TransformAndValidate()
+	err = append(err, e...)
+
+	ret.Statistics, e = i.Statistics.TransformAndValidate()
+	err = append(err, e...)
+
 	if i.Version == nil {
 		err = append(err, fmt.Errorf("Version must be defined; use Version=0"))
 	} else {
@@ -80,6 +86,42 @@ func (i configRead) TransformAndValidate() (ret Config, err []error) {
 		ret.LogMqttDebug = true
 	}
 
+	return
+}
+
+func (i *httpServerConfigRead) TransformAndValidate() (ret HttpServerConfig, err []error) {
+	ret.Enabled = false
+	ret.Bind = "[::1]"
+	ret.Port = 8042
+
+	if i == nil {
+		return
+	}
+
+	ret.Enabled = true
+
+	if len(i.Bind) > 0 {
+		ret.Bind = i.Bind
+	}
+
+	if i.Port != nil {
+		ret.Port = *i.Port
+	}
+
+	if i.LogRequests != nil && *i.LogRequests {
+		ret.LogRequests = true
+	}
+
+	return
+}
+
+func (i *statisticsConfigRead) TransformAndValidate() (ret StatisticsConfig, err []error) {
+	ret.Enabled = false
+	if i == nil {
+		return
+	}
+
+	ret.Enabled = true
 	return
 }
 
