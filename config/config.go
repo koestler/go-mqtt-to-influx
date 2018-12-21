@@ -90,26 +90,26 @@ func (i configRead) TransformAndValidate() (ret Config, err []error) {
 }
 
 func (i *httpServerConfigRead) TransformAndValidate() (ret HttpServerConfig, err []error) {
-	ret.Enabled = false
-	ret.Bind = "[::1]"
-	ret.Port = 8042
+	ret.enabled = false
+	ret.bind = "[::1]"
+	ret.port = 8042
 
 	if i == nil {
 		return
 	}
 
-	ret.Enabled = true
+	ret.enabled = true
 
 	if len(i.Bind) > 0 {
-		ret.Bind = i.Bind
+		ret.bind = i.Bind
 	}
 
 	if i.Port != nil {
-		ret.Port = *i.Port
+		ret.port = *i.Port
 	}
 
 	if i.LogRequests != nil && *i.LogRequests {
-		ret.LogRequests = true
+		ret.logRequests = true
 	}
 
 	return

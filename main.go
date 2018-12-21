@@ -163,12 +163,12 @@ func setupStatistics() {
 }
 
 func setupHttpServer() {
-	if !cfg.HttpServer.Enabled {
+	if !cfg.HttpServer.Enabled() {
 		return
 	}
 
 	if cfg.LogWorkerStart {
-		log.Printf("main: start Http server, bind=%s, port=%d", cfg.HttpServer.Bind, cfg.HttpServer.Port)
+		log.Printf("main: start Http server, bind=%s, port=%d", cfg.HttpServer.Bind(), cfg.HttpServer.Port())
 	}
 
 	httpServerInstance = httpServer.Run(

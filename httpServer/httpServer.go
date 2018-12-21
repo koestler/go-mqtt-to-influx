@@ -1,7 +1,6 @@
 package httpServer
 
 import (
-	"github.com/koestler/go-mqtt-to-influxdb/config"
 	"github.com/koestler/go-mqtt-to-influxdb/statistics"
 	"io"
 	"log"
@@ -11,18 +10,24 @@ import (
 )
 
 type HttpServer struct {
-	config config.HttpServerConfig
+	config Config
 }
 
-func Run(config config.HttpServerConfig, env *Environment) (httpServer *HttpServer) {
+type Config interface {
+	Bind() string
+	Port() int
+	LogRequests() bool
+}
+
+func Run(config Config, env *Environment) (httpServer *HttpServer) {
 	var logger io.Writer
-	if config.LogRequests {
+	if config.LogRequests() {
 		logger = os.Stdout
 	}
 
 	go func() {
 		router := newRouter(logger, env)
-		address := config.Bind + ":" + strconv.Itoa(config.Port)
+		address := config.Bind() + ":" + strconv.Itoa(config.Port())
 
 		log.Printf("httpServer: listening on %v", address)
 		log.Fatal(router, http.ListenAndServe(address, router))

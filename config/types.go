@@ -48,14 +48,14 @@ type ConverterConfig struct {
 }
 
 type HttpServerConfig struct {
-	Enabled     bool   `yaml:"Enabled"`     // defined automatically if HttpServer section exists
-	Bind        string `yaml:"Bind"`        // optional: defaults to ::1 (ipv6 loopback)
-	Port        int    `yaml:"Port"`        // optional: defaults to 8042
-	LogRequests bool   `yaml:"LogRequests"` // optional:  default False
+	enabled     bool   `yaml:"Enabled"`     // defined automatically if HttpServer section exists
+	bind        string `yaml:"Bind"`        // optional: defaults to ::1 (ipv6 loopback)
+	port        int    `yaml:"Port"`        // optional: defaults to 8042
+	logRequests bool   `yaml:"LogRequests"` // optional:  default False
 }
 
 type StatisticsConfig struct {
-	Enabled bool `yaml:"Enabled"` // defined automatically if Statistics section exists
+	Enabled bool `yaml:"enabled"` // defined automatically if Statistics section exists
 }
 
 // Read structs are given to yaml for decoding and are slightly less exact in types
@@ -108,9 +108,9 @@ type converterConfigRead struct {
 type converterReadMap map[string]converterConfigRead
 
 type httpServerConfigRead struct {
-	Bind        string `yaml:"Bind"`
+	Bind        string `yaml:"bind"`
 	Port        *int   `yaml:"Port"`
-	LogRequests *bool  `yaml:"LogRequests"`
+	LogRequests *bool  `yaml:"logRequests"`
 }
 
 type statisticsConfigRead struct {
