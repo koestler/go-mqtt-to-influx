@@ -4,6 +4,7 @@ import (
 	"github.com/eclipse/paho.mqtt.golang"
 	"log"
 	"strings"
+	"time"
 )
 
 type MqttClient struct {
@@ -39,6 +40,8 @@ func Run(config Config) (mqttClient *MqttClient) {
 	if len(config.Password()) > 0 {
 		opts.SetPassword(config.Password())
 	}
+
+	opts.MaxReconnectInterval = 30 * time.Second
 
 	// setup availability topic using will
 	availableTopic := replaceTemplate(config.AvailabilityTopic(), config)
