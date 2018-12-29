@@ -31,13 +31,13 @@ func (p *ClientPool) Stop() {
 func (p *ClientPool) AddClient(client *Client) {
 	p.clientsMutex.Lock()
 	defer p.clientsMutex.Unlock()
-	p.clients[client.GetName()] = client
+	p.clients[client.Name()] = client
 }
 
 func (p *ClientPool) RemoveClient(client *Client) {
 	p.clientsMutex.Lock()
 	defer p.clientsMutex.Unlock()
-	delete(p.clients, client.GetName())
+	delete(p.clients, client.Name())
 }
 
 func (p *ClientPool) getReceiverClients(receiversNames []string) (receivers []*Client) {

@@ -3,16 +3,24 @@ package converter
 import (
 	"fmt"
 	"github.com/eclipse/paho.mqtt.golang"
-	"github.com/koestler/go-mqtt-to-influxdb/config"
 	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"github.com/koestler/go-mqtt-to-influxdb/mqttClient"
 )
 
-type HandleFunc func(c *config.ConverterConfig, oup Output, msg mqtt.Message)
+type HandleFunc func(c Config, oup Output, msg mqtt.Message)
 
 type Converter struct {
-	config                     config.ConverterConfig
+	config                     Config
 	influxDbClientPoolInstance *influxDbClient.ClientPool
+}
+
+type Config interface {
+	Name() string
+	Implementation() string
+	TargetMeasurement() string
+	MqttTopics() []string
+	InfluxDbClients() []string
+	LogHandleOnce() bool
 }
 
 type Output interface {
@@ -27,15 +35,15 @@ var converterImplementations = map[string]HandleFunc{
 }
 
 func RunConverter(
-	config config.ConverterConfig,
+	config Config,
 	mqttClientInstance *mqttClient.MqttClient,
 	influxDbClientPoolInstance *influxDbClient.ClientPool,
 ) (err error) {
 	var handleFunc HandleFunc
 
-	handleFunc, ok := converterImplementations[config.Implementation]
+	handleFunc, ok := converterImplementations[config.Implementation()]
 	if !ok {
-		return fmt.Errorf("unknown implementation='%s'", config.Implementation)
+		return fmt.Errorf("unknown implementation='%s'", config.Implementation())
 	}
 
 	converter := Converter{
@@ -43,7 +51,7 @@ func RunConverter(
 		influxDbClientPoolInstance: influxDbClientPoolInstance,
 	}
 
-	for _, mqttTopic := range config.MqttTopics {
+	for _, mqttTopic := range config.MqttTopics() {
 		if err := mqttClientInstance.Subscribe(mqttTopic, getMqttMessageHandler(&converter, handleFunc)); err != nil {
 			return err
 		}
@@ -52,18 +60,18 @@ func RunConverter(
 	return nil
 }
 
-func (c *Converter) GetName() string {
-	return c.config.Name
+func (c *Converter) Name() string {
+	return c.config.Name()
 }
 
 func getMqttMessageHandler(converter *Converter, handleFunc HandleFunc) mqtt.MessageHandler {
-	if converter.config.LogHandleOnce {
+	if converter.config.LogHandleOnce() {
 		return func(client mqtt.Client, message mqtt.Message) {
-			logTopicOnce(converter.config.Name, message.Topic())
-			handleFunc(&converter.config, converter.influxDbClientPoolInstance, message)
+			logTopicOnce(converter.Name(), message.Topic())
+			handleFunc(converter.config, converter.influxDbClientPoolInstance, message)
 		}
 	}
 	return func(client mqtt.Client, message mqtt.Message) {
-		handleFunc(&converter.config, converter.influxDbClientPoolInstance, message)
+		handleFunc(converter.config, converter.influxDbClientPoolInstance, message)
 	}
 }

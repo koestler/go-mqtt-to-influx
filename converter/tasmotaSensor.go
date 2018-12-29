@@ -3,7 +3,6 @@ package converter
 import (
 	"encoding/json"
 	"github.com/eclipse/paho.mqtt.golang"
-	"github.com/koestler/go-mqtt-to-influxdb/config"
 	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"log"
 	"regexp"
@@ -27,11 +26,11 @@ type SensorMessage struct {
 
 var tasmotaSensorTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/SENSOR$")
 
-func tasmotaSensorHandler(c *config.ConverterConfig, oup Output, msg mqtt.Message) {
+func tasmotaSensorHandler(c Config, oup Output, msg mqtt.Message) {
 	// parse topic
 	matches := tasmotaSensorTopicMatcher.FindStringSubmatch(msg.Topic())
 	if len(matches) < 3 {
-		log.Printf("tasmota-sensor[%s]: cannot extract device from topic='%s", c.Name, msg.Topic())
+		log.Printf("tasmota-sensor[%s]: cannot extract device from topic='%s", c.Name(), msg.Topic())
 		return
 	}
 	device := matches[2]
@@ -39,7 +38,7 @@ func tasmotaSensorHandler(c *config.ConverterConfig, oup Output, msg mqtt.Messag
 	// parse payload
 	var message SensorMessage
 	if err := json.Unmarshal(msg.Payload(), &message); err != nil {
-		log.Printf("tasmota-sensor[%s]: cannot json decode: %s", c.Name, err)
+		log.Printf("tasmota-sensor[%s]: cannot json decode: %s", c.Name(), err)
 		return
 	}
 
@@ -49,7 +48,7 @@ func tasmotaSensorHandler(c *config.ConverterConfig, oup Output, msg mqtt.Messag
 		log.Printf(
 			"tasmota-sensor[%s]: could not extract any sensor data; "+
 				"sensor type is probably unknown; known sensors are AM2301, SI7021, DS18B20; payload='%s'",
-			c.Name, msg.Payload(),
+			c.Name(), msg.Payload(),
 		)
 		return
 	}
@@ -59,7 +58,7 @@ func tasmotaSensorHandler(c *config.ConverterConfig, oup Output, msg mqtt.Messag
 		timeStamp = time.Now()
 	}
 
-	oup.WriteRawPoints(points.ToRaw(c.TargetMeasurement, timeStamp), c.InfluxDbClients)
+	oup.WriteRawPoints(points.ToRaw(c.TargetMeasurement(), timeStamp), c.InfluxDbClients())
 }
 
 func (v SensorMessage) toPoints(device string) influxDbClient.Points {

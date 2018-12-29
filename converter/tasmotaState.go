@@ -3,7 +3,6 @@ package converter
 import (
 	"encoding/json"
 	"github.com/eclipse/paho.mqtt.golang"
-	"github.com/koestler/go-mqtt-to-influxdb/config"
 	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"log"
 	"regexp"
@@ -43,11 +42,11 @@ type StateMessage struct {
 
 var tasmotaStateTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/STATE$")
 
-func tasmotaStateHandler(c *config.ConverterConfig, oup Output, msg mqtt.Message) {
+func tasmotaStateHandler(c Config, oup Output, msg mqtt.Message) {
 	// parse topic
 	matches := tasmotaStateTopicMatcher.FindStringSubmatch(msg.Topic())
 	if len(matches) < 3 {
-		log.Printf("tasmota-state[%s]: cannot extract device from topic='%s", c.Name, msg.Topic())
+		log.Printf("tasmota-state[%s]: cannot extract device from topic='%s", c.Name(), msg.Topic())
 		return
 	}
 	device := matches[2]
@@ -55,15 +54,15 @@ func tasmotaStateHandler(c *config.ConverterConfig, oup Output, msg mqtt.Message
 	// parse payload
 	var message StateMessage
 	if err := json.Unmarshal(msg.Payload(), &message); err != nil {
-		log.Printf("tasmota-state[%s]: cannot json decode: %s", c.Name, err)
+		log.Printf("tasmota-state[%s]: cannot json decode: %s", c.Name(), err)
 		return
 	}
 
 	// create points
-	rawPoints := message.toPoints(c.Name, device)
+	rawPoints := message.toPoints(c.Name(), device)
 	oup.WriteRawPoints(
 		rawPoints,
-		c.InfluxDbClients,
+		c.InfluxDbClients(),
 	)
 }
 

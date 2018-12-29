@@ -86,10 +86,10 @@ func setupMqttClient() {
 		if cfg.LogWorkerStart {
 			log.Printf(
 				"main: start mqtt client, name='%s', broker='%s', clientId='%s'",
-				mqttClientConfig.Name, mqttClientConfig.Broker, mqttClientConfig.ClientId,
+				mqttClientConfig.Name(), mqttClientConfig.Broker(), mqttClientConfig.ClientId(),
 			)
 		}
-		mqttClientInstances[mqttClientConfig.Name] = mqttClient.Run(mqttClientConfig)
+		mqttClientInstances[mqttClientConfig.Name()] = mqttClient.Run(&mqttClientConfig)
 	}
 }
 
@@ -100,30 +100,30 @@ func setupInfluxDbClient() {
 		if cfg.LogWorkerStart {
 			log.Printf(
 				"main: start influxDB client, name='%s' addr='%s'",
-				influxDbClientConfig.Name,
-				influxDbClientConfig.Address,
+				influxDbClientConfig.Name(),
+				influxDbClientConfig.Address(),
 			)
 		}
 		influxDbClientPoolInstance.AddClient(
-			influxDbClient.RunClient(influxDbClientConfig),
+			influxDbClient.RunClient(&influxDbClientConfig),
 		)
 	}
 }
 
 func setupConverters() {
 	for _, convertConfig := range cfg.Converters {
-		for _, clientInstance := range getMqttClient(convertConfig.MqttClients) {
+		for _, clientInstance := range getMqttClient(convertConfig.MqttClients()) {
 			if cfg.LogWorkerStart {
 				log.Printf(
 					"main: start converter name='%s', implementation='%s', mqttClient='%s', influxDbClients=%v",
-					convertConfig.Name,
-					convertConfig.Implementation,
-					clientInstance.GetName(),
-					convertConfig.InfluxDbClients,
+					convertConfig.Name(),
+					convertConfig.Implementation(),
+					clientInstance.Name(),
+					convertConfig.InfluxDbClients(),
 				)
 			}
 
-			if err := converter.RunConverter(convertConfig, clientInstance, influxDbClientPoolInstance); err != nil {
+			if err := converter.RunConverter(&convertConfig, clientInstance, influxDbClientPoolInstance); err != nil {
 				log.Fatalf("main: cannot start converter: %s", err)
 			}
 		}
@@ -151,7 +151,7 @@ func getMqttClient(clientNames []string) (clients []*mqttClient.MqttClient) {
 }
 
 func setupStatistics() {
-	if !cfg.Statistics.Enabled {
+	if !cfg.Statistics.Enabled() {
 		return
 	}
 
@@ -172,7 +172,7 @@ func setupHttpServer() {
 	}
 
 	httpServerInstance = httpServer.Run(
-		cfg.HttpServer,
+		&cfg.HttpServer,
 		&httpServer.Environment{
 			Statistics: statisticsInstance,
 		},
