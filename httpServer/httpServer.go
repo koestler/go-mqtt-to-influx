@@ -11,6 +11,7 @@ import (
 
 type HttpServer struct {
 	config Config
+	server *http.Server
 }
 
 type Config interface {
@@ -25,16 +26,31 @@ func Run(config Config, env *Environment) (httpServer *HttpServer) {
 		logger = os.Stdout
 	}
 
-	go func() {
-		router := newRouter(logger, env)
-		address := config.Bind() + ":" + strconv.Itoa(config.Port())
+	address := config.Bind() + ":" + strconv.Itoa(config.Port())
+	router := newRouter(logger, env)
 
+	server := &http.Server{
+		Addr:    address,
+		Handler: router,
+	}
+
+	go func() {
 		log.Printf("httpServer: listening on %v", address)
-		log.Fatal(router, http.ListenAndServe(address, router))
+		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+			log.Printf("httpServer: stopped due to error: %s", err)
+		}
 	}()
 
 	return &HttpServer{
 		config: config,
+		server: server,
+	}
+}
+
+func (s *HttpServer) Shutdown() {
+	err := s.server.Shutdown(nil)
+	if err != nil {
+		log.Printf("httpServer: gracefully shutdown failed: %s", err)
 	}
 }
 

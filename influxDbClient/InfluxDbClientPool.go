@@ -20,11 +20,11 @@ func RunPool() (pool *ClientPool) {
 	return
 }
 
-func (p *ClientPool) Stop() {
+func (p *ClientPool) Shutdown() {
 	p.clientsMutex.RLock()
 	defer p.clientsMutex.RUnlock()
 	for _, c := range p.clients {
-		c.Stop()
+		c.Shutdown()
 	}
 }
 

@@ -69,6 +69,10 @@ func Run(config Config) (mqttClient *MqttClient) {
 	}
 }
 
+func (mq *MqttClient) Shutdown() {
+	mq.client.Disconnect(1000)
+}
+
 func replaceTemplate(template string, config Config) (r string) {
 	r = strings.Replace(template, "%Prefix%", config.TopicPrefix(), 1)
 	r = strings.Replace(r, "%clientId%", config.ClientId(), 1)

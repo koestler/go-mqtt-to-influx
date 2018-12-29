@@ -10,6 +10,8 @@ type Client struct {
 	config Config
 	client influxClient.Client
 
+	shutdown           chan struct{}
+	closed             chan struct{}
 	pointToSendChannel chan *influxClient.Point
 	currentBatch       influxClient.BatchPoints
 }
@@ -37,11 +39,13 @@ func RunClient(config Config) (client *Client) {
 	}
 
 	client = &Client{
-		config,
-		dbClient,
+		config: config,
+		client: dbClient,
 
-		make(chan *influxClient.Point, 64),
-		getBatch(config),
+		shutdown:           make(chan struct{}),
+		closed:             make(chan struct{}),
+		pointToSendChannel: make(chan *influxClient.Point, 64),
+		currentBatch:       getBatch(config),
 	}
 
 	// start to send out points
@@ -50,8 +54,13 @@ func RunClient(config Config) (client *Client) {
 	return
 }
 
-func (ic *Client) Stop() {
-	// Close client resources
+func (ic *Client) Shutdown() {
+	// send remaining points
+	close(ic.shutdown)
+	// wait for pointsSender to shut down
+	<- ic.closed
+
+	// shutdown client ressources
 	if err := ic.client.Close(); err != nil {
 		log.Fatal(err)
 	}
@@ -62,6 +71,8 @@ func (ic *Client) Name() string {
 }
 
 func (ic *Client) pointsSender(writeInterval time.Duration) {
+	defer close(ic.closed)
+
 	writeTick := time.Tick(writeInterval)
 
 	for {
@@ -75,7 +86,11 @@ func (ic *Client) pointsSender(writeInterval time.Duration) {
 			}
 		case <-writeTick:
 			ic.sendBatch()
+		case <-ic.shutdown:
+			ic.sendBatch()
+			return // shutdown
 		}
+
 	}
 }
 

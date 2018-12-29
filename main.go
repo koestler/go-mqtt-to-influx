@@ -11,6 +11,8 @@ import (
 	"github.com/koestler/go-mqtt-to-influxdb/statistics"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 type CmdOptions struct {
@@ -41,10 +43,28 @@ func main() {
 	setupHttpServer()
 
 	if cfg.LogWorkerStart {
-		log.Print("main: start completed; run until kill signal is received")
+		log.Print("main: start completed; run until SIGTERM or SIGINT is received")
 	}
 
-	select {}
+	var gracefulStop = make(chan os.Signal)
+	signal.Notify(gracefulStop, syscall.SIGTERM)
+	signal.Notify(gracefulStop, syscall.SIGINT)
+
+	sig := <-gracefulStop
+	if cfg.LogWorkerStart {
+		log.Printf("main: caught signal: %+v; shutdown", sig)
+	}
+
+	// shutdown all workers
+	for _, client := range mqttClientInstances {
+		client.Shutdown()
+	}
+	httpServerInstance.Shutdown()
+	influxDbClientPoolInstance.Shutdown()
+
+	if cfg.LogWorkerStart {
+		log.Print("main: shutdown completed; exit")
+	}
 }
 
 func setupConfig() {
