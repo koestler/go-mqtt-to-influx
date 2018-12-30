@@ -114,5 +114,5 @@ type httpServerConfigRead struct {
 }
 
 type statisticsConfigRead struct {
-	HttpServer *httpServerConfigRead `yaml:"HttpServer"`
+	Enabled *bool `yaml:"Enabled"`
 }

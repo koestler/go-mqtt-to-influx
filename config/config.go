@@ -121,7 +121,10 @@ func (i *statisticsConfigRead) TransformAndValidate() (ret StatisticsConfig, err
 		return
 	}
 
-	ret.enabled = true
+	if i.Enabled != nil && *i.Enabled {
+		ret.enabled = true
+	}
+
 	return
 }
 
