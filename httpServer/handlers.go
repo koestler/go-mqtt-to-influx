@@ -23,7 +23,7 @@ func HandleStatsCounts(env *Environment, w http.ResponseWriter, r *http.Request)
 		return StatusError{404, err}
 	}
 
-	counts := env.Statistics.GetCounts()
+	counts := env.Statistics.GetTotalPerModule()
 
 	writeJsonHeaders(w)
 	b, err := json.MarshalIndent(counts, "", "    ")
