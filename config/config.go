@@ -141,7 +141,7 @@ func (m mqttClientConfigReadMap) getOrderedKeys() (ret []string) {
 
 func (i mqttClientConfigReadMap) TransformAndValidate() (ret []MqttClientConfig, err []error) {
 	if len(i) < 1 {
-		return ret, []error{fmt.Errorf("mqttClients section must no be empty")}
+		return ret, []error{fmt.Errorf("MqttClients section must no be empty")}
 	}
 
 	ret = make([]MqttClientConfig, len(i))
@@ -170,7 +170,7 @@ func (i mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 	}
 
 	if len(ret.broker) < 1 {
-		err = append(err, fmt.Errorf("MqttClientConfig->%s->broker must not be empty", name))
+		err = append(err, fmt.Errorf("MqttClientConfig->%s->Broker must not be empty", name))
 	}
 	if len(ret.clientId) < 1 {
 		ret.clientId = "go-mqtt-to-influxdb"
@@ -180,7 +180,7 @@ func (i mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 	} else if *i.Qos == 0 || *i.Qos == 1 || *i.Qos == 2 {
 		ret.qos = *i.Qos
 	} else {
-		err = append(err, fmt.Errorf("MqttClientConfig->%s->qos=%d but must be 0, 1 or 2", name, *i.Qos))
+		err = append(err, fmt.Errorf("MqttClientConfig->%s->Qos=%d but must be 0, 1 or 2", name, *i.Qos))
 	}
 
 	if i.AvailabilityTopic == nil {
@@ -210,7 +210,7 @@ func (m influxDbClientConfigReadMap) getOrderedKeys() (ret []string) {
 
 func (i influxDbClientConfigReadMap) TransformAndValidate() (ret []InfluxDbClientConfig, err []error) {
 	if len(i) < 1 {
-		return ret, []error{fmt.Errorf("influxDbClients section must no be empty")}
+		return ret, []error{fmt.Errorf("InfluxDbClients section must no be empty")}
 	}
 
 	ret = make([]InfluxDbClientConfig, len(i))
@@ -238,7 +238,7 @@ func (i influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxD
 	}
 
 	if len(ret.address) < 1 {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->address must not be empty", name))
+		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->Address must not be empty", name))
 	}
 
 	if len(ret.database) < 1 {
@@ -249,11 +249,11 @@ func (i influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxD
 		// use default 0
 		ret.writeInterval = 200 * time.Millisecond
 	} else if writeInterval, e := time.ParseDuration(i.WriteInterval); e != nil {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->writeInterval='%s' parse error: %s",
+		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->WriteInterval='%s' parse error: %s",
 			name, i.WriteInterval, e,
 		))
 	} else if writeInterval < 0 {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->writeInterval='%s' must be positive",
+		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->WriteInterval='%s' must be positive",
 			name, i.WriteInterval,
 		))
 	} else {
@@ -264,11 +264,11 @@ func (i influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxD
 		// use default 1s
 		ret.timePrecision = time.Second
 	} else if timePrecision, e := time.ParseDuration(i.TimePrecision); e != nil {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->timePrecision='%s' parse error: %s",
+		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->TimePrecision='%s' parse error: %s",
 			name, i.TimePrecision, e,
 		))
 	} else if timePrecision < 0 {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->timePrecision='%s' must be positive",
+		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->TimePrecision='%s' must be positive",
 			name, i.TimePrecision,
 		))
 	} else {
@@ -338,7 +338,7 @@ func (i converterConfigRead) TransformAndValidate(
 	}
 
 	if def, ok := implementationsAndDefaultMeasurement[ret.implementation]; !ok {
-		err = append(err, fmt.Errorf("Converters->%s->implementation='%s' is unkown", name, ret.implementation))
+		err = append(err, fmt.Errorf("Converters->%s->Implementation='%s' is unkown", name, ret.implementation))
 	} else if len(ret.targetMeasurement) < 1 {
 		ret.targetMeasurement = def
 	}
@@ -374,7 +374,7 @@ func (i converterConfigRead) TransformAndValidate(
 	}
 
 	if len(ret.mqttTopics) < 1 {
-		err = append(err, fmt.Errorf("Converters->%s->mqttTopics must not be empty", name))
+		err = append(err, fmt.Errorf("Converters->%s->MqttTopics must not be empty", name))
 	}
 
 	if i.LogHandleOnce != nil && *i.LogHandleOnce {

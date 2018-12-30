@@ -61,8 +61,8 @@ type StatisticsConfig struct {
 // Read structs are given to yaml for decoding and are slightly less exact in types
 type configRead struct {
 	Version         *int                        `yaml:"Version"`
-	MqttClients     mqttClientConfigReadMap     `yaml:"mqttClients"`
-	InfluxDbClients influxDbClientConfigReadMap `yaml:"influxDbClients"`
+	MqttClients     mqttClientConfigReadMap     `yaml:"MqttClients"`
+	InfluxDbClients influxDbClientConfigReadMap `yaml:"InfluxDbClients"`
 	Converters      converterReadMap            `yaml:"Converters"`
 	HttpServer      *httpServerConfigRead       `yaml:"HttpServer"`
 	Statistics      *statisticsConfigRead       `yaml:"Statistics"`
@@ -72,45 +72,45 @@ type configRead struct {
 }
 
 type mqttClientConfigRead struct {
-	Broker            string  `yaml:"broker"`
-	User              string  `yaml:"user"`
-	Password          string  `yaml:"password"`
-	ClientId          string  `yaml:"clientId"`
-	Qos               *byte   `yaml:"qos"`
-	AvailabilityTopic *string `yaml:"availabilityTopic"`
-	TopicPrefix       string  `yaml:"topicPrefix"`
-	LogMessages       *bool   `yaml:"logMessages"`
+	Broker            string  `yaml:"Broker"`
+	User              string  `yaml:"User"`
+	Password          string  `yaml:"Password"`
+	ClientId          string  `yaml:"ClientId"`
+	Qos               *byte   `yaml:"Qos"`
+	AvailabilityTopic *string `yaml:"AvailabilityTopic"`
+	TopicPrefix       string  `yaml:"TopicPrefix"`
+	LogMessages       *bool   `yaml:"LogMessages"`
 }
 
 type mqttClientConfigReadMap map[string]mqttClientConfigRead
 
 type influxDbClientConfigRead struct {
-	Address         string `yaml:"address"`
-	User            string `yaml:"user"`
-	Password        string `yaml:"password"`
-	Database        string `yaml:"database"`
-	WriteInterval   string `yaml:"writeInterval"`
-	TimePrecision   string `yaml:"timePrecision"`
-	LogLineProtocol *bool  `yaml:"logLineProtocol"`
+	Address         string `yaml:"Address"`
+	User            string `yaml:"User"`
+	Password        string `yaml:"Password"`
+	Database        string `yaml:"Database"`
+	WriteInterval   string `yaml:"WriteInterval"`
+	TimePrecision   string `yaml:"TimePrecision"`
+	LogLineProtocol *bool  `yaml:"LogLineProtocol"`
 }
 
 type influxDbClientConfigReadMap map[string]influxDbClientConfigRead
 
 type converterConfigRead struct {
-	Implementation    string   `yaml:"implementation"`
-	TargetMeasurement string   `yaml:"targetMeasurement"`
-	MqttTopics        []string `yaml:"mqttTopics"`
-	MqttClients       []string `yaml:"mqttClients"`
-	InfluxDbClients   []string `yaml:"influxDbClients"`
-	LogHandleOnce     *bool    `yaml:"logHandleOnce"`
+	Implementation    string   `yaml:"Implementation"`
+	TargetMeasurement string   `yaml:"TargetMeasurement"`
+	MqttTopics        []string `yaml:"MqttTopics"`
+	MqttClients       []string `yaml:"MqttClients"`
+	InfluxDbClients   []string `yaml:"InfluxDbClients"`
+	LogHandleOnce     *bool    `yaml:"LogHandleOnce"`
 }
 
 type converterReadMap map[string]converterConfigRead
 
 type httpServerConfigRead struct {
-	Bind        string `yaml:"bind"`
+	Bind        string `yaml:"Bind"`
 	Port        *int   `yaml:"Port"`
-	LogRequests *bool  `yaml:"logRequests"`
+	LogRequests *bool  `yaml:"LogRequests"`
 }
 
 type statisticsConfigRead struct {
