@@ -42,6 +42,10 @@ type StateMessage struct {
 
 var tasmotaStateTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/STATE$")
 
+func init() {
+	registerHandler("tasmota-state", tasmotaSensorHandler)
+}
+
 func tasmotaStateHandler(c Config, oup Output, msg mqtt.Message) {
 	// parse topic
 	matches := tasmotaStateTopicMatcher.FindStringSubmatch(msg.Topic())

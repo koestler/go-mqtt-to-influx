@@ -1,13 +1,10 @@
 package converter
 
 import (
-	"fmt"
 	"github.com/eclipse/paho.mqtt.golang"
 	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"github.com/koestler/go-mqtt-to-influxdb/mqttClient"
 )
-
-type HandleFunc func(c Config, oup Output, msg mqtt.Message)
 
 type Converter struct {
 	config                     Config
@@ -27,23 +24,14 @@ type Output interface {
 	WriteRawPoints(rawPoints []influxDbClient.RawPoint, receiverNames []string)
 }
 
-var converterImplementations = map[string]HandleFunc{
-	"go-ve-sensor":   goVeSensorHandler,
-	"lwt":            lwtHandler,
-	"tasmota-state":  tasmotaStateHandler,
-	"tasmota-sensor": tasmotaSensorHandler,
-}
-
 func RunConverter(
 	config Config,
 	mqttClientInstance *mqttClient.MqttClient,
 	influxDbClientPoolInstance *influxDbClient.ClientPool,
 ) (err error) {
-	var handleFunc HandleFunc
-
-	handleFunc, ok := converterImplementations[config.Implementation()]
-	if !ok {
-		return fmt.Errorf("unknown implementation='%s'", config.Implementation())
+	handleFunc, err := getHandler(config.Implementation())
+	if err != nil {
+		return
 	}
 
 	converter := Converter{

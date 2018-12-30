@@ -26,6 +26,10 @@ type SensorMessage struct {
 
 var tasmotaSensorTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/SENSOR$")
 
+func init() {
+	registerHandler("tasmota-sensor", tasmotaSensorHandler)
+}
+
 func tasmotaSensorHandler(c Config, oup Output, msg mqtt.Message) {
 	// parse topic
 	matches := tasmotaSensorTopicMatcher.FindStringSubmatch(msg.Topic())

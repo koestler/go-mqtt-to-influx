@@ -10,6 +10,10 @@ import (
 
 var lwtTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/LWT$")
 
+func init() {
+	registerHandler("lwt", lwtHandler)
+}
+
 func lwtHandler(c Config, oup Output, msg mqtt.Message) {
 	// parse topic
 	matches := lwtTopicMatcher.FindStringSubmatch(msg.Topic())
