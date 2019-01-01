@@ -24,7 +24,8 @@ type SensorMessage struct {
 	TempUnit string
 }
 
-var tasmotaSensorTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/SENSOR$")
+const tasmotaSensorTopicRegex = "^([^/]*/)*tele/(.*)/SENSOR$"
+var tasmotaSensorTopicMatcher = regexp.MustCompile(tasmotaSensorTopicRegex)
 
 func init() {
 	registerHandler("tasmota-sensor", tasmotaSensorHandler)
@@ -34,7 +35,9 @@ func tasmotaSensorHandler(c Config, oup Output, msg mqtt.Message) {
 	// parse topic
 	matches := tasmotaSensorTopicMatcher.FindStringSubmatch(msg.Topic())
 	if len(matches) < 3 {
-		log.Printf("tasmota-sensor[%s]: cannot extract device from topic='%s", c.Name(), msg.Topic())
+		log.Printf("tasmota-sensor[%s]: cannot extract device from topic='%s', regex='%s'",
+			c.Name(), msg.Topic(), tasmotaSensorTopicRegex,
+		)
 		return
 	}
 	device := matches[2]

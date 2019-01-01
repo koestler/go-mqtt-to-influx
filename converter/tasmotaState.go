@@ -40,17 +40,20 @@ type StateMessage struct {
 	}
 }
 
-var tasmotaStateTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/STATE$")
+const tasmotaStateTopicRegexp = "^([^/]*/)*tele/(.*)/STATE$"
+var tasmotaStateTopicMatcher = regexp.MustCompile(tasmotaStateTopicRegexp)
 
 func init() {
-	registerHandler("tasmota-state", tasmotaSensorHandler)
+	registerHandler("tasmota-state", tasmotaStateHandler)
 }
 
 func tasmotaStateHandler(c Config, oup Output, msg mqtt.Message) {
 	// parse topic
 	matches := tasmotaStateTopicMatcher.FindStringSubmatch(msg.Topic())
 	if len(matches) < 3 {
-		log.Printf("tasmota-state[%s]: cannot extract device from topic='%s", c.Name(), msg.Topic())
+		log.Printf("tasmota-state[%s]: cannot extract device from topic='%s', regex='%s'",
+			c.Name(), msg.Topic(), tasmotaStateTopicRegexp,
+		)
 		return
 	}
 	device := matches[2]
