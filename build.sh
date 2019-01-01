@@ -1,1 +1,2 @@
-CGO_ENABLED=0 GOOS=linux go build -a -tags netgo -ldflags '-w'
+OOS=linux go build -ldflags="-s -w"
+upx -qqq go-mqtt-to-influxdb
