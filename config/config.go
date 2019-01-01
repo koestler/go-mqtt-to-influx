@@ -282,7 +282,7 @@ func (i influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxD
 	return
 }
 
-func (m converterReadMap) getOrderedKeys() (ret []string) {
+func (m converterConfigReadMap) getOrderedKeys() (ret []string) {
 	ret = make([]string, len(m))
 	i := 0
 	for k, _ := range (m) {
@@ -293,7 +293,7 @@ func (m converterReadMap) getOrderedKeys() (ret []string) {
 	return
 }
 
-func (i converterReadMap) TransformAndValidate(
+func (i converterConfigReadMap) TransformAndValidate(
 	mqttClients []*MqttClientConfig,
 	influxDbClients []*InfluxDbClientConfig,
 ) (ret []*ConverterConfig, err []error) {
