@@ -41,6 +41,7 @@ type StateMessage struct {
 }
 
 const tasmotaStateTopicRegexp = "^([^/]*/)*tele/(.*)/STATE$"
+
 var tasmotaStateTopicMatcher = regexp.MustCompile(tasmotaStateTopicRegexp)
 
 func init() {
@@ -147,19 +148,19 @@ func (v StateMessage) toPoints(converterName, device string) []influxDbClient.Ra
 	}
 
 	if value, ok := powerToBoolean(v.Power); ok {
-		ret = append(ret, powerPoint(device, value, timeStamp))
+		ret = append(ret, powerPoint(device, "Power", value, timeStamp))
 	}
 	if value, ok := powerToBoolean(v.Power1); ok {
-		ret = append(ret, powerPoint(device, value, timeStamp))
+		ret = append(ret, powerPoint(device, "Power1", value, timeStamp))
 	}
 	if value, ok := powerToBoolean(v.Power2); ok {
-		ret = append(ret, powerPoint(device, value, timeStamp))
+		ret = append(ret, powerPoint(device, "Power2", value, timeStamp))
 	}
 	if value, ok := powerToBoolean(v.Power3); ok {
-		ret = append(ret, powerPoint(device, value, timeStamp))
+		ret = append(ret, powerPoint(device, "Power3", value, timeStamp))
 	}
 	if value, ok := powerToBoolean(v.Power4); ok {
-		ret = append(ret, powerPoint(device, value, timeStamp))
+		ret = append(ret, powerPoint(device, "Power4", value, timeStamp))
 	}
 
 	// wifi value
@@ -181,12 +182,12 @@ func (v StateMessage) toPoints(converterName, device string) []influxDbClient.Ra
 	return ret
 }
 
-func powerPoint(device string, value bool, timeStamp time.Time) influxDbClient.RawPoint {
+func powerPoint(device string, field string, value bool, timeStamp time.Time) influxDbClient.RawPoint {
 	return influxDbClient.RawPoint{
 		Measurement: "boolValue",
 		Tags: map[string]string{
 			"device": device,
-			"field":  "Power",
+			"field":  field,
 		},
 		Fields: map[string]interface{}{
 			"value": value,
