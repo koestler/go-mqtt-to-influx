@@ -109,7 +109,7 @@ func setupMqttClient() {
 				mqttClientConfig.Name(), mqttClientConfig.Broker(), mqttClientConfig.ClientId(),
 			)
 		}
-		mqttClientInstances[mqttClientConfig.Name()] = mqttClient.Run(&mqttClientConfig)
+		mqttClientInstances[mqttClientConfig.Name()] = mqttClient.Run(mqttClientConfig)
 	}
 }
 
@@ -125,7 +125,7 @@ func setupInfluxDbClient() {
 			)
 		}
 		influxDbClientPoolInstance.AddClient(
-			influxDbClient.RunClient(&influxDbClientConfig),
+			influxDbClient.RunClient(influxDbClientConfig),
 		)
 	}
 }
@@ -143,7 +143,7 @@ func setupConverters() {
 				)
 			}
 
-			if err := converter.RunConverter(&convertConfig, clientInstance, influxDbClientPoolInstance); err != nil {
+			if err := converter.RunConverter(convertConfig, clientInstance, influxDbClientPoolInstance); err != nil {
 				log.Fatalf("main: cannot start converter: %s", err)
 			}
 		}

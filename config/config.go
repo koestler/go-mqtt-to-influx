@@ -139,16 +139,16 @@ func (m mqttClientConfigReadMap) getOrderedKeys() (ret []string) {
 	return
 }
 
-func (i mqttClientConfigReadMap) TransformAndValidate() (ret []MqttClientConfig, err []error) {
+func (i mqttClientConfigReadMap) TransformAndValidate() (ret []*MqttClientConfig, err []error) {
 	if len(i) < 1 {
 		return ret, []error{fmt.Errorf("MqttClients section must no be empty")}
 	}
 
-	ret = make([]MqttClientConfig, len(i))
+	ret = make([]*MqttClientConfig, len(i))
 	j := 0
 	for _, name := range i.getOrderedKeys() {
-		var e []error
-		ret[j], e = i[name].TransformAndValidate(name)
+		r, e := i[name].TransformAndValidate(name)
+		ret[j] = &r
 		err = append(err, e...)
 		j++
 	}
@@ -208,16 +208,16 @@ func (m influxDbClientConfigReadMap) getOrderedKeys() (ret []string) {
 	return
 }
 
-func (i influxDbClientConfigReadMap) TransformAndValidate() (ret []InfluxDbClientConfig, err []error) {
+func (i influxDbClientConfigReadMap) TransformAndValidate() (ret []*InfluxDbClientConfig, err []error) {
 	if len(i) < 1 {
 		return ret, []error{fmt.Errorf("InfluxDbClients section must no be empty")}
 	}
 
-	ret = make([]InfluxDbClientConfig, len(i))
+	ret = make([]*InfluxDbClientConfig, len(i))
 	j := 0
 	for _, name := range i.getOrderedKeys() {
-		var e []error
-		ret[j], e = i[name].TransformAndValidate(name)
+		r, e := i[name].TransformAndValidate(name)
+		ret[j] = &r
 		err = append(err, e...)
 		j++
 	}
@@ -294,18 +294,18 @@ func (m converterReadMap) getOrderedKeys() (ret []string) {
 }
 
 func (i converterReadMap) TransformAndValidate(
-	mqttClients []MqttClientConfig,
-	influxDbClients []InfluxDbClientConfig,
-) (ret []ConverterConfig, err []error) {
+	mqttClients []*MqttClientConfig,
+	influxDbClients []*InfluxDbClientConfig,
+) (ret []*ConverterConfig, err []error) {
 	if len(i) < 1 {
 		return ret, []error{fmt.Errorf("Converters section must no be empty")}
 	}
 
-	ret = make([]ConverterConfig, len(i))
+	ret = make([]*ConverterConfig, len(i))
 	j := 0
 	for _, name := range i.getOrderedKeys() {
-		var e []error
-		ret[j], e = i[name].TransformAndValidate(name, mqttClients, influxDbClients)
+		r, e := i[name].TransformAndValidate(name, mqttClients, influxDbClients)
+		ret[j] = &r
 		err = append(err, e...)
 		j++
 	}
@@ -321,8 +321,8 @@ var implementationsAndDefaultMeasurement = map[string]string{
 
 func (i converterConfigRead) TransformAndValidate(
 	name string,
-	mqttClients []MqttClientConfig,
-	influxDbClients []InfluxDbClientConfig,
+	mqttClients []*MqttClientConfig,
+	influxDbClients []*InfluxDbClientConfig,
 ) (ret ConverterConfig, err []error) {
 	ret = ConverterConfig{
 		name:              name,
