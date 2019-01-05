@@ -117,3 +117,11 @@ func (c HttpServerConfig) LogRequests() bool {
 func (c StatisticsConfig) Enabled() bool {
 	return c.enabled
 }
+
+func (c StatisticsConfig) HistoryResolution() time.Duration {
+	return c.historyResolution
+}
+
+func (c StatisticsConfig) HistoryMaxAge() time.Duration {
+	return c.historyMaxAge
+}

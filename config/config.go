@@ -116,13 +116,45 @@ func (i *httpServerConfigRead) TransformAndValidate() (ret HttpServerConfig, err
 }
 
 func (i *statisticsConfigRead) TransformAndValidate() (ret StatisticsConfig, err []error) {
+	// default values
 	ret.enabled = false
+	ret.historyResolution = time.Second
+	ret.historyMaxAge = 10 * time.Minute
+
 	if i == nil {
 		return
 	}
 
 	if i.Enabled != nil && *i.Enabled {
 		ret.enabled = true
+	}
+
+	if len(i.HistoryResolution) < 1 {
+		// use default 1s
+	} else if historyResolution, e := time.ParseDuration(i.HistoryResolution); e != nil {
+		err = append(err, fmt.Errorf("Statistics->HistoryResolution='%s' parse error: %s",
+			i.HistoryResolution, e,
+		))
+	} else if historyResolution <= 0 {
+		err = append(err, fmt.Errorf("Statistics->HistoryResolution='%s' must be >0",
+			i.HistoryResolution,
+		))
+	} else {
+		ret.historyResolution = historyResolution
+	}
+
+	if len(i.HistoryMaxAge) < 1 {
+		// use default 10min
+	} else if historyMaxAge, e := time.ParseDuration(i.HistoryMaxAge); e != nil {
+		err = append(err, fmt.Errorf("Statistics->HistoryMaxAge='%s' parse error: %s",
+			i.HistoryMaxAge, e,
+		))
+	} else if historyMaxAge <= 0 {
+		err = append(err, fmt.Errorf("Statistics->HistoryMaxAge='%s' must be >0",
+			i.HistoryMaxAge,
+		))
+	} else {
+		ret.historyMaxAge = historyMaxAge
 	}
 
 	return

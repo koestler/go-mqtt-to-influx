@@ -55,7 +55,9 @@ type HttpServerConfig struct {
 }
 
 type StatisticsConfig struct {
-	enabled bool // defined automatically if Statistics section exists
+	enabled           bool          // defined automatically if Statistics section exists
+	historyResolution time.Duration // optional: defaults to 1s
+	historyMaxAge     time.Duration // optional: default to 10min
 }
 
 // Read structs are given to yaml for decoding and are slightly less exact in types
@@ -114,5 +116,7 @@ type httpServerConfigRead struct {
 }
 
 type statisticsConfigRead struct {
-	Enabled *bool `yaml:"Enabled"`
+	Enabled           *bool  `yaml:"Enabled"`
+	HistoryResolution string `yaml:"HistoryResolution"`
+	HistoryMaxAge     string `yaml:"HistoryMaxAge"`
 }

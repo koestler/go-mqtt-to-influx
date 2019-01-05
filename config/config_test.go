@@ -62,6 +62,11 @@ InfluxDbClients:
     WriteInterval: -1s
     TimePrecision: -5ms
 
+Statistics:
+  Enabled: True
+  HistoryResolution: 0s
+  HistoryMaxAge: -1s
+
 Converters:
   äöü:
     Implementation: go-ve-sensor
@@ -101,6 +106,9 @@ HttpServer:
   LogRequests: True
 Statistics:
   Enabled: True
+  HistoryResolution: 100ms
+  HistoryMaxAge: 1h
+  
 MqttClients:
   0-piegn-mosquitto:
     Broker: "tcp://example.com:1883"
@@ -260,16 +268,21 @@ func TestReadConfig_InvalidValues(t *testing.T) {
 		t.Error("expect invalid writeInterval='-1s' to be returned as error")
 	}
 
-	if !containsError("-5ms", err) {
-		t.Error("expect invalid timePrecision='-5ms' to be returned as error")
+	if !containsError("HistoryResolution", err) {
+		t.Error("expect invalid HistoryResolution='0s' to be returned as error")
 	}
+
+	if !containsError("HistoryMaxAge", err) {
+		t.Error("expect invalid HistoryMaxAge='-1s' to be returned as error")
+	}
+
 }
 
 // check that a complex example setting all available options is correctly read
 func TestReadConfig_Complex(t *testing.T) {
 	config, err := ReadConfig([]byte(ValidComplexConfig))
 	if len(err) > 0 {
-		t.Error("did not expect any errors")
+		t.Errorf("did not expect any errors, got: %v", err)
 	}
 
 	t.Logf("config=%v", config)
@@ -457,6 +470,16 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect Statistics->Enabled to be True")
 	}
 
+	if config.Statistics.HistoryResolution().String() != "100ms" {
+		t.Errorf("expect Statistics->HistoryResolution to be '100ms', got '%s'",
+			config.Statistics.HistoryResolution())
+	}
+
+	if config.Statistics.HistoryMaxAge().String() != "1h0m0s" {
+		t.Errorf("expect Statistics->HistoryMaxAge to be '1h0m0s', got '%s'",
+			config.Statistics.HistoryMaxAge())
+	}
+
 	// test config output does not crash
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
@@ -575,5 +598,15 @@ func TestReadConfig_Default(t *testing.T) {
 	// Statistics
 	if config.Statistics.Enabled() {
 		t.Error("expect default Statistics->Enabled to be False")
+	}
+
+	if config.Statistics.HistoryResolution().String() != "1s" {
+		t.Errorf("expect default Statistics->HistoryResolution to be '1s', got '%s'",
+			config.Statistics.HistoryResolution())
+	}
+
+	if config.Statistics.HistoryMaxAge().String() != "10m0s" {
+		t.Errorf("expect default Statistics->HistoryMaxAge to be '10m0s', got '%s'",
+			config.Statistics.HistoryMaxAge())
 	}
 }

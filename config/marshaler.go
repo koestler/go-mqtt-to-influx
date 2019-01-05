@@ -89,6 +89,8 @@ func (c HttpServerConfig) convertToRead() (httpServerConfigRead) {
 
 func (c StatisticsConfig) convertToRead() (statisticsConfigRead) {
 	return statisticsConfigRead{
-		Enabled: &c.enabled,
+		Enabled:           &c.enabled,
+		HistoryResolution: c.HistoryResolution().String(),
+		HistoryMaxAge:     c.HistoryMaxAge().String(),
 	}
 }
