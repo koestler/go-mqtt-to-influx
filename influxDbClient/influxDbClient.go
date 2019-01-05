@@ -6,9 +6,16 @@ import (
 	"time"
 )
 
+const ErrorDelayMin = time.Second
+const ErrorDelayMax = time.Minute
+
 type Client struct {
-	config Config
-	client influxClient.Client
+	config     Config
+	client     influxClient.Client
+	statistics Statistics
+
+	lastTransmission time.Time
+	errorRetryDelay  time.Duration
 
 	shutdown           chan struct{}
 	closed             chan struct{}
@@ -27,7 +34,11 @@ type Config interface {
 	LogLineProtocol() bool
 }
 
-func RunClient(config Config) (client *Client) {
+type Statistics interface {
+	IncrementOne(module, name, field string)
+}
+
+func RunClient(config Config, statistics Statistics) (client *Client) {
 	// Create a new HTTPClient
 	dbClient, err := influxClient.NewHTTPClient(influxClient.HTTPConfig{
 		Addr:     config.Address(),
@@ -39,8 +50,9 @@ func RunClient(config Config) (client *Client) {
 	}
 
 	client = &Client{
-		config: config,
-		client: dbClient,
+		config:     config,
+		client:     dbClient,
+		statistics: statistics,
 
 		shutdown:           make(chan struct{}),
 		closed:             make(chan struct{}),
@@ -58,7 +70,7 @@ func (ic *Client) Shutdown() {
 	// send remaining points
 	close(ic.shutdown)
 	// wait for pointsSender to shut down
-	<- ic.closed
+	<-ic.closed
 
 	// shutdown client ressources
 	if err := ic.client.Close(); err != nil {
@@ -111,8 +123,13 @@ func (ic *Client) sendBatch() {
 		return
 	}
 
+	if time.Now().Before(ic.lastTransmission.Add(ic.errorRetryDelay)) {
+		// in retransmission backoff: keep data & return
+		return
+	}
+
+	points := ic.currentBatch.Points()
 	if ic.config.LogLineProtocol() {
-		points := ic.currentBatch.Points()
 		if len(points) == 1 {
 			log.Printf("influxDbClient[%s]: %s", ic.Name(), points[0].String())
 		} else {
@@ -122,11 +139,37 @@ func (ic *Client) sendBatch() {
 			}
 		}
 	}
+	// update statistics
+	for _, p := range points {
+		ic.statistics.IncrementOne("influxDb", ic.Name(), p.Name())
+	}
 
-	if err := ic.client.Write(ic.currentBatch); err != nil {
-		log.Printf("influxDbClient[%s]: cannot write to db: %s", ic.Name(), err)
+	ic.lastTransmission = time.Now()
+	if err := ic.client.Write(ic.currentBatch); err == nil {
+		// all ok
+		ic.errorRetryDelay = 0
+	} else {
+		// retry with exponential backoff
+		if ic.errorRetryDelay < 1 {
+			ic.errorRetryDelay = ErrorDelayMin
+		} else {
+			ic.errorRetryDelay *= 2
+		}
+		if ic.errorRetryDelay > ErrorDelayMax {
+			ic.errorRetryDelay = ErrorDelayMax
+		}
+
+		log.Printf("influxDbClient[%s]: cannot write to db; retry no ealier than %s; err: %s",
+			ic.Name(),
+			ic.lastTransmission.Add(ic.errorRetryDelay).Format(time.UnixDate),
+			err,
+		)
+
+		// keep current batch for retransmission
 		return
 	}
+
+	// flush batch / start a new one
 	ic.currentBatch = getBatch(ic.config)
 }
 
