@@ -3,6 +3,7 @@ package influxDbClient
 import (
 	influxClient "github.com/influxdata/influxdb/client/v2"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -141,7 +142,7 @@ func (ic *Client) sendBatch() {
 	}
 	// update statistics
 	for _, p := range points {
-		ic.statistics.IncrementOne("influxDb", ic.Name(), p.Name())
+		ic.statistics.IncrementOne("influxDb", ic.Name(), strings.Split(p.String(), " ")[0])
 	}
 
 	ic.lastTransmission = time.Now()

@@ -1,57 +1,109 @@
 package statistics
 
-import "sync"
-
 type Statistics struct {
-	counts      Counts
-	countsMutex sync.RWMutex
+	config Config
 
+	counts map[Desc]*Counts
+
+	// input channels
 	incrementOne chan Desc
+
+	// output channels
+	requestHierarchicalCounts chan requestHierarchicalCounts
+}
+
+type Config interface {
+	Enabled() bool
+}
+
+type HierarchicalCounts map[string]map[string]map[string]Counts
+
+type requestHierarchicalCounts struct {
+	response chan HierarchicalCounts
 }
 
 type Desc struct {
 	module string
+	name   string
 	field  string
 }
 
 type Counts struct {
-	// 1. dim: module
-	// 2. dim: field
-	Total map[Desc]int
+	Total int
 }
 
-func Run() (stats *Statistics) {
+func Run(config Config) (stats *Statistics) {
+	if !config.Enabled() {
+		return &Statistics{
+			config: config,
+		}
+	}
+
 	stats = &Statistics{
-		counts: Counts{
-			Total: make(map[Desc]int),
-		},
-		incrementOne: make(chan Desc, 128),
+		config:                    config,
+		counts:                    make(map[Desc]*Counts),
+		incrementOne:              make(chan Desc, 128),
+		requestHierarchicalCounts: make(chan requestHierarchicalCounts),
 	}
 
 	// start incrementer routine
-	go stats.incerementer()
+	go stats.worker()
 
 	return stats
 }
 
-func (s *Statistics) incerementer() {
-	s.countsMutex.Lock()
-	defer s.countsMutex.Unlock()
+func (s *Statistics) worker() {
+	for {
+		select {
+		case d := <-s.incrementOne:
+			if s.counts[d] == nil {
+				s.counts[d] = &Counts{
+					Total: 1,
+				}
+			} else {
+				s.counts[d].Total += 1
+			}
+		case request := <-s.requestHierarchicalCounts:
+			// copy / restructure data
+			ret := make(HierarchicalCounts)
+			for desc, count := range s.counts {
+				if _, ok := ret[desc.module]; !ok {
+					ret[desc.module] = make(map[string]map[string]Counts)
+				}
+				if _, ok := ret[desc.module][desc.name]; !ok {
+					ret[desc.module][desc.name] = make(map[string]Counts)
+				}
+				ret[desc.module][desc.name][desc.field] = *count
+			}
+			request.response <- ret
+		}
+	}
 
 }
 
-func (s *Statistics) GetTotalPerModule() (ret map[string]map[string]int) {
-	s.countsMutex.RLock()
-	defer s.countsMutex.RUnlock()
+func (s *Statistics) Enabled() bool {
+	return s.config.Enabled()
+}
 
-	// copy / restructe data
-	ret = make(map[string]map[string]int)
-	for desc, tot := range s.counts.Total {
-		if _, ok := ret[desc.module]; !ok {
-			ret[desc.module] = make(map[string]int)
-		}
-		ret[desc.module][desc.field] = tot
+func (s *Statistics) IncrementOne(module, name, field string) {
+	if !s.Enabled() {
+		return
 	}
 
-	return
+	s.incrementOne <- Desc{
+		module: module,
+		name:   name,
+		field:  field,
+	}
+}
+
+func (s *Statistics) GetHierarchicalCounts() (ret interface{}) {
+	if !s.Enabled() {
+		return
+	}
+	response := make(chan HierarchicalCounts)
+	s.requestHierarchicalCounts <- requestHierarchicalCounts{
+		response: response,
+	}
+	return <-response
 }

@@ -17,13 +17,13 @@ func HandleApiNotFound(env *Environment, w http.ResponseWriter, r *http.Request)
 }
 
 func HandleStatsCounts(env *Environment, w http.ResponseWriter, r *http.Request) Error {
-	if env.Statistics == nil {
+	if !env.Statistics.Enabled() {
 		// Statistics module not available -> return 404
 		err := errors.New("Statistics module is disabled")
 		return StatusError{404, err}
 	}
 
-	counts := env.Statistics.GetTotalPerModule()
+	counts := env.Statistics.GetHierarchicalCounts()
 
 	writeJsonHeaders(w)
 	b, err := json.MarshalIndent(counts, "", "    ")

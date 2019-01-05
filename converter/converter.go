@@ -9,6 +9,7 @@ import (
 type Converter struct {
 	config                     Config
 	influxDbClientPoolInstance *influxDbClient.ClientPool
+	statistics                 Statistics
 }
 
 type Config interface {
@@ -20,12 +21,17 @@ type Config interface {
 	LogHandleOnce() bool
 }
 
+type Statistics interface {
+	IncrementOne(module, name, field string)
+}
+
 type Output interface {
 	WriteRawPoints(rawPoints []influxDbClient.RawPoint, receiverNames []string)
 }
 
 func RunConverter(
 	config Config,
+	statistics Statistics,
 	mqttClientInstance *mqttClient.MqttClient,
 	influxDbClientPoolInstance *influxDbClient.ClientPool,
 ) (err error) {
@@ -37,6 +43,7 @@ func RunConverter(
 	converter := Converter{
 		config: config,
 		influxDbClientPoolInstance: influxDbClientPoolInstance,
+		statistics:                 statistics,
 	}
 
 	for _, mqttTopic := range config.MqttTopics() {
@@ -56,10 +63,12 @@ func getMqttMessageHandler(converter *Converter, handleFunc HandleFunc) mqtt.Mes
 	if converter.config.LogHandleOnce() {
 		return func(client mqtt.Client, message mqtt.Message) {
 			logTopicOnce(converter.Name(), message.Topic())
+			converter.statistics.IncrementOne("converter", converter.Name(), message.Topic())
 			handleFunc(converter.config, converter.influxDbClientPoolInstance, message)
 		}
 	}
 	return func(client mqtt.Client, message mqtt.Message) {
+		converter.statistics.IncrementOne("converter", converter.Name(), message.Topic())
 		handleFunc(converter.config, converter.influxDbClientPoolInstance, message)
 	}
 }

@@ -21,12 +21,11 @@ type CmdOptions struct {
 
 var (
 	cmdOptions                 CmdOptions
+	cfg                        config.Config
+	statisticsInstance         *statistics.Statistics
 	mqttClientInstances        map[string]*mqttClient.MqttClient
 	influxDbClientPoolInstance *influxDbClient.ClientPool
 	httpServerInstance         *httpServer.HttpServer
-	statisticsInstance         *statistics.Statistics
-
-	cfg config.Config
 )
 
 func main() {
@@ -36,10 +35,10 @@ func main() {
 		log.Print("main: start go-mqtt-to-influxdb...")
 	}
 
+	setupStatistics()
 	setupMqttClient()
 	setupInfluxDbClient()
 	setupConverters()
-	setupStatistics()
 	setupHttpServer()
 
 	if cfg.LogWorkerStart {
@@ -94,6 +93,14 @@ func setupConfig() {
 	}
 }
 
+func setupStatistics() {
+	if cfg.LogWorkerStart && cfg.Statistics.Enabled() {
+		log.Printf("main: start Statistisc module")
+	}
+
+	statisticsInstance = statistics.Run(cfg.Statistics)
+}
+
 func setupMqttClient() {
 	mqtt.ERROR = log.New(os.Stdout, "MqttDebugLog: ", log.LstdFlags)
 	if cfg.LogMqttDebug {
@@ -105,11 +112,11 @@ func setupMqttClient() {
 	for _, mqttClientConfig := range cfg.MqttClients {
 		if cfg.LogWorkerStart {
 			log.Printf(
-				"main: start mqtt client, name='%s', broker='%s', clientId='%s'",
+				"main: start Mqtt client, Name='%s', Broker='%s', ClientId='%s'",
 				mqttClientConfig.Name(), mqttClientConfig.Broker(), mqttClientConfig.ClientId(),
 			)
 		}
-		mqttClientInstances[mqttClientConfig.Name()] = mqttClient.Run(mqttClientConfig)
+		mqttClientInstances[mqttClientConfig.Name()] = mqttClient.Run(mqttClientConfig, statisticsInstance)
 	}
 }
 
@@ -119,13 +126,13 @@ func setupInfluxDbClient() {
 	for _, influxDbClientConfig := range cfg.InfluxDbClients {
 		if cfg.LogWorkerStart {
 			log.Printf(
-				"main: start influxDB client, name='%s' addr='%s'",
+				"main: start IinfluxDB client, Name='%s' Address='%s'",
 				influxDbClientConfig.Name(),
 				influxDbClientConfig.Address(),
 			)
 		}
 		influxDbClientPoolInstance.AddClient(
-			influxDbClient.RunClient(influxDbClientConfig),
+			influxDbClient.RunClient(influxDbClientConfig, statisticsInstance),
 		)
 	}
 }
@@ -135,7 +142,7 @@ func setupConverters() {
 		for _, clientInstance := range getMqttClient(convertConfig.MqttClients()) {
 			if cfg.LogWorkerStart {
 				log.Printf(
-					"main: start converter name='%s', implementation='%s', mqttClient='%s', influxDbClients=%v",
+					"main: start Converter Name='%s', Implementation='%s', MqttClient='%s', InfluxDbClients=%v",
 					convertConfig.Name(),
 					convertConfig.Implementation(),
 					clientInstance.Name(),
@@ -143,8 +150,12 @@ func setupConverters() {
 				)
 			}
 
-			if err := converter.RunConverter(convertConfig, clientInstance, influxDbClientPoolInstance); err != nil {
-				log.Fatalf("main: cannot start converter: %s", err)
+			if err := converter.RunConverter(
+				convertConfig, statisticsInstance,
+				clientInstance,
+				influxDbClientPoolInstance,
+			); err != nil {
+				log.Fatalf("main: cannot start Converter: %s", err)
 			}
 		}
 	}
@@ -170,25 +181,13 @@ func getMqttClient(clientNames []string) (clients []*mqttClient.MqttClient) {
 	return
 }
 
-func setupStatistics() {
-	if !cfg.Statistics.Enabled() {
-		return
-	}
-
-	if cfg.LogWorkerStart {
-		log.Printf("main: start Statistisc module")
-	}
-
-	statisticsInstance = statistics.Run()
-}
-
 func setupHttpServer() {
 	if !cfg.HttpServer.Enabled() {
 		return
 	}
 
 	if cfg.LogWorkerStart {
-		log.Printf("main: start Http server, bind=%s, port=%d", cfg.HttpServer.Bind(), cfg.HttpServer.Port())
+		log.Printf("main: start HttpServer, bind=%s, port=%d", cfg.HttpServer.Bind(), cfg.HttpServer.Port())
 	}
 
 	httpServerInstance = httpServer.Run(

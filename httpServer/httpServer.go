@@ -1,7 +1,6 @@
 package httpServer
 
 import (
-	"github.com/koestler/go-mqtt-to-influxdb/statistics"
 	"io"
 	"log"
 	"net/http"
@@ -18,6 +17,11 @@ type Config interface {
 	Bind() string
 	Port() int
 	LogRequests() bool
+}
+
+type Statistics interface {
+	Enabled() bool
+	GetHierarchicalCounts() interface{}
 }
 
 func Run(config Config, env *Environment) (httpServer *HttpServer) {
@@ -56,7 +60,7 @@ func (s *HttpServer) Shutdown() {
 
 // Our application wide data containers
 type Environment struct {
-	Statistics *statistics.Statistics
+	Statistics Statistics
 }
 
 // Error represents a handler error. It provides methods for a HTTP status

@@ -8,8 +8,9 @@ import (
 )
 
 type MqttClient struct {
-	config Config
-	client mqtt.Client
+	config     Config
+	client     mqtt.Client
+	statistics Statistics
 }
 
 type Config interface {
@@ -24,12 +25,16 @@ type Config interface {
 	LogMessages() bool
 }
 
+type Statistics interface {
+	IncrementOne(module, name, field string)
+}
+
 const (
 	OfflinePayload string = "Offline"
 	OnlinePayload  string = "Online"
 )
 
-func Run(config Config) (mqttClient *MqttClient) {
+func Run(config Config, statistics Statistics) (mqttClient *MqttClient) {
 	// configure client and start connection
 	opts := mqtt.NewClientOptions().
 		AddBroker(config.Broker()).
@@ -64,8 +69,9 @@ func Run(config Config) (mqttClient *MqttClient) {
 	client.Publish(availableTopic, config.Qos(), true, OnlinePayload)
 
 	return &MqttClient{
-		config: config,
-		client: client,
+		config:     config,
+		client:     client,
+		statistics: statistics,
 	}
 }
 
@@ -81,7 +87,10 @@ func replaceTemplate(template string, config Config) (r string) {
 
 func (mq *MqttClient) wrapCallBack(callback mqtt.MessageHandler) mqtt.MessageHandler {
 	if !mq.config.LogMessages() {
-		return callback
+		return func(client mqtt.Client, message mqtt.Message) {
+			mq.statistics.IncrementOne("mqtt", mq.Name(), message.Topic())
+			callback(client, message)
+		}
 	}
 
 	return func(client mqtt.Client, message mqtt.Message) {
@@ -89,6 +98,7 @@ func (mq *MqttClient) wrapCallBack(callback mqtt.MessageHandler) mqtt.MessageHan
 			"mqttClient[%s]: received qos=%d: %s %s",
 			mq.Name(), message.Qos(), message.Topic(), message.Payload(),
 		)
+		mq.statistics.IncrementOne("mqtt", mq.Name(), message.Topic())
 		callback(client, message)
 	}
 }
