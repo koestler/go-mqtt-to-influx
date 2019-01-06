@@ -16,81 +16,84 @@ func Test(t *testing.T) {
 	mockConfig := mock.NewMockConfig(mockCtrl)
 
 	mockConfig.EXPECT().Enabled().Return(true).AnyTimes()
-	mockConfig.EXPECT().HistoryResolution().Return(10 * time.Millisecond).AnyTimes()
-	mockConfig.EXPECT().HistoryMaxAge().Return(50 * time.Millisecond).AnyTimes()
+	mockConfig.EXPECT().HistoryResolution().Return(100 * time.Millisecond).AnyTimes()
+	mockConfig.EXPECT().HistoryMaxAge().Return(500 * time.Millisecond).AnyTimes()
 
 	s := Run(mockConfig)
 	// t = 0ms
 
+	time.Sleep(50 * time.Millisecond)
+	// t = 50ms
+
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR", 3)
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR", 4)
 	incrementN(s, "mqtt", "foobar", "piegn/tele/bar/SENSOR", 9)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
-	// t = 10ms
+	// t = 150ms
 	printHistorical(t, s)
 
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR", 1)
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR", 2)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
-	// t = 20ms
+	// t = 250ms
 	printHistorical(t, s)
 
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR", 3)
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR", 4)
-	time.Sleep(20 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
-	// t = 40ms
+	// t = 450ms
 	printHistorical(t, s)
 
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR", 5)
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR", 6)
 	incrementN(s, "influxDb", "foobar", "piegn/tele/bar/SENSOR", 3)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
-	// t = 50ms
+	// t = 550ms
 	printHistorical(t, s)
 
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR", 3)
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR", 2)
-	time.Sleep(20 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
-	// t = 70ms
+	// t = 750ms
 	printHistorical(t, s)
 
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR", 3)
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR", 2)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
-	// t = 80ms
+	// t = 850ms
 	printHistorical(t, s)
 
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR", 1)
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR", 1)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
-	// t = 90ms
+	// t = 950ms
 	printHistorical(t, s)
 
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR", 4)
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR", 3)
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
-	// t = 100ms
+	// t = 1050ms
 	printHistorical(t, s)
 
-	if c := getHistorical(s, 25*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 5 {
-		t.Errorf("expect getHistorical(25ms) == 4+1 for foo1; got=%d", c)
+	if c := getHistorical(s, 225*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 5 {
+		t.Errorf("expect getHistorical(225ms) == 4+1 for foo1; got=%d", c)
 	}
-	if c := getHistorical(s, 25*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR"); c != 4 {
-		t.Errorf("expect getHistorical(25ms) == 3+1 for foo2; got=%d", c)
+	if c := getHistorical(s, 225*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR"); c != 4 {
+		t.Errorf("expect getHistorical(225ms) == 3+1 for foo2; got=%d", c)
 	}
-	if c := getHistorical(s, 55*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 11 {
-		t.Errorf("expect getHistorical(55ms) == 4+1+3+3 for foo1; got=%d", c)
+	if c := getHistorical(s, 525*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 11 {
+		t.Errorf("expect getHistorical(525ms) == 4+1+3+3 for foo1; got=%d", c)
 	}
-	if c := getHistorical(s, 55*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR"); c != 8 {
-		t.Errorf("expect getHistorical(55ms) == 3+1+2+2 for foo2; got=%d", c)
+	if c := getHistorical(s, 525*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR"); c != 8 {
+		t.Errorf("expect getHistorical(525ms) == 3+1+2+2 for foo2; got=%d", c)
 	}
 
 	{
@@ -103,15 +106,15 @@ func Test(t *testing.T) {
 		}
 	}
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 	// t = 200ms
 	printHistorical(t, s)
 
-	if c := getHistorical(s, 25*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 0 {
-		t.Errorf("expect getHistorical(25ms) == 0 for foo1; got=%d", c)
+	if c := getHistorical(s, 225*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 0 {
+		t.Errorf("expect getHistorical(225ms) == 0 for foo1; got=%d", c)
 	}
-	if c := getHistorical(s, 55*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 0 {
-		t.Errorf("expect getHistorical(55ms) == 0 for foo1; got=%d", c)
+	if c := getHistorical(s, 525*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 0 {
+		t.Errorf("expect getHistorical(525ms) == 0 for foo1; got=%d", c)
 	}
 
 	{
