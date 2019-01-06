@@ -72,6 +72,10 @@ func (s *Statistics) handleHistoryTick(now time.Time) {
 }
 
 func (s *Statistics) getHistoricalCounts(duration time.Duration) (ret map[Desc]int) {
+	if !s.Enabled() {
+		return
+	}
+
 	ret = make(map[Desc]int)
 
 	limit := time.Now().Add(-duration)

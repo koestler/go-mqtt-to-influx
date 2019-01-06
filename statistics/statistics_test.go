@@ -9,7 +9,7 @@ import (
 
 //go:generate mockgen -destination=mock/statistics_mock.go -package mock github.com/koestler/go-mqtt-to-influxdb/statistics Config
 
-func Test(t *testing.T) {
+func TestEnabled(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -20,6 +20,71 @@ func Test(t *testing.T) {
 	mockConfig.EXPECT().HistoryMaxAge().Return(500 * time.Millisecond).AnyTimes()
 
 	s := Run(mockConfig)
+	simulationCase0(t, s)
+
+	if c := getHistorical(s, 225*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 5 {
+		t.Errorf("expect getHistorical(225ms) == 4+1 for foo1; got=%d", c)
+	}
+	if c := getHistorical(s, 225*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR"); c != 4 {
+		t.Errorf("expect getHistorical(225ms) == 3+1 for foo2; got=%d", c)
+	}
+	if c := getHistorical(s, 525*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 11 {
+		t.Errorf("expect getHistorical(525ms) == 4+1+3+3 for foo1; got=%d", c)
+	}
+	if c := getHistorical(s, 525*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR"); c != 8 {
+		t.Errorf("expect getHistorical(525ms) == 3+1+2+2 for foo2; got=%d", c)
+	}
+
+	{
+		counts := s.getHierarchicalCounts()
+		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo1/SENSOR"].Total; r != 23 {
+			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo1/SENSOR].Total == 23, got=%v", r)
+		}
+		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo2/SENSOR"].Total; r != 24 {
+			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo2/SENSOR].Total == 24, got=%v", r)
+		}
+	}
+
+	time.Sleep(1000 * time.Millisecond)
+	// t = 200ms
+	printHistorical(t, s)
+
+	if c := getHistorical(s, 225*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 0 {
+		t.Errorf("expect getHistorical(225ms) == 0 for foo1; got=%d", c)
+	}
+	if c := getHistorical(s, 525*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 0 {
+		t.Errorf("expect getHistorical(525ms) == 0 for foo1; got=%d", c)
+	}
+
+	{
+		counts := s.getHierarchicalCounts()
+		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo1/SENSOR"].Total; r != 23 {
+			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo1/SENSOR].Total == 23, got=%v", r)
+		}
+		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo2/SENSOR"].Total; r != 24 {
+			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo2/SENSOR].Total == 24, got=%v", r)
+		}
+	}
+}
+
+func TestDisabled(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockConfig := mock.NewMockConfig(mockCtrl)
+
+	mockConfig.EXPECT().Enabled().Return(false).AnyTimes()
+
+	s := Run(mockConfig)
+	simulationCase0(t, s)
+
+	// must not crash even if module disabled
+	getHistorical(s, time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR");
+	s.getHierarchicalCounts()
+}
+
+func simulationCase0(t *testing.T, s *Statistics) {
+
 	// t = 0ms
 
 	time.Sleep(50 * time.Millisecond)
@@ -82,51 +147,6 @@ func Test(t *testing.T) {
 
 	// t = 1050ms
 	printHistorical(t, s)
-
-	if c := getHistorical(s, 225*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 5 {
-		t.Errorf("expect getHistorical(225ms) == 4+1 for foo1; got=%d", c)
-	}
-	if c := getHistorical(s, 225*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR"); c != 4 {
-		t.Errorf("expect getHistorical(225ms) == 3+1 for foo2; got=%d", c)
-	}
-	if c := getHistorical(s, 525*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 11 {
-		t.Errorf("expect getHistorical(525ms) == 4+1+3+3 for foo1; got=%d", c)
-	}
-	if c := getHistorical(s, 525*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR"); c != 8 {
-		t.Errorf("expect getHistorical(525ms) == 3+1+2+2 for foo2; got=%d", c)
-	}
-
-	{
-		counts := s.getHierarchicalCounts()
-		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo1/SENSOR"].Total; r != 23 {
-			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo1/SENSOR].Total == 23, got=%v", r)
-		}
-		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo2/SENSOR"].Total; r != 24 {
-			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo2/SENSOR].Total == 24, got=%v", r)
-		}
-	}
-
-	time.Sleep(1000 * time.Millisecond)
-	// t = 200ms
-	printHistorical(t, s)
-
-	if c := getHistorical(s, 225*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 0 {
-		t.Errorf("expect getHistorical(225ms) == 0 for foo1; got=%d", c)
-	}
-	if c := getHistorical(s, 525*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 0 {
-		t.Errorf("expect getHistorical(525ms) == 0 for foo1; got=%d", c)
-	}
-
-	{
-		counts := s.getHierarchicalCounts()
-		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo1/SENSOR"].Total; r != 23 {
-			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo1/SENSOR].Total == 23, got=%v", r)
-		}
-		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo2/SENSOR"].Total; r != 24 {
-			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo2/SENSOR].Total == 24, got=%v", r)
-		}
-	}
-
 }
 
 func incrementN(s *Statistics, module, name, field string, n int) {
@@ -140,6 +160,10 @@ func getHistorical(s *Statistics, duration time.Duration, module, name, field st
 }
 
 func printHistorical(t *testing.T, s *Statistics) {
+	if !s.Enabled() {
+		return
+	}
+
 	t.Log("printHistorical:")
 
 	for e := s.historical.Front(); e != nil; e = e.Next() {
