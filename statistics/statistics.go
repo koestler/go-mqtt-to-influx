@@ -46,7 +46,7 @@ func Run(config Config) (stats *Statistics) {
 		config:                    config,
 		total:                     make(map[Desc]int),
 		historical:                list.New(),
-		incrementOne:              make(chan Desc, 128),
+		incrementOne:              make(chan Desc, 1024),
 		requestHierarchicalCounts: make(chan requestHierarchicalCounts),
 	}
 

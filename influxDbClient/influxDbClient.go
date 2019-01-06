@@ -35,6 +35,13 @@ type Config interface {
 	LogLineProtocol() bool
 }
 
+type Point interface {
+	Measurement() string
+	Tags() map[string]string
+	Fields() map[string]interface{}
+	Time() time.Time
+}
+
 type Statistics interface {
 	IncrementOne(module, name, field string)
 }
@@ -57,12 +64,12 @@ func RunClient(config Config, statistics Statistics) (client *Client) {
 
 		shutdown:           make(chan struct{}),
 		closed:             make(chan struct{}),
-		pointToSendChannel: make(chan *influxClient.Point, 64),
+		pointToSendChannel: make(chan *influxClient.Point, 1024),
 		currentBatch:       getBatch(config),
 	}
 
 	// start to send out points
-	go client.pointsSender(config.WriteInterval())
+	go client.worker(config.WriteInterval())
 
 	return
 }
@@ -70,7 +77,7 @@ func RunClient(config Config, statistics Statistics) (client *Client) {
 func (ic *Client) Shutdown() {
 	// send remaining points
 	close(ic.shutdown)
-	// wait for pointsSender to shut down
+	// wait for worker to shut down
 	<-ic.closed
 
 	// shutdown client ressources
@@ -83,7 +90,7 @@ func (ic *Client) Name() string {
 	return ic.config.Name()
 }
 
-func (ic *Client) pointsSender(writeInterval time.Duration) {
+func (ic *Client) worker(writeInterval time.Duration) {
 	defer close(ic.closed)
 
 	writeTick := time.Tick(writeInterval)
@@ -172,23 +179,4 @@ func (ic *Client) sendBatch() {
 
 	// flush batch / start a new one
 	ic.currentBatch = getBatch(ic.config)
-}
-
-func (ic *Client) WritePoints(
-	measurement string,
-	points Points,
-	time time.Time,
-) {
-	ic.WriteRawPoints(points.ToRaw(measurement, time))
-}
-
-func (ic *Client) WriteRawPoints(rawPoints []RawPoint) {
-	for _, point := range rawPoints {
-		pt, err := influxClient.NewPoint(point.Measurement, point.Tags, point.Fields, point.Time)
-		if err != nil {
-			log.Printf("influxDbClient[%s]: cannot create point: %s", ic.Name(), err)
-			continue
-		}
-		ic.pointToSendChannel <- pt
-	}
 }

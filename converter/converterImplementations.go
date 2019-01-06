@@ -2,11 +2,8 @@ package converter
 
 import (
 	"fmt"
-	"github.com/eclipse/paho.mqtt.golang"
 	"log"
 )
-
-type HandleFunc func(c Config, oup Output, msg mqtt.Message)
 
 var converterImplementations = make(map[string]HandleFunc)
 

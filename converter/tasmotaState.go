@@ -2,8 +2,6 @@ package converter
 
 import (
 	"encoding/json"
-	"github.com/eclipse/paho.mqtt.golang"
-	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"log"
 	"regexp"
 	"strings"
@@ -20,24 +18,51 @@ import (
 //   "POWER1":"ON","POWER2":"OFF","POWER3":"OFF","POWER4":"OFF",
 //   "Wifi":{"AP":1,"SSId":"piegn-iot","BSSId":"04:F0:21:2F:B7:CC","Channel":1,"RSSI":100}
 // }
-
 type StateMessage struct {
 	Time   string  // save to timeValue
 	Uptime string  // save to timeValue
-	Vcc    float32 // save to floatValues
+	Vcc    float64 // save to floatValues
 	Power  string  // save to boolValues
 	Power1 string  // save to boolValues
 	Power2 string  // save to boolValues
 	Power3 string  // save to boolValues
 	Power4 string  // save to boolValues
-	Wifi   struct {
-		// -> wifi
-		AP      int
-		SSId    string
-		BSSId   string
-		Channel int
-		RSSI    int
-	}
+	Wifi   Wifi
+}
+
+type Wifi struct {
+	AP      int
+	SSId    string
+	BSSId   string
+	Channel int
+	RSSI    int
+}
+
+type stateWifiOutputMessage struct {
+	timeStamp time.Time
+	device    string
+	wifi      Wifi
+}
+
+type stateTimeOutputMessage struct {
+	timeStamp time.Time
+	device    string
+	value     time.Time
+}
+
+type stateFloatOutputMessage struct {
+	timeStamp time.Time
+	device    string
+	field     string
+	unit      string
+	value     float64
+}
+
+type stateBoolOutputMessage struct {
+	timeStamp time.Time
+	device    string
+	field     string
+	value     bool
 }
 
 const tasmotaStateTopicRegexp = "^([^/]*/)*tele/(.*)/STATE$"
@@ -48,12 +73,12 @@ func init() {
 	registerHandler("tasmota-state", tasmotaStateHandler)
 }
 
-func tasmotaStateHandler(c Config, oup Output, msg mqtt.Message) {
+func tasmotaStateHandler(c Config, input Input, outputFunc OutputFunc) {
 	// parse topic
-	matches := tasmotaStateTopicMatcher.FindStringSubmatch(msg.Topic())
+	matches := tasmotaStateTopicMatcher.FindStringSubmatch(input.Topic())
 	if len(matches) < 3 {
 		log.Printf("tasmota-state[%s]: cannot extract device from topic='%s', regex='%s'",
-			c.Name(), msg.Topic(), tasmotaStateTopicRegexp,
+			c.Name(), input.Topic(), tasmotaStateTopicRegexp,
 		)
 		return
 	}
@@ -61,75 +86,48 @@ func tasmotaStateHandler(c Config, oup Output, msg mqtt.Message) {
 
 	// parse payload
 	var message StateMessage
-	if err := json.Unmarshal(msg.Payload(), &message); err != nil {
+	if err := json.Unmarshal(input.Payload(), &message); err != nil {
 		log.Printf("tasmota-state[%s]: cannot json decode: %s", c.Name(), err)
 		return
 	}
 
-	// create points
-	rawPoints := message.toPoints(c.Name(), device)
-	oup.WriteRawPoints(
-		rawPoints,
-		c.InfluxDbClients(),
-	)
-}
-
-func (v StateMessage) toPoints(converterName, device string) []influxDbClient.RawPoint {
-	ret := make([]influxDbClient.RawPoint, 0, 16)
-
 	// setup timestamps
 	now := time.Now()
-	timeStamp, err := parseTime(v.Time)
+	timeStamp, err := parseTime(message.Time)
 	if err != nil {
 		timeStamp = time.Now()
 	}
 
 	// save time given vs time now
-	ret = append(ret, influxDbClient.RawPoint{
-		Measurement: "timeValue",
-		Tags: map[string]string{
-			"device": device,
-		},
-		Fields: map[string]interface{}{
-			"value": timeStamp,
-		},
-		Time: now,
+	outputFunc(stateTimeOutputMessage{
+		timeStamp: now,
+		device:    device,
+		value:     timeStamp,
 	})
 
 	// save uptime
-	if upTime, err := parseUpTime(v.Uptime); err == nil {
-		ret = append(ret, influxDbClient.RawPoint{
-			Measurement: "floatValue",
-			Tags: map[string]string{
-				"device": device,
-				"field":  "UpTime",
-				"unit":   "s",
-			},
-			Fields: map[string]interface{}{
-				"value": float64(upTime),
-			},
-			Time: timeStamp,
+	if upTime, err := parseUpTime(message.Uptime); err == nil {
+		outputFunc(stateFloatOutputMessage{
+			timeStamp: timeStamp,
+			device:    device,
+			field:     "UpTime",
+			unit:      "s",
+			value:     float64(upTime),
 		})
 	} else {
-		log.Printf("tasmota-state[%s]: cannot parse uptime='%s': %s", converterName, v.Uptime, err)
+		log.Printf("tasmota-state[%s]: cannot parse uptime='%s': %s", c.Name(), message.Uptime, err)
 	}
 
 	// Vcc
-	ret = append(ret, influxDbClient.RawPoint{
-		Measurement: "floatValue",
-		Tags: map[string]string{
-			"device": device,
-			"field":  "Vcc",
-			"unit":   "V",
-		},
-		Fields: map[string]interface{}{
-			"value": v.Vcc,
-		},
-		Time: timeStamp,
+	outputFunc(stateFloatOutputMessage{
+		timeStamp: timeStamp,
+		device:    device,
+		field:     "Vcc",
+		unit:      "V",
+		value:     message.Vcc,
 	})
 
 	// Power[1,2,3,4]?
-
 	powerToBoolean := func(power string) (res, ok bool) {
 		power = strings.ToUpper(power)
 		switch power {
@@ -141,57 +139,118 @@ func (v StateMessage) toPoints(converterName, device string) []influxDbClient.Ra
 			return false, true
 		default:
 			log.Printf("tasmota-state[%s]: cannot parse POWER='%s': only ON/OFF case-insentive known",
-				converterName, power,
+				c.Name(), power,
 			)
 			return false, false
 		}
 	}
-
-	if value, ok := powerToBoolean(v.Power); ok {
-		ret = append(ret, powerPoint(device, "Power", value, timeStamp))
+	outputPower := func(field string, power string) {
+		if value, ok := powerToBoolean(message.Power); ok {
+			outputFunc(stateBoolOutputMessage{
+				timeStamp: timeStamp,
+				device:    device,
+				field:     field,
+				value:     value,
+			})
+		}
 	}
-	if value, ok := powerToBoolean(v.Power1); ok {
-		ret = append(ret, powerPoint(device, "Power1", value, timeStamp))
-	}
-	if value, ok := powerToBoolean(v.Power2); ok {
-		ret = append(ret, powerPoint(device, "Power2", value, timeStamp))
-	}
-	if value, ok := powerToBoolean(v.Power3); ok {
-		ret = append(ret, powerPoint(device, "Power3", value, timeStamp))
-	}
-	if value, ok := powerToBoolean(v.Power4); ok {
-		ret = append(ret, powerPoint(device, "Power4", value, timeStamp))
-	}
+	outputPower("Power", message.Power)
+	outputPower("Power1", message.Power1)
+	outputPower("Power2", message.Power2)
+	outputPower("Power3", message.Power3)
+	outputPower("Power4", message.Power4)
 
 	// wifi value
-	ret = append(ret, influxDbClient.RawPoint{
-		Measurement: "wifi",
-		Tags: map[string]string{
-			"device": device,
-			"SSId":   v.Wifi.SSId,
-			"BSSId":  v.Wifi.BSSId,
-		},
-		Fields: map[string]interface{}{
-			"AP":      v.Wifi.AP,
-			"Channel": v.Wifi.Channel,
-			"RSSI":    v.Wifi.RSSI,
-		},
-		Time: timeStamp,
+	outputFunc(stateWifiOutputMessage{
+		timeStamp: timeStamp,
+		device:    device,
+		wifi:      message.Wifi,
 	})
-
-	return ret
 }
 
-func powerPoint(device string, field string, value bool, timeStamp time.Time) influxDbClient.RawPoint {
-	return influxDbClient.RawPoint{
-		Measurement: "boolValue",
-		Tags: map[string]string{
-			"device": device,
-			"field":  field,
-		},
-		Fields: map[string]interface{}{
-			"value": value,
-		},
-		Time: timeStamp,
+func (m stateWifiOutputMessage) Measurement() string {
+	return "wifi"
+}
+
+func (m stateWifiOutputMessage) Tags() map[string]string {
+	return map[string]string{
+		"device": m.device,
+		"SSId":   m.wifi.SSId,
+		"BSSId":  m.wifi.BSSId,
 	}
+}
+
+func (m stateWifiOutputMessage) Fields() map[string]interface{} {
+	return map[string]interface{}{
+		"AP":      m.wifi.AP,
+		"Channel": m.wifi.Channel,
+		"RSSI":    m.wifi.RSSI,
+	}
+}
+
+func (m stateWifiOutputMessage) Time() time.Time {
+	return m.timeStamp
+}
+
+func (m stateTimeOutputMessage) Measurement() string {
+	return "timeValue"
+}
+
+func (m stateTimeOutputMessage) Tags() map[string]string {
+	return map[string]string{
+		"device": m.device,
+	}
+}
+
+func (m stateTimeOutputMessage) Fields() map[string]interface{} {
+	return map[string]interface{}{
+		"value": m.value,
+	}
+}
+
+func (m stateTimeOutputMessage) Time() time.Time {
+	return m.timeStamp
+}
+
+func (m stateFloatOutputMessage) Measurement() string {
+	return "floatValue"
+}
+
+func (m stateFloatOutputMessage) Tags() map[string]string {
+	return map[string]string{
+		"device": m.device,
+		"field":  m.field,
+		"unit":   m.unit,
+	}
+}
+
+func (m stateFloatOutputMessage) Fields() map[string]interface{} {
+	return map[string]interface{}{
+		"value": m.value,
+	}
+}
+
+func (m stateFloatOutputMessage) Time() time.Time {
+	return m.timeStamp
+}
+
+func (m stateBoolOutputMessage) Measurement() string {
+	return "boolValue"
+}
+
+func (m stateBoolOutputMessage) Tags() map[string]string {
+	return map[string]string{
+		"device": m.device,
+		"field":  m.field,
+	}
+}
+
+func (m stateBoolOutputMessage) Fields() map[string]interface{} {
+	return map[string]interface{}{
+		"value": m.value,
+	}
+}
+
+func (m stateBoolOutputMessage) Time() time.Time {
+	return m.timeStamp
 }

@@ -2,8 +2,6 @@ package converter
 
 import (
 	"encoding/json"
-	"github.com/eclipse/paho.mqtt.golang"
-	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"log"
 	"regexp"
 	"time"
@@ -24,19 +22,30 @@ type SensorMessage struct {
 	TempUnit string
 }
 
+type tasmotaSensorOutputMessage struct {
+	timeStamp   time.Time
+	measurement string
+	device      string
+	field       string
+	unit        string
+	sensor      string
+	value       float64
+}
+
 const tasmotaSensorTopicRegex = "^([^/]*/)*tele/(.*)/SENSOR$"
+
 var tasmotaSensorTopicMatcher = regexp.MustCompile(tasmotaSensorTopicRegex)
 
 func init() {
 	registerHandler("tasmota-sensor", tasmotaSensorHandler)
 }
 
-func tasmotaSensorHandler(c Config, oup Output, msg mqtt.Message) {
+func tasmotaSensorHandler(c Config, input Input, outputFunc OutputFunc) {
 	// parse topic
-	matches := tasmotaSensorTopicMatcher.FindStringSubmatch(msg.Topic())
+	matches := tasmotaSensorTopicMatcher.FindStringSubmatch(input.Topic())
 	if len(matches) < 3 {
 		log.Printf("tasmota-sensor[%s]: cannot extract device from topic='%s', regex='%s'",
-			c.Name(), msg.Topic(), tasmotaSensorTopicRegex,
+			c.Name(), input.Topic(), tasmotaSensorTopicRegex,
 		)
 		return
 	}
@@ -44,98 +53,102 @@ func tasmotaSensorHandler(c Config, oup Output, msg mqtt.Message) {
 
 	// parse payload
 	var message SensorMessage
-	if err := json.Unmarshal(msg.Payload(), &message); err != nil {
+	if err := json.Unmarshal(input.Payload(), &message); err != nil {
 		log.Printf("tasmota-sensor[%s]: cannot json decode: %s", c.Name(), err)
 		return
 	}
 
-	// create points
-	points := message.toPoints(device)
-	if len(points) < 1 {
-		log.Printf(
-			"tasmota-sensor[%s]: could not extract any sensor data; "+
-				"sensor type is probably unknown; known sensors are AM2301, SI7021, DS18B20; payload='%s'",
-			c.Name(), msg.Payload(),
-		)
-		return
-	}
-
+	// get timestamp
 	timeStamp, err := parseTime(message.Time)
 	if err != nil {
 		timeStamp = time.Now()
 	}
 
-	oup.WriteRawPoints(points.ToRaw(c.TargetMeasurement(), timeStamp), c.InfluxDbClients())
+	// send points
+	count := 0
+
+	output := func(field, unit, sensor string, value float64) {
+		count += 1
+		outputFunc(tasmotaSensorOutputMessage{
+			timeStamp:   timeStamp,
+			measurement: c.TargetMeasurement(),
+			device:      device,
+			field:       field,
+			unit:        unit,
+			sensor:      sensor,
+			value:       value,
+		})
+	}
+
+	if message.AM2301 != nil {
+		output(
+			"Temperature",
+			message.TempUnit,
+			"AM2301",
+			message.AM2301.Temperature,
+		)
+		output(
+			"Humidity",
+			"%",
+			"AM2301",
+			message.AM2301.Humidity,
+		)
+	}
+
+	if message.SI7021 != nil {
+		output(
+			"Temperature",
+			message.TempUnit,
+			"SI7021",
+			message.SI7021.Temperature,
+		)
+		output(
+			"Humidity",
+			"%",
+			"SI7021",
+			message.SI7021.Humidity,
+		)
+	}
+
+	if message.DS18B20 != nil {
+		output(
+			"Temperature",
+			message.TempUnit,
+			"DS18B20",
+			message.DS18B20.Temperature,
+		)
+	}
+
+	// any points sent?
+	if count < 1 {
+		log.Printf(
+			"tasmota-sensor[%s]: could not extract any sensor data; "+
+				"sensor type is probably unknown; known sensors are AM2301, SI7021, DS18B20; payload='%s'",
+			c.Name(), input.Payload(),
+		)
+		return
+	}
 }
 
-func (v SensorMessage) toPoints(device string) influxDbClient.Points {
-	ret := make(influxDbClient.Points, 0, 2)
+func (m tasmotaSensorOutputMessage) Measurement() string {
+	return m.measurement
+}
 
-	if v.AM2301 != nil {
-		ret = append(ret, influxDbClient.Point{
-			Tags: map[string]string{
-				"device": device,
-				"field":  "Temperature",
-				"unit":   v.TempUnit,
-				"sensor": "AM2301",
-			},
-			Fields: map[string]interface{}{
-				"value": v.AM2301.Temperature,
-			},
-		})
-
-		ret = append(ret, influxDbClient.Point{
-			Tags: map[string]string{
-				"device": device,
-				"field":  "Humidity",
-				"unit":   "%",
-				"sensor": "AM2301",
-			},
-			Fields: map[string]interface{}{
-				"value": v.AM2301.Humidity,
-			},
-		})
+func (m tasmotaSensorOutputMessage) Tags() map[string]string {
+	return map[string]string{
+		"device": m.device,
+		"field":  m.field,
+		"unit":   m.unit,
+		"sensor": m.sensor,
 	}
+}
 
-	if v.SI7021 != nil {
-		ret = append(ret, influxDbClient.Point{
-			Tags: map[string]string{
-				"device": device,
-				"field":  "Temperature",
-				"unit":   v.TempUnit,
-				"sensor": "SI7021",
-			},
-			Fields: map[string]interface{}{
-				"value": v.SI7021.Temperature,
-			},
-		})
-
-		ret = append(ret, influxDbClient.Point{
-			Tags: map[string]string{
-				"device": device,
-				"field":  "Humidity",
-				"unit":   "%",
-				"sensor": "SI7021",
-			},
-			Fields: map[string]interface{}{
-				"value": v.SI7021.Humidity,
-			},
-		})
+func (m tasmotaSensorOutputMessage) Fields() map[string]interface{} {
+	return map[string]interface{}{
+		"value": m.value,
 	}
+}
 
-	if v.DS18B20 != nil {
-		ret = append(ret, influxDbClient.Point{
-			Tags: map[string]string{
-				"device": device,
-				"field":  "Temperature",
-				"unit":   v.TempUnit,
-				"sensor": "DS18B20",
-			},
-			Fields: map[string]interface{}{
-				"value": v.DS18B20.Temperature,
-			},
-		})
-	}
-
-	return ret
+func (m tasmotaSensorOutputMessage) Time() time.Time {
+	return m.timeStamp
 }
