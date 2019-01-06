@@ -1,8 +1,9 @@
 package statistics
 
 type HierarchicalCount struct {
-	Total int
-	Last1 int
+	Total     int
+	Last10Res int
+	LastMax   int
 }
 
 type HierarchicalCounts map[string]map[string]map[string]HierarchicalCount
@@ -30,6 +31,9 @@ func (s *Statistics) handleRequestHierarchicalCounts(request requestHierarchical
 	// copy / restructure data
 	ret := make(HierarchicalCounts)
 
+	last10Res := s.getHistoricalCounts(s.config.HistoryResolution() * 10)
+	lastMax := s.getHistoricalCounts(s.config.HistoryMaxAge())
+
 	for desc, count := range s.total {
 		if _, ok := ret[desc.module]; !ok {
 			ret[desc.module] = make(map[string]map[string]HierarchicalCount)
@@ -38,7 +42,9 @@ func (s *Statistics) handleRequestHierarchicalCounts(request requestHierarchical
 			ret[desc.module][desc.name] = make(map[string]HierarchicalCount)
 		}
 		ret[desc.module][desc.name][desc.field] = HierarchicalCount{
-			Total: *count,
+			Total:     *count,
+			Last10Res: last10Res[desc],
+			LastMax:   lastMax[desc],
 		}
 	}
 
