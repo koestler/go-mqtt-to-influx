@@ -1,9 +1,15 @@
 package statistics
 
+import (
+	"container/list"
+	"time"
+)
+
 type Statistics struct {
 	config Config
 
-	counts map[Desc]*Counts
+	total      map[Desc]*int
+	historical *list.List
 
 	// input channels
 	incrementOne chan Desc
@@ -14,12 +20,8 @@ type Statistics struct {
 
 type Config interface {
 	Enabled() bool
-}
-
-type HierarchicalCounts map[string]map[string]map[string]Counts
-
-type requestHierarchicalCounts struct {
-	response chan HierarchicalCounts
+	HistoryResolution() time.Duration
+	HistoryMaxAge() time.Duration
 }
 
 type Desc struct {
@@ -28,8 +30,9 @@ type Desc struct {
 	field  string
 }
 
-type Counts struct {
-	Total int
+type HistoricalCount struct {
+	NewerThan time.Time
+	Count     map[Desc]*int
 }
 
 func Run(config Config) (stats *Statistics) {
@@ -41,44 +44,16 @@ func Run(config Config) (stats *Statistics) {
 
 	stats = &Statistics{
 		config:                    config,
-		counts:                    make(map[Desc]*Counts),
+		total:                     make(map[Desc]*int),
+		historical:                list.New(),
 		incrementOne:              make(chan Desc, 128),
 		requestHierarchicalCounts: make(chan requestHierarchicalCounts),
 	}
 
 	// start incrementer routine
-	go stats.worker()
+	go stats.countWorker()
 
 	return stats
-}
-
-func (s *Statistics) worker() {
-	for {
-		select {
-		case d := <-s.incrementOne:
-			if s.counts[d] == nil {
-				s.counts[d] = &Counts{
-					Total: 1,
-				}
-			} else {
-				s.counts[d].Total += 1
-			}
-		case request := <-s.requestHierarchicalCounts:
-			// copy / restructure data
-			ret := make(HierarchicalCounts)
-			for desc, count := range s.counts {
-				if _, ok := ret[desc.module]; !ok {
-					ret[desc.module] = make(map[string]map[string]Counts)
-				}
-				if _, ok := ret[desc.module][desc.name]; !ok {
-					ret[desc.module][desc.name] = make(map[string]Counts)
-				}
-				ret[desc.module][desc.name][desc.field] = *count
-			}
-			request.response <- ret
-		}
-	}
-
 }
 
 func (s *Statistics) Enabled() bool {
@@ -95,15 +70,4 @@ func (s *Statistics) IncrementOne(module, name, field string) {
 		name:   name,
 		field:  field,
 	}
-}
-
-func (s *Statistics) GetHierarchicalCounts() (ret interface{}) {
-	if !s.Enabled() {
-		return
-	}
-	response := make(chan HierarchicalCounts)
-	s.requestHierarchicalCounts <- requestHierarchicalCounts{
-		response: response,
-	}
-	return <-response
 }
