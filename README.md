@@ -1,4 +1,4 @@
 * write proper Readme
 * implement tests
 * document files / functions
-* mqtt reconnect: republish LWT message
+* test if performance is higher when reimplementing topic matcher with string.split instead of regexp
