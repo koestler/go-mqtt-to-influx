@@ -12,11 +12,15 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
+	"runtime/pprof"
 	"syscall"
 )
 
 type CmdOptions struct {
-	Config flags.Filename `short:"c" long:"config" description:"Config File in yaml format" default:"./config.yaml"`
+	Config     flags.Filename `short:"c" long:"config" description:"Config File in yaml format" default:"./config.yaml"`
+	CpuProfile flags.Filename `long:"cpuprofile" description:"write cpu profile to <file>"`
+	MemProfile flags.Filename `long:"memprofile" description:"write memory profile to <file>"`
 }
 
 var (
@@ -34,6 +38,9 @@ func main() {
 	if cfg.LogWorkerStart {
 		log.Print("main: start go-mqtt-to-influxdb...")
 	}
+
+	setupCpuProfile()
+	defer pprof.StopCPUProfile()
 
 	setupStatistics()
 	setupMqttClient()
@@ -53,6 +60,8 @@ func main() {
 	if cfg.LogWorkerStart {
 		log.Printf("main: caught signal: %+v; shutdown", sig)
 	}
+
+	writeMemProfile()
 
 	// shutdown all workers
 	for _, client := range mqttClientInstances {
@@ -91,6 +100,38 @@ func setupConfig() {
 	if cfg.LogConfig {
 		cfg.PrintConfig()
 	}
+}
+
+func setupCpuProfile() {
+	if cmdOptions.CpuProfile == "" {
+		return
+	}
+
+	f, err := os.Create(string(cmdOptions.CpuProfile))
+	if err != nil {
+		log.Fatal("main: could not create CPU profile: ", err)
+	}
+	if err := pprof.StartCPUProfile(f); err != nil {
+		log.Fatal("main: could not start CPU profile: ", err)
+	}
+	log.Print("main: started CPU profile")
+}
+
+func writeMemProfile() {
+	if cmdOptions.MemProfile == "" {
+		return
+	}
+
+	f, err := os.Create(string(cmdOptions.MemProfile))
+	if err != nil {
+		log.Fatal("main: could not create memory profile: ", err)
+	}
+	runtime.GC() // get up-to-date statistics
+	if err := pprof.WriteHeapProfile(f); err != nil {
+		log.Fatal("main: could not write memory profile: ", err)
+	}
+	log.Print("main: wrote memory profile")
+	f.Close()
 }
 
 func setupStatistics() {
