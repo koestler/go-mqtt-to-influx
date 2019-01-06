@@ -1,7 +1,6 @@
 package statistics
 
 import (
-	"log"
 	"time"
 )
 
@@ -26,8 +25,6 @@ func (s *Statistics) countWorker() {
 }
 
 func (s *Statistics) handleIncrementOne(desc Desc) {
-	log.Printf("handleIncrementOne(%v)", desc)
-
 	// handle total
 	if t := s.total[desc]; t == nil {
 		i := 1
@@ -50,17 +47,16 @@ func (s *Statistics) handleIncrementOne(desc Desc) {
 
 func (s *Statistics) handleHistoryTick(now time.Time) {
 	// create new historical list entry if newest one is outdated
-	if back := s.historical.Back(); back == nil || back.Value.(*HistoricalCount).NewerThan.Before(now) {
-		if back != nil && len(back.Value.(*HistoricalCount).Count) < 1 {
-			// newest entry is empty -> update it
-			back.Value.(*HistoricalCount).NewerThan = now
-		} else {
-			// list is empty or newest entry is too old -> create new one
-			s.historical.PushBack(&HistoricalCount{
-				NewerThan: now.Add(s.config.HistoryResolution()),
-				Count:     make(map[Desc]*int),
-			})
-		}
+	back := s.historical.Back();
+	if back != nil && len(back.Value.(*HistoricalCount).Count) < 1 {
+		// newest entry is empty -> update it
+		back.Value.(*HistoricalCount).NewerThan = now
+	} else {
+		// list is empty or newest entry is too old -> create new one
+		s.historical.PushBack(&HistoricalCount{
+			NewerThan: now.Add(s.config.HistoryResolution()),
+			Count:     make(map[Desc]*int),
+		})
 	}
 
 	// remove too old historical data but keep at least one
