@@ -8,7 +8,7 @@ import (
 type Statistics struct {
 	config Config
 
-	total      map[Desc]*int
+	total      map[Desc]int
 	historical *list.List
 
 	// input channels
@@ -32,7 +32,7 @@ type Desc struct {
 
 type HistoricalCount struct {
 	NewerThan time.Time
-	Count     map[Desc]*int
+	Count     map[Desc]int
 }
 
 func Run(config Config) (stats *Statistics) {
@@ -44,7 +44,7 @@ func Run(config Config) (stats *Statistics) {
 
 	stats = &Statistics{
 		config:                    config,
-		total:                     make(map[Desc]*int),
+		total:                     make(map[Desc]int),
 		historical:                list.New(),
 		incrementOne:              make(chan Desc, 128),
 		requestHierarchicalCounts: make(chan requestHierarchicalCounts),

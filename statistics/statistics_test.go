@@ -170,7 +170,7 @@ func printHistorical(t *testing.T, s *Statistics) {
 		c := e.Value.(*HistoricalCount)
 		t.Logf("c.NewerThan=%s", c.NewerThan)
 		for desc, count := range c.Count {
-			t.Logf("  desc=%v, count=%d", desc, *count)
+			t.Logf("  desc=%v, count=%d", desc, count)
 		}
 	}
 	t.Log("")

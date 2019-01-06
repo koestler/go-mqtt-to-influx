@@ -8,8 +8,8 @@ func (s *Statistics) countWorker() {
 	ticker := time.Tick(s.config.HistoryResolution())
 
 	s.historical.PushBack(&HistoricalCount{
-		NewerThan: time.Now().Add(s.config.HistoryResolution()),
-		Count:     make(map[Desc]*int),
+		NewerThan: time.Now(),
+		Count:     make(map[Desc]int),
 	})
 
 	for {
@@ -26,44 +26,44 @@ func (s *Statistics) countWorker() {
 
 func (s *Statistics) handleIncrementOne(desc Desc) {
 	// handle total
-	if t := s.total[desc]; t == nil {
-		i := 1
-		s.total[desc] = &i
+	if count, ok := s.total[desc]; !ok {
+		s.total[desc] = 1
 	} else {
 		// existing element -> increment
-		*t += 1
+		s.total[desc] = count + 1
 	}
 
 	// historical data: increment one to newest entry
 	newest := s.historical.Back().Value.(*HistoricalCount)
-	if t := newest.Count[desc]; t == nil {
-		i := 1
-		newest.Count[desc] = &i
+	if count, ok := newest.Count[desc]; !ok {
+		newest.Count[desc] = 1
 	} else {
 		// existing element -> increment
-		*t += 1
+		newest.Count[desc] = count + 1
 	}
 }
 
 func (s *Statistics) handleHistoryTick(now time.Time) {
 	// create new historical list entry if newest one is outdated
 	back := s.historical.Back();
-	if back != nil && len(back.Value.(*HistoricalCount).Count) < 1 {
+	h := back.Value.(*HistoricalCount)
+	if len(h.Count) < 1 {
 		// newest entry is empty -> update it
-		back.Value.(*HistoricalCount).NewerThan = now
+		h.NewerThan = now
 	} else {
-		// list is empty or newest entry is too old -> create new one
+		// newest entry is too old and not empty -> create new one
+		// use 1.2 times last used count size as capacity hint
 		s.historical.PushBack(&HistoricalCount{
-			NewerThan: now.Add(s.config.HistoryResolution()),
-			Count:     make(map[Desc]*int),
+			NewerThan: now,
+			Count:     make(map[Desc]int, int(1.2*float64(len(h.Count)))),
 		})
 	}
 
 	// remove too old historical data but keep at least one
-	oldest := now.Add(-s.config.HistoryMaxAge())
+	// - s.config.HistoryResolution() is used to accommodate tick jitter
+	oldest := now.Add(-s.config.HistoryMaxAge() - s.config.HistoryResolution())
 	for e := s.historical.Front(); e != nil && s.historical.Len() > 0; e = e.Next() {
-		c := e.Value.(*HistoricalCount)
-		if c.NewerThan.After(oldest) {
+		if e.Value.(*HistoricalCount).NewerThan.After(oldest) {
 			break
 		}
 		// remove element
@@ -76,22 +76,37 @@ func (s *Statistics) getHistoricalCounts(duration time.Duration) (ret map[Desc]i
 		return
 	}
 
+	if s.historical.Back() == nil {
+		// list empty
+		return
+	}
+
 	ret = make(map[Desc]int)
 
-	limit := time.Now().Add(-duration)
+	// use 1.5 Resolution to compensate for tick jitter
+	limit := time.Now().Add(-duration - s.config.HistoryResolution() - s.config.HistoryResolution()/2)
 
 	// iterate reverse over history
-	for e := s.historical.Back(); e != nil; e = e.Prev() {
+	// having:
+	// tN - tN-1 = HistoryResolution
+	// duration = 3 * HistoryResolution
+	// t0... t1... t2... t3... t4... t5... t6..
+	//                   xxxxxxxxxxxxxxxxx        used
+	//                     xxxxxxxxxxxxxxxxx      now - duration ... now
+	// use t3, t4, t5, ignore partial t6, ignore older
+
+	// start with second last (do not use active element)
+	for e := s.historical.Back().Prev(); e != nil; e = e.Prev() {
 		c := e.Value.(*HistoricalCount)
 
-		// until NewerThan is reached
+		// if the one we counted is too old already, stop now
 		if c.NewerThan.Before(limit) {
 			break;
 		}
 
 		// accumulate counts
 		for desc, i := range c.Count {
-			ret[desc] += *i
+			ret[desc] += i
 		}
 	}
 

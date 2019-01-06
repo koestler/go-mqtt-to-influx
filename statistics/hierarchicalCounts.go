@@ -42,7 +42,7 @@ func (s *Statistics) handleRequestHierarchicalCounts(request requestHierarchical
 			ret[desc.module][desc.name] = make(map[string]HierarchicalCount)
 		}
 		ret[desc.module][desc.name][desc.field] = HierarchicalCount{
-			Total:     *count,
+			Total:     count,
 			Last10Res: last10Res[desc],
 			LastMax:   lastMax[desc],
 		}
