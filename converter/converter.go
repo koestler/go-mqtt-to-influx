@@ -75,7 +75,7 @@ func (c *Converter) Name() string {
 func getMqttMessageHandler(converter *Converter, handleFunc HandleFunc) mqtt.MessageHandler {
 	return func(client mqtt.Client, message mqtt.Message) {
 		if converter.config.LogHandleOnce() {
-			logTopicOnce(converter.Name(), message.Topic())
+			logTopicOnce(converter.Name(), message)
 		}
 		converter.statistics.IncrementOne("converter", converter.Name(), message.Topic())
 		handleFunc(

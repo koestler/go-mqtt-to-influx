@@ -11,15 +11,15 @@ var (
 	loggedTopicMutex sync.RWMutex
 )
 
-func logTopicOnce(converter, topic string) {
-	id := fmt.Sprintf("%s,%s", converter, topic)
+func logTopicOnce(converter string, input Input) {
+	id := fmt.Sprintf("%s,%s", converter, input.Topic())
 
 	loggedTopicMutex.RLock()
 	_, ok := loggedTopics[id]
 	loggedTopicMutex.RUnlock()
 
 	if !ok {
-		log.Printf("converter[%s]: handle topic='%s'", converter, topic)
+		log.Printf("converter[%s]: handle topic='%s', payload='%s'", converter, input.Topic(), input.Payload())
 		loggedTopicMutex.Lock()
 		loggedTopics[id] = true
 		loggedTopicMutex.Unlock()
