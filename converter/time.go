@@ -2,6 +2,7 @@ package converter
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"log"
 	"regexp"
 	"strconv"
@@ -14,6 +15,10 @@ const (
 )
 
 func parseTime(timeStr string) (res time.Time, err error) {
+	if len(timeStr) < 1 {
+		return res, errors.New("empty timeStr")
+	}
+
 	res, err = time.Parse(timeFormat, timeStr)
 	if err != nil {
 		log.Printf("time: cannot parse timeString='%s': %s : expect format %s", timeStr, err, timeFormat)
