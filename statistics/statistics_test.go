@@ -17,7 +17,7 @@ func TestEnabled(t *testing.T) {
 
 	mockConfig.EXPECT().Enabled().Return(true).AnyTimes()
 	mockConfig.EXPECT().HistoryResolution().Return(100 * time.Millisecond).AnyTimes()
-	mockConfig.EXPECT().HistoryMaxAge().Return(500 * time.Millisecond).AnyTimes()
+	mockConfig.EXPECT().HistoryMaxAge().Return(600 * time.Millisecond).AnyTimes()
 
 	s := Run(mockConfig)
 	simulationCase0(t, s)
@@ -147,6 +147,12 @@ func simulationCase0(t *testing.T, s *Statistics) {
 
 	// t = 1050ms
 	printHistorical(t, s)
+
+	time.Sleep(100 * time.Millisecond)
+
+	// t = 1150ms
+	printHistorical(t, s)
+
 }
 
 func incrementN(s *Statistics, module, name, field string, n int) {
