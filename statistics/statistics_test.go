@@ -7,13 +7,13 @@ import (
 	"time"
 )
 
-//go:generate mockgen -destination=mock/statistics_mock.go -package mock github.com/koestler/go-mqtt-to-influxdb/statistics Config
+//go:generate mockgen -destination=mock/config_mock.go -package statistics_mock github.com/koestler/go-mqtt-to-influxdb/statistics Config
 
 func TestEnabled(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockConfig := mock.NewMockConfig(mockCtrl)
+	mockConfig := statistics_mock.NewMockConfig(mockCtrl)
 
 	mockConfig.EXPECT().Enabled().Return(true).AnyTimes()
 	mockConfig.EXPECT().HistoryResolution().Return(100 * time.Millisecond).AnyTimes()
@@ -71,7 +71,7 @@ func TestDisabled(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockConfig := mock.NewMockConfig(mockCtrl)
+	mockConfig := statistics_mock.NewMockConfig(mockCtrl)
 
 	mockConfig.EXPECT().Enabled().Return(false).AnyTimes()
 

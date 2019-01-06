@@ -60,8 +60,12 @@ func (p *ClientPool) getReceiverClients(receiversNames []string) (receivers []*C
 	return
 }
 
+func ToInfluxPoint(point Point) (*influxClient.Point, error) {
+	return influxClient.NewPoint(point.Measurement(), point.Tags(), point.Fields(), point.Time())
+}
+
 func (p *ClientPool) WritePoint(point Point, receiverNames []string) {
-	pt, err := influxClient.NewPoint(point.Measurement(), point.Tags(), point.Fields(), point.Time())
+	pt, err := ToInfluxPoint(point)
 	if err != nil {
 		log.Printf("InfluxDbClientPool: error creating a point: %s", err)
 		return
