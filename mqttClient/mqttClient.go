@@ -52,15 +52,17 @@ func Run(config Config, statistics Statistics) (mqttClient *MqttClient) {
 
 	// setup availability topic using will
 	availableTopic := getAvailableTopic(config)
-	log.Printf("mqttClient[%s]: set will to topic='%s', payload='%s'",
-		config.Name(), availableTopic, OfflinePayload,
-	)
-	opts.SetWill(availableTopic, OfflinePayload, config.Qos(), true)
+	if len(availableTopic) > 0 {
+		log.Printf("mqttClient[%s]: set will to topic='%s', payload='%s'",
+			config.Name(), availableTopic, OfflinePayload,
+		)
+		opts.SetWill(availableTopic, OfflinePayload, config.Qos(), true)
 
-	// public availability after each connect
-	opts.SetOnConnectHandler(func(client mqtt.Client) {
-		sendAvailableMsg(config, client)
-	})
+		// public availability after each connect
+		opts.SetOnConnectHandler(func(client mqtt.Client) {
+			sendAvailableMsg(config, client)
+		})
+	}
 
 	// start connection
 	client := mqtt.NewClient(opts)
@@ -124,6 +126,10 @@ func getAvailableTopic(config Config) string {
 
 func sendUnavailableMsg(config Config, client mqtt.Client) {
 	availableTopic := getAvailableTopic(config)
+	if len(availableTopic) < 1 {
+		return
+	}
+
 	log.Printf("mqttClient[%s]: set availability to topic='%s', payload='%s'",
 		config.Name(), availableTopic, OfflinePayload,
 	)
