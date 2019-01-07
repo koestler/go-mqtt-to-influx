@@ -1,6 +1,7 @@
 package mqttClient
 
 import (
+	"fmt"
 	"github.com/eclipse/paho.mqtt.golang"
 	"log"
 	"strings"
@@ -34,7 +35,7 @@ const (
 	OnlinePayload  string = "Online"
 )
 
-func Run(config Config, statistics Statistics) (mqttClient *MqttClient) {
+func Run(config Config, statistics Statistics) (*MqttClient, error) {
 	// configure client and start connection
 	opts := mqtt.NewClientOptions().
 		AddBroker(config.Broker()).
@@ -67,7 +68,7 @@ func Run(config Config, statistics Statistics) (mqttClient *MqttClient) {
 	// start connection
 	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		log.Fatalf("mqttClient[%s]: connect failed: %s", config.Name(), token.Error())
+		return nil, fmt.Errorf("mqttClient[%s]: connect failed: %s", config.Name(), token.Error())
 	}
 	log.Printf("mqttClient[%s]: connected to broker='%s'", config.Name(), config.Broker())
 
@@ -75,7 +76,7 @@ func Run(config Config, statistics Statistics) (mqttClient *MqttClient) {
 		config:     config,
 		client:     client,
 		statistics: statistics,
-	}
+	}, nil
 }
 
 func (mq *MqttClient) Shutdown() {

@@ -1,6 +1,7 @@
 package influxDbClient
 
 import (
+	"fmt"
 	influxClient "github.com/influxdata/influxdb/client/v2"
 	"log"
 	"strings"
@@ -22,6 +23,8 @@ type Client struct {
 	closed             chan struct{}
 	pointToSendChannel chan *influxClient.Point
 	currentBatch       influxClient.BatchPoints
+
+	serverVersion string
 }
 
 type Config interface {
@@ -46,7 +49,7 @@ type Statistics interface {
 	IncrementOne(module, name, field string)
 }
 
-func RunClient(config Config, statistics Statistics) (client *Client) {
+func RunClient(config Config, statistics Statistics) (*Client, error) {
 	// Create a new HTTPClient
 	dbClient, err := influxClient.NewHTTPClient(influxClient.HTTPConfig{
 		Addr:     config.Address(),
@@ -54,10 +57,10 @@ func RunClient(config Config, statistics Statistics) (client *Client) {
 		Password: config.Password(),
 	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	client = &Client{
+	client := &Client{
 		config:     config,
 		client:     dbClient,
 		statistics: statistics,
@@ -68,10 +71,15 @@ func RunClient(config Config, statistics Statistics) (client *Client) {
 		currentBatch:       getBatch(config),
 	}
 
+	// ping server
+	if _, client.serverVersion, err = dbClient.Ping(10 * time.Second); err != nil {
+		return nil, fmt.Errorf("InfluxDbClient: ping failed: %s", err)
+	}
+
 	// start to send out points
 	go client.worker(config.WriteInterval())
 
-	return
+	return client, nil
 }
 
 func (ic *Client) Shutdown() {
@@ -82,12 +90,16 @@ func (ic *Client) Shutdown() {
 
 	// shutdown client ressources
 	if err := ic.client.Close(); err != nil {
-		log.Fatal(err)
+		log.Printf("influxDbClient[%s]: error during shutdown: %s", ic.Name(), err)
 	}
 }
 
-func (ic *Client) Name() string {
+func (ic Client) Name() string {
 	return ic.config.Name()
+}
+
+func (ic Client) ServerVersion() string {
+	return ic.serverVersion
 }
 
 func (ic *Client) worker(writeInterval time.Duration) {
@@ -120,7 +132,7 @@ func getBatch(config Config) (bp influxClient.BatchPoints) {
 		Precision: config.TimePrecision().String(),
 	})
 	if err != nil {
-		log.Fatalf("influxDbClient[%s]: cannot create batch: %s", config.Name(), err)
+		log.Printf("influxDbClient[%s]: cannot create batch: %s", config.Name(), err)
 	}
 	return
 }
