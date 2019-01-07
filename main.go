@@ -179,26 +179,51 @@ func setupInfluxDbClient() {
 }
 
 func setupConverters() {
-	for _, convertConfig := range cfg.Converters {
-		for _, clientInstance := range getMqttClient(convertConfig.MqttClients()) {
+	for _, converterConfig := range cfg.Converters {
+		handleFunc, err := converter.GetHandler(converterConfig.Implementation())
+		messageHandler := getMqttMessageHandler(converterConfig, handleFunc)
+
+		if err != nil {
+			log.Printf("Converter[%s]: cannot start: %s", converterConfig.Name(), err)
+			continue
+		}
+
+		for _, mqttClientInstance := range getMqttClient(converterConfig.MqttClients()) {
 			if cfg.LogWorkerStart {
 				log.Printf(
-					"main: start Converter Name='%s', Implementation='%s', MqttClient='%s', InfluxDbClients=%v",
-					convertConfig.Name(),
-					convertConfig.Implementation(),
-					clientInstance.Name(),
-					convertConfig.InfluxDbClients(),
+					"main: start Converter[%s], Implementation='%s', MqttClient='%s', InfluxDbClients=%v",
+					converterConfig.Name(),
+					converterConfig.Implementation(),
+					mqttClientInstance.Name(),
+					converterConfig.InfluxDbClients(),
 				)
 			}
 
-			if err := converter.RunConverter(
-				convertConfig, statisticsInstance,
-				clientInstance,
-				influxDbClientPoolInstance,
-			); err != nil {
-				log.Fatalf("main: cannot start Converter: %s", err)
+			for _, mqttTopic := range converterConfig.MqttTopics() {
+				if err := mqttClientInstance.Subscribe(mqttTopic, messageHandler); err != nil {
+					log.Printf("Converter[%s]: error while subscribing: %s", converterConfig.Name(), err)
+				}
 			}
 		}
+	}
+}
+
+func getMqttMessageHandler(config converter.Config, handleFunc converter.HandleFunc) mqtt.MessageHandler {
+	return func(client mqtt.Client, message mqtt.Message) {
+		if config.LogHandleOnce() {
+			converter.LogTopicOnce(config.Name(), message)
+		}
+		statisticsInstance.IncrementOne("converter", config.Name(), message.Topic())
+		handleFunc(
+			config,
+			message,
+			func(output converter.Output) {
+				influxDbClientPoolInstance.WritePoint(
+					output,
+					config.InfluxDbClients(),
+				)
+			},
+		)
 	}
 }
 

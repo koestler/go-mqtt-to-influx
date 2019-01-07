@@ -11,7 +11,7 @@ var (
 	loggedTopicMutex sync.Mutex
 )
 
-func logTopicOnce(converter string, input Input) {
+func LogTopicOnce(converter string, input Input) {
 	id := fmt.Sprintf("%s,%s", converter, input.Topic())
 
 	loggedTopicMutex.Lock()
