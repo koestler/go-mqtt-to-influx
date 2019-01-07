@@ -27,6 +27,14 @@ func TestParseTime(t *testing.T) {
 	}
 }
 
+func TestParseInvalidTime(t *testing.T) {
+	_, err := parseTime("2018-12-19q00:31:05")
+	if err == nil {
+		t.Error("expected error when entering an invalid timestamp")
+	}
+}
+
+
 func TestParseUpTime(t *testing.T) {
 	values := []struct {
 		Str     string
@@ -49,5 +57,12 @@ func TestParseUpTime(t *testing.T) {
 		if res != v.Seconds {
 			t.Errorf("expected str='%s' to return %d seconds", v.Str, v.Seconds)
 		}
+	}
+}
+
+func TestParseInvalidUpTime(t *testing.T) {
+	_, err := parseUpTime("10T05:40:-59")
+	if err == nil {
+		t.Error("expected error when entering an invalid timestamp")
 	}
 }
