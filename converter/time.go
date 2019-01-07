@@ -41,12 +41,6 @@ func parseUpTime(timeStr string) (res int, err error) {
 		hours, _ = strconv.Atoi(parts[3])
 		minutes, _ = strconv.Atoi(parts[4])
 		seconds, _ = strconv.Atoi(parts[5])
-	} else if len(parts) == 4 {
-		days = 0
-		// Atoi won't fail due to regexp above
-		hours, _ = strconv.Atoi(parts[2])
-		minutes, _ = strconv.Atoi(parts[3])
-		seconds, _ = strconv.Atoi(parts[4])
 	} else {
 		return 0, fmt.Errorf("converter: cannot parse uptime str='%s' : expect format %s",
 			timeStr, uptimeFormat,
