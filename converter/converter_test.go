@@ -5,6 +5,7 @@ import (
 	"github.com/koestler/go-mqtt-to-influxdb/converter/mock"
 	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -14,9 +15,8 @@ import (
 
 const epsilon = time.Millisecond
 
-func checkNow(t time.Time) bool {
-	now := time.Now()
-	return t.After(now.Add(-epsilon)) && t.Before(now.Add(epsilon))
+func checkTimeStamp(expected, response time.Time) bool {
+	return response.After(expected.Add(-epsilon)) && response.Before(expected.Add(epsilon))
 }
 
 func getLineWoTime(line string) string {
@@ -24,9 +24,10 @@ func getLineWoTime(line string) string {
 }
 
 type TestStimuliResponse []struct {
-	Topic         string
-	Payload       string
-	ExpectedLines []string
+	Topic             string
+	Payload           string
+	ExpectedTimeStamp time.Time
+	ExpectedLines     []string
 }
 
 func testStimuliResponse(
@@ -35,7 +36,7 @@ func testStimuliResponse(
 	config Config,
 	dut HandleFunc,
 	stimuli TestStimuliResponse,
-	) {
+) {
 	for _, s := range stimuli {
 		t.Logf("stimuli: Topic='%s'", s.Topic)
 		t.Logf("stimuli: Payload='%s'", s.Payload)
@@ -60,14 +61,24 @@ func testStimuliResponse(
 
 			responseLines = append(responseLines, response)
 
-			if !checkNow(output.Time()) {
-				t.Errorf("expect timestamp to be now")
+			if !checkTimeStamp(s.ExpectedTimeStamp, output.Time()) {
+				t.Errorf("expect timestamp to %s but got %s", s.ExpectedTimeStamp, output.Time())
 			}
 		}
 		dut(config, mockInput, outputTestFunc)
 
+		// sort strings before comparison
+		sort.Strings(s.ExpectedLines)
+		sort.Strings(responseLines)
 		if !reflect.DeepEqual(s.ExpectedLines, responseLines) {
-			t.Errorf("expected %v, but got %v", s.ExpectedLines, responseLines)
+			t.Errorf("expected lines do not match response lines:")
+
+			for _, l := range s.ExpectedLines {
+				t.Errorf("  expected: %s", l)
+			}
+			for _, l := range responseLines {
+				t.Errorf("  got: %s", l)
+			}
 		}
 	}
 }

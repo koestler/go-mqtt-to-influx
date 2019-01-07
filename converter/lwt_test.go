@@ -4,9 +4,10 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/koestler/go-mqtt-to-influxdb/converter/mock"
 	"testing"
+	"time"
 )
 
-func Test(t *testing.T) {
+func TestLwt(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -15,23 +16,34 @@ func Test(t *testing.T) {
 	mockConfig.EXPECT().Name().Return("test-converter").AnyTimes()
 	mockConfig.EXPECT().TargetMeasurement().Return("boolValue").MinTimes(1)
 
+	now := time.Now()
+
 	stimuli := TestStimuliResponse{
 		{
-			Topic:         "piegn/tele/software/srv1-go-ve-sensor/LWT",
-			Payload:       "Online",
-			ExpectedLines: []string{"boolValue,device=software/srv1-go-ve-sensor,field=Available value=true"},
+			Topic:             "piegn/tele/software/srv1-go-ve-sensor/LWT",
+			Payload:           "Online",
+			ExpectedLines:     []string{"boolValue,device=software/srv1-go-ve-sensor,field=Available value=true"},
+			ExpectedTimeStamp: now,
 		}, {
-			Topic:         "piegn/tele/software/srv1-go-ve-sensor/LWT",
-			Payload:       "Offline",
-			ExpectedLines: []string{"boolValue,device=software/srv1-go-ve-sensor,field=Available value=false"},
+			Topic:             "piegn/tele/mezzo/stube-licht1/LWT",
+			Payload:           "Online",
+			ExpectedLines:     []string{"boolValue,device=mezzo/stube-licht1,field=Available value=true"},
+			ExpectedTimeStamp: now,
 		}, {
-			Topic:         "piegn/tele/software/srv1-go-ve-sensor/LWT",
-			Payload:       "invalid",
-			ExpectedLines: []string{},
+			Topic:             "piegn/tele/software/srv1-go-ve-sensor/LWT",
+			Payload:           "Offline",
+			ExpectedLines:     []string{"boolValue,device=software/srv1-go-ve-sensor,field=Available value=false"},
+			ExpectedTimeStamp: now,
 		}, {
-			Topic:         "piegn/tele/software/srv1-go-ve-sensor/LWT-invalid-topic",
-			Payload:       "Online",
-			ExpectedLines: []string{},
+			Topic:             "piegn/tele/software/srv1-go-ve-sensor/LWT",
+			Payload:           "invalid",
+			ExpectedLines:     []string{},
+			ExpectedTimeStamp: now,
+		}, {
+			Topic:             "piegn/tele/software/srv1-go-ve-sensor/LWT-invalid-topic",
+			Payload:           "Online",
+			ExpectedLines:     []string{},
+			ExpectedTimeStamp: now,
 		},
 	}
 
