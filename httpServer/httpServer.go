@@ -1,11 +1,13 @@
 package httpServer
 
 import (
+	"context"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 type HttpServer struct {
@@ -52,9 +54,10 @@ func Run(config Config, env *Environment) (httpServer *HttpServer) {
 }
 
 func (s *HttpServer) Shutdown() {
-	err := s.server.Shutdown(nil)
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	err := s.server.Shutdown(ctx)
 	if err != nil {
-		log.Printf("httpServer: gracefully shutdown failed: %s", err)
+		log.Printf("httpServer: graceful shutdown failed: %s", err)
 	}
 }
 
