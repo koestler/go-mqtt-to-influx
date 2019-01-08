@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/jessevdk/go-flags"
 	"github.com/koestler/go-mqtt-to-influxdb/config"
 	"log"
@@ -10,7 +11,12 @@ import (
 	"syscall"
 )
 
+// is set through linker by build.sh
+var buildVersion string
+var buildTime string
+
 type CmdOptions struct {
+	Version    bool           `long:"version" description:"Print the build version and timestamp"`
 	Config     flags.Filename `short:"c" long:"config" description:"Config File in yaml format" default:"./config.yaml"`
 	CpuProfile flags.Filename `long:"cpuprofile" description:"write cpu profile to <file>"`
 	MemProfile flags.Filename `long:"memprofile" description:"write memory profile to <file>"`
@@ -33,6 +39,12 @@ func getCmdOptions() (cmdOptions CmdOptions, cmdName string) {
 		} else {
 			os.Exit(ExitDueToCmdOptions)
 		}
+	}
+
+	if cmdOptions.Version {
+		fmt.Println("github.com/koestler/go-mqtt-to-influxdb version:", buildVersion)
+		fmt.Println("build at:", buildTime)
+		os.Exit(ExitSuccess)
 	}
 
 	return cmdOptions, parser.Name
@@ -68,7 +80,7 @@ func main() {
 		initiateShutdown := make(chan error, 4)
 
 		if cfg.LogWorkerStart {
-			log.Print("main: start go-mqtt-to-influxdb...")
+			log.Printf("main: start go-mqtt-to-influxdb version=%s", buildVersion)
 		}
 
 		// start cpu profiling if enabled
