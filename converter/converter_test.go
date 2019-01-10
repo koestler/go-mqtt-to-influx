@@ -20,7 +20,8 @@ func checkTimeStamp(expected, response time.Time) bool {
 }
 
 func getLineWoTime(line string) string {
-	return strings.Join(strings.Split(line, " ")[0:2], " ")
+	parts := strings.Split(line, " ")
+	return strings.Join(parts[0:len(parts)-1], " ")
 }
 
 type TestStimuliResponse []struct {
@@ -61,7 +62,11 @@ func testStimuliResponse(
 
 			responseLines = append(responseLines, response)
 
-			if !checkTimeStamp(s.ExpectedTimeStamp, output.Time()) {
+			expectedTime := s.ExpectedTimeStamp
+			if strings.HasPrefix(response, "timeValue,") {
+				expectedTime = time.Now()
+			}
+			if !checkTimeStamp(expectedTime, output.Time()) {
 				t.Errorf("expect timestamp to %s but got %s", s.ExpectedTimeStamp, output.Time())
 			}
 		}
@@ -73,11 +78,13 @@ func testStimuliResponse(
 		if !reflect.DeepEqual(s.ExpectedLines, responseLines) {
 			t.Errorf("expected lines do not match response lines:")
 
+			t.Errorf("  expected: %d lines:", len(s.ExpectedLines))
 			for _, l := range s.ExpectedLines {
-				t.Errorf("  expected: %s", l)
+				t.Errorf("    %s", l)
 			}
+			t.Errorf("  got: %d lines:", len(responseLines))
 			for _, l := range responseLines {
-				t.Errorf("  got: %s", l)
+				t.Errorf("    %s", l)
 			}
 		}
 	}
