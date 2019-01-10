@@ -96,14 +96,14 @@ func tasmotaStateHandler(c Config, input Input, outputFunc OutputFunc) {
 	timeStamp, err := parseTime(message.Time)
 	if err != nil {
 		timeStamp = time.Now()
+	} else {
+		// save time given vs time now
+		outputFunc(stateTimeOutputMessage{
+			timeStamp: now,
+			device:    device,
+			value:     timeStamp,
+		})
 	}
-
-	// save time given vs time now
-	outputFunc(stateTimeOutputMessage{
-		timeStamp: now,
-		device:    device,
-		value:     timeStamp,
-	})
 
 	// save uptime
 	if upTime, err := parseUpTime(message.Uptime); err != nil {
