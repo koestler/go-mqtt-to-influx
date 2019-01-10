@@ -83,5 +83,9 @@ func TestGoVeSensor(t *testing.T) {
 		},
 	}
 
-	testStimuliResponse(t, mockCtrl, mockConfig, goVeSensorHandler, stimuli)
+	if h, err := GetHandler("go-ve-sensor"); err != nil {
+		t.Errorf("did not expect an error while getting handler: %s", err)
+	} else {
+		testStimuliResponse(t, mockCtrl, mockConfig, h, stimuli)
+	}
 }

@@ -62,5 +62,9 @@ func TestTasmotaSensor(t *testing.T) {
 		},
 	}
 
-	testStimuliResponse(t, mockCtrl, mockConfig, tasmotaSensorHandler, stimuli)
+	if h, err := GetHandler("tasmota-sensor"); err != nil {
+		t.Errorf("did not expect an error while getting handler: %s", err)
+	} else {
+		testStimuliResponse(t, mockCtrl, mockConfig, h, stimuli)
+	}
 }

@@ -47,5 +47,9 @@ func TestLwt(t *testing.T) {
 		},
 	}
 
-	testStimuliResponse(t, mockCtrl, mockConfig, lwtHandler, stimuli)
+	if h, err := GetHandler("lwt"); err != nil {
+		t.Errorf("did not expect an error while getting handler: %s", err)
+	} else {
+		testStimuliResponse(t, mockCtrl, mockConfig, h, stimuli)
+	}
 }

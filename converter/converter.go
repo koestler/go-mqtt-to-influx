@@ -34,7 +34,7 @@ var converterImplementations = make(map[string]HandleFunc)
 
 func registerHandler(implementation string, h HandleFunc) {
 	if _, ok := converterImplementations[implementation]; ok {
-		log.Fatalf("converter: implementation='%s' registered twice", implementation)
+		log.Printf("converter: implementation='%s' registered twice; ignore second", implementation)
 	}
 
 	converterImplementations[implementation] = h

@@ -1,9 +1,11 @@
 package converter
 
 import (
+	"bytes"
 	"github.com/golang/mock/gomock"
 	"github.com/koestler/go-mqtt-to-influxdb/converter/mock"
 	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
+	"log"
 	"reflect"
 	"sort"
 	"strings"
@@ -87,5 +89,24 @@ func testStimuliResponse(
 				t.Errorf("    %s", l)
 			}
 		}
+	}
+}
+
+func TestInvalidHandler(t *testing.T) {
+	_, err := GetHandler("unknown")
+	if err == nil {
+		t.Errorf("expected an error")
+	}
+}
+
+func TestRegisterTwice(t *testing.T) {
+	var logBuffer bytes.Buffer
+	log.SetOutput(&logBuffer)
+
+	registerHandler("empty", func(c Config, input Input, outputFunc OutputFunc) {})
+	registerHandler("empty", func(c Config, input Input, outputFunc OutputFunc) {})
+
+	if !strings.Contains(logBuffer.String(), "twice") {
+		t.Errorf("expected a log output that we registered go-ve-sensor twice")
 	}
 }
