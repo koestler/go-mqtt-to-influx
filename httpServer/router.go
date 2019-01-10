@@ -1,6 +1,7 @@
 package httpServer
 
 import (
+	"expvar"
 	"github.com/gorilla/mux"
 	"github.com/lestrrat-go/apache-logformat"
 	"io"
@@ -25,6 +26,14 @@ var httpRoutes = []HttpRoute{
 		"GET",
 		"/api{Path:.*}",
 		HandleApiNotFound,
+	}, {
+		"expvar",
+		"GET",
+		"/debug/vars",
+		func(env *Environment, w http.ResponseWriter, r *http.Request) Error {
+			expvar.Handler().ServeHTTP(w, r)
+			return nil
+		},
 	},
 }
 
