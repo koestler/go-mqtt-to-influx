@@ -145,7 +145,7 @@ func tasmotaStateHandler(c Config, input Input, outputFunc OutputFunc) {
 		}
 	}
 	outputPower := func(field string, power string) {
-		if value, ok := powerToBoolean(message.Power); ok {
+		if value, ok := powerToBoolean(power); ok {
 			outputFunc(stateBoolOutputMessage{
 				timeStamp: timeStamp,
 				device:    device,
