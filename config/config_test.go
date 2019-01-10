@@ -212,8 +212,8 @@ func TestReadConfig_InvalidEmpty(t *testing.T) {
 
 func TestReadConfig_InvalidUnknownVersion(t *testing.T) {
 	_, err := ReadConfig([]byte(InvalidUnknownVersionConfig))
-	if len(err) != 1 || err[0].Error() != "Version=42 not supported" {
-		t.Errorf("expect 1 error: 'Version=42 not supported' but got: %v", err)
+	if len(err) != 1 || err[0].Error() != "Version=42 is not supported." {
+		t.Errorf("expect 1 error: 'Version=42 is not supported.' but got: %v", err)
 	}
 }
 
