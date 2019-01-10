@@ -35,7 +35,7 @@ func runMqttClient(
 
 			log.Printf("main: Mqtt[%s] started", mqttClientConfig.Name())
 		} else {
-			log.Printf("main: Mqtt[%s] start failed: %s", err)
+			log.Printf("main: Mqtt[%s] start failed: %s", mqttClientConfig.Name(), err)
 		}
 	}
 

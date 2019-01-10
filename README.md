@@ -5,3 +5,4 @@
 * refactor statistics module; Statistics should be an interface; there should be a dummy implementation
 * check consistency of log outputs
 * rewrite all err == nil to err != nil
+* add expvar metrics?

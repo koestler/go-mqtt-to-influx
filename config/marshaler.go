@@ -44,7 +44,7 @@ func (c Config) MarshalYAML() (interface{}, error) {
 	}, nil
 }
 
-func (c MqttClientConfig) convertToRead() (mqttClientConfigRead) {
+func (c MqttClientConfig) convertToRead() mqttClientConfigRead {
 	return mqttClientConfigRead{
 		Broker:            c.broker,
 		User:              c.user,
@@ -57,7 +57,7 @@ func (c MqttClientConfig) convertToRead() (mqttClientConfigRead) {
 	}
 }
 
-func (c InfluxDbClientConfig) convertToRead() (influxDbClientConfigRead) {
+func (c InfluxDbClientConfig) convertToRead() influxDbClientConfigRead {
 	return influxDbClientConfigRead{
 		Address:         c.address,
 		User:            c.user,
@@ -69,7 +69,7 @@ func (c InfluxDbClientConfig) convertToRead() (influxDbClientConfigRead) {
 	}
 }
 
-func (c ConverterConfig) convertToRead() (converterConfigRead) {
+func (c ConverterConfig) convertToRead() converterConfigRead {
 	return converterConfigRead{
 		Implementation:    c.implementation,
 		TargetMeasurement: c.targetMeasurement,
@@ -79,7 +79,7 @@ func (c ConverterConfig) convertToRead() (converterConfigRead) {
 	}
 }
 
-func (c HttpServerConfig) convertToRead() (httpServerConfigRead) {
+func (c HttpServerConfig) convertToRead() httpServerConfigRead {
 	return httpServerConfigRead{
 		Bind:        c.bind,
 		Port:        &c.port,
@@ -87,7 +87,7 @@ func (c HttpServerConfig) convertToRead() (httpServerConfigRead) {
 	}
 }
 
-func (c StatisticsConfig) convertToRead() (statisticsConfigRead) {
+func (c StatisticsConfig) convertToRead() statisticsConfigRead {
 	return statisticsConfigRead{
 		Enabled:           &c.enabled,
 		HistoryResolution: c.HistoryResolution().String(),

@@ -19,7 +19,7 @@ func HandleApiNotFound(env *Environment, w http.ResponseWriter, r *http.Request)
 func HandleStatsCounts(env *Environment, w http.ResponseWriter, r *http.Request) Error {
 	if !env.Statistics.Enabled() {
 		// Statistics module not available -> return 404
-		err := errors.New("Statistics module is disabled")
+		err := errors.New("Statistics module is disabled.")
 		return StatusError{404, err}
 	}
 
@@ -30,6 +30,9 @@ func HandleStatsCounts(env *Environment, w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		return StatusError{500, err}
 	}
-	w.Write(b)
+	_, err = w.Write(b)
+	if err != nil {
+		return StatusError{500, err}
+	}
 	return nil
 }

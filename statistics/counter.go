@@ -45,7 +45,7 @@ func (s *Statistics) handleIncrementOne(desc Desc) {
 
 func (s *Statistics) handleHistoryTick(now time.Time) {
 	// create new historical list entry if newest one is outdated
-	back := s.historical.Back();
+	back := s.historical.Back()
 	h := back.Value.(*HistoricalCount)
 	if len(h.Count) < 1 {
 		// newest entry is empty -> update it
@@ -101,7 +101,7 @@ func (s *Statistics) getHistoricalCounts(duration time.Duration) (ret map[Desc]i
 
 		// if the one we counted is too old already, stop now
 		if c.NewerThan.Before(limit) {
-			break;
+			break
 		}
 
 		// accumulate counts

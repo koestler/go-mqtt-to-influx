@@ -35,123 +35,123 @@ func ReadConfig(yamlStr []byte) (config Config, err []error) {
 	return configRead.TransformAndValidate()
 }
 
-func (config Config) PrintConfig() (err error) {
-	newYamlStr, err := yaml.Marshal(config)
+func (c Config) PrintConfig() (err error) {
+	newYamlStr, err := yaml.Marshal(c)
 	if err != nil {
 		return fmt.Errorf("cannot encode yaml again: %s", err)
 	}
 
-	log.Print("config: use the following config:")
+	log.Print("c: use the following c:")
 	for _, line := range strings.Split(string(newYamlStr), "\n") {
-		log.Print("config: ", line)
+		log.Print("c: ", line)
 	}
 	return nil
 }
 
-func (i configRead) TransformAndValidate() (ret Config, err []error) {
+func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	var e []error
-	ret.MqttClients, e = i.MqttClients.TransformAndValidate()
+	ret.MqttClients, e = c.MqttClients.TransformAndValidate()
 	err = append(err, e...)
 
-	ret.InfluxDbClients, e = i.InfluxDbClients.TransformAndValidate()
+	ret.InfluxDbClients, e = c.InfluxDbClients.TransformAndValidate()
 	err = append(err, e...)
 
-	ret.Converters, e = i.Converters.TransformAndValidate(ret.MqttClients, ret.InfluxDbClients)
+	ret.Converters, e = c.Converters.TransformAndValidate(ret.MqttClients, ret.InfluxDbClients)
 	err = append(err, e...)
 
-	ret.HttpServer, e = i.HttpServer.TransformAndValidate()
+	ret.HttpServer, e = c.HttpServer.TransformAndValidate()
 	err = append(err, e...)
 
-	ret.Statistics, e = i.Statistics.TransformAndValidate()
+	ret.Statistics, e = c.Statistics.TransformAndValidate()
 	err = append(err, e...)
 
-	if i.Version == nil {
-		err = append(err, fmt.Errorf("Version must be defined; use Version=0"))
+	if c.Version == nil {
+		err = append(err, fmt.Errorf("Version must be defined. Use Version=0."))
 	} else {
-		ret.Version = *i.Version
+		ret.Version = *c.Version
 		if ret.Version != 0 {
-			err = append(err, fmt.Errorf("Version=%d not supported", ret.Version))
+			err = append(err, fmt.Errorf("Version=%d is not supported.", ret.Version))
 		}
 	}
 
-	if i.LogConfig != nil && *i.LogConfig {
+	if c.LogConfig != nil && *c.LogConfig {
 		ret.LogConfig = true
 	}
 
-	if i.LogWorkerStart != nil && *i.LogWorkerStart {
+	if c.LogWorkerStart != nil && *c.LogWorkerStart {
 		ret.LogWorkerStart = true
 	}
 
-	if i.LogMqttDebug != nil && *i.LogMqttDebug {
+	if c.LogMqttDebug != nil && *c.LogMqttDebug {
 		ret.LogMqttDebug = true
 	}
 
 	return
 }
 
-func (i *httpServerConfigRead) TransformAndValidate() (ret HttpServerConfig, err []error) {
+func (c *httpServerConfigRead) TransformAndValidate() (ret HttpServerConfig, err []error) {
 	ret.enabled = false
 	ret.bind = "[::1]"
 	ret.port = 8042
 
-	if i == nil {
+	if c == nil {
 		return
 	}
 
 	ret.enabled = true
 
-	if len(i.Bind) > 0 {
-		ret.bind = i.Bind
+	if len(c.Bind) > 0 {
+		ret.bind = c.Bind
 	}
 
-	if i.Port != nil {
-		ret.port = *i.Port
+	if c.Port != nil {
+		ret.port = *c.Port
 	}
 
-	if i.LogRequests != nil && *i.LogRequests {
+	if c.LogRequests != nil && *c.LogRequests {
 		ret.logRequests = true
 	}
 
 	return
 }
 
-func (i *statisticsConfigRead) TransformAndValidate() (ret StatisticsConfig, err []error) {
+func (c *statisticsConfigRead) TransformAndValidate() (ret StatisticsConfig, err []error) {
 	// default values
 	ret.enabled = false
 	ret.historyResolution = time.Second
 	ret.historyMaxAge = 10 * time.Minute
 
-	if i == nil {
+	if c == nil {
 		return
 	}
 
-	if i.Enabled != nil && *i.Enabled {
+	if c.Enabled != nil && *c.Enabled {
 		ret.enabled = true
 	}
 
-	if len(i.HistoryResolution) < 1 {
+	if len(c.HistoryResolution) < 1 {
 		// use default 1s
-	} else if historyResolution, e := time.ParseDuration(i.HistoryResolution); e != nil {
+	} else if historyResolution, e := time.ParseDuration(c.HistoryResolution); e != nil {
 		err = append(err, fmt.Errorf("Statistics->HistoryResolution='%s' parse error: %s",
-			i.HistoryResolution, e,
+			c.HistoryResolution, e,
 		))
 	} else if historyResolution <= 0 {
 		err = append(err, fmt.Errorf("Statistics->HistoryResolution='%s' must be >0",
-			i.HistoryResolution,
+			c.HistoryResolution,
 		))
 	} else {
 		ret.historyResolution = historyResolution
 	}
 
-	if len(i.HistoryMaxAge) < 1 {
+	if len(c.HistoryMaxAge) < 1 {
 		// use default 10min
-	} else if historyMaxAge, e := time.ParseDuration(i.HistoryMaxAge); e != nil {
+	} else if historyMaxAge, e := time.ParseDuration(c.HistoryMaxAge); e != nil {
 		err = append(err, fmt.Errorf("Statistics->HistoryMaxAge='%s' parse error: %s",
-			i.HistoryMaxAge, e,
+			c.HistoryMaxAge, e,
 		))
 	} else if historyMaxAge <= 0 {
 		err = append(err, fmt.Errorf("Statistics->HistoryMaxAge='%s' must be >0",
-			i.HistoryMaxAge,
+			c.HistoryMaxAge,
 		))
 	} else {
 		ret.historyMaxAge = historyMaxAge
@@ -160,10 +160,10 @@ func (i *statisticsConfigRead) TransformAndValidate() (ret StatisticsConfig, err
 	return
 }
 
-func (m mqttClientConfigReadMap) getOrderedKeys() (ret []string) {
-	ret = make([]string, len(m))
+func (c mqttClientConfigReadMap) getOrderedKeys() (ret []string) {
+	ret = make([]string, len(c))
 	i := 0
-	for k, _ := range (m) {
+	for k := range c {
 		ret[i] = k
 		i++
 	}
@@ -171,15 +171,15 @@ func (m mqttClientConfigReadMap) getOrderedKeys() (ret []string) {
 	return
 }
 
-func (i mqttClientConfigReadMap) TransformAndValidate() (ret []*MqttClientConfig, err []error) {
-	if len(i) < 1 {
+func (c mqttClientConfigReadMap) TransformAndValidate() (ret []*MqttClientConfig, err []error) {
+	if len(c) < 1 {
 		return ret, []error{fmt.Errorf("MqttClients section must no be empty")}
 	}
 
-	ret = make([]*MqttClientConfig, len(i))
+	ret = make([]*MqttClientConfig, len(c))
 	j := 0
-	for _, name := range i.getOrderedKeys() {
-		r, e := i[name].TransformAndValidate(name)
+	for _, name := range c.getOrderedKeys() {
+		r, e := c[name].TransformAndValidate(name)
 		ret[j] = &r
 		err = append(err, e...)
 		j++
@@ -187,14 +187,14 @@ func (i mqttClientConfigReadMap) TransformAndValidate() (ret []*MqttClientConfig
 	return
 }
 
-func (i mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientConfig, err []error) {
+func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientConfig, err []error) {
 	ret = MqttClientConfig{
 		name:        name,
-		broker:      i.Broker,
-		user:        i.User,
-		password:    i.Password,
-		clientId:    i.ClientId,
-		topicPrefix: i.TopicPrefix,
+		broker:      c.Broker,
+		user:        c.User,
+		password:    c.Password,
+		clientId:    c.ClientId,
+		topicPrefix: c.TopicPrefix,
 	}
 
 	if !nameMatcher.MatchString(ret.name) {
@@ -207,32 +207,32 @@ func (i mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 	if len(ret.clientId) < 1 {
 		ret.clientId = "go-mqtt-to-influxdb"
 	}
-	if i.Qos == nil {
+	if c.Qos == nil {
 		ret.qos = 0
-	} else if *i.Qos == 0 || *i.Qos == 1 || *i.Qos == 2 {
-		ret.qos = *i.Qos
+	} else if *c.Qos == 0 || *c.Qos == 1 || *c.Qos == 2 {
+		ret.qos = *c.Qos
 	} else {
-		err = append(err, fmt.Errorf("MqttClientConfig->%s->Qos=%d but must be 0, 1 or 2", name, *i.Qos))
+		err = append(err, fmt.Errorf("MqttClientConfig->%s->Qos=%d but must be 0, 1 or 2", name, *c.Qos))
 	}
 
-	if i.AvailabilityTopic == nil {
+	if c.AvailabilityTopic == nil {
 		// use default
 		ret.availabilityTopic = "%Prefix%tele/%clientId%/LWT"
 	} else {
-		ret.availabilityTopic = *i.AvailabilityTopic
+		ret.availabilityTopic = *c.AvailabilityTopic
 	}
 
-	if i.LogMessages != nil && *i.LogMessages {
+	if c.LogMessages != nil && *c.LogMessages {
 		ret.logMessages = true
 	}
 
 	return
 }
 
-func (m influxDbClientConfigReadMap) getOrderedKeys() (ret []string) {
-	ret = make([]string, len(m))
+func (c influxDbClientConfigReadMap) getOrderedKeys() (ret []string) {
+	ret = make([]string, len(c))
 	i := 0
-	for k, _ := range (m) {
+	for k := range c {
 		ret[i] = k
 		i++
 	}
@@ -240,15 +240,15 @@ func (m influxDbClientConfigReadMap) getOrderedKeys() (ret []string) {
 	return
 }
 
-func (i influxDbClientConfigReadMap) TransformAndValidate() (ret []*InfluxDbClientConfig, err []error) {
-	if len(i) < 1 {
+func (c influxDbClientConfigReadMap) TransformAndValidate() (ret []*InfluxDbClientConfig, err []error) {
+	if len(c) < 1 {
 		return ret, []error{fmt.Errorf("InfluxDbClients section must no be empty")}
 	}
 
-	ret = make([]*InfluxDbClientConfig, len(i))
+	ret = make([]*InfluxDbClientConfig, len(c))
 	j := 0
-	for _, name := range i.getOrderedKeys() {
-		r, e := i[name].TransformAndValidate(name)
+	for _, name := range c.getOrderedKeys() {
+		r, e := c[name].TransformAndValidate(name)
 		ret[j] = &r
 		err = append(err, e...)
 		j++
@@ -256,13 +256,13 @@ func (i influxDbClientConfigReadMap) TransformAndValidate() (ret []*InfluxDbClie
 	return
 }
 
-func (i influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxDbClientConfig, err []error) {
+func (c influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxDbClientConfig, err []error) {
 	ret = InfluxDbClientConfig{
 		name:     name,
-		address:  i.Address,
-		user:     i.User,
-		password: i.Password,
-		database: i.Database,
+		address:  c.Address,
+		user:     c.User,
+		password: c.Password,
+		database: c.Database,
 	}
 
 	if !nameMatcher.MatchString(ret.name) {
@@ -277,47 +277,47 @@ func (i influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxD
 		ret.database = "go-mqtt-to-influxdb"
 	}
 
-	if len(i.WriteInterval) < 1 {
+	if len(c.WriteInterval) < 1 {
 		// use default 0
 		ret.writeInterval = 200 * time.Millisecond
-	} else if writeInterval, e := time.ParseDuration(i.WriteInterval); e != nil {
+	} else if writeInterval, e := time.ParseDuration(c.WriteInterval); e != nil {
 		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->WriteInterval='%s' parse error: %s",
-			name, i.WriteInterval, e,
+			name, c.WriteInterval, e,
 		))
 	} else if writeInterval < 0 {
 		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->WriteInterval='%s' must be positive",
-			name, i.WriteInterval,
+			name, c.WriteInterval,
 		))
 	} else {
 		ret.writeInterval = writeInterval
 	}
 
-	if len(i.TimePrecision) < 1 {
+	if len(c.TimePrecision) < 1 {
 		// use default 1s
 		ret.timePrecision = time.Second
-	} else if timePrecision, e := time.ParseDuration(i.TimePrecision); e != nil {
+	} else if timePrecision, e := time.ParseDuration(c.TimePrecision); e != nil {
 		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->TimePrecision='%s' parse error: %s",
-			name, i.TimePrecision, e,
+			name, c.TimePrecision, e,
 		))
 	} else if timePrecision < 0 {
 		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->TimePrecision='%s' must be positive",
-			name, i.TimePrecision,
+			name, c.TimePrecision,
 		))
 	} else {
 		ret.timePrecision = timePrecision
 	}
 
-	if i.LogLineProtocol != nil && *i.LogLineProtocol {
+	if c.LogLineProtocol != nil && *c.LogLineProtocol {
 		ret.logLineProtocol = true
 	}
 
 	return
 }
 
-func (m converterConfigReadMap) getOrderedKeys() (ret []string) {
-	ret = make([]string, len(m))
+func (c converterConfigReadMap) getOrderedKeys() (ret []string) {
+	ret = make([]string, len(c))
 	i := 0
-	for k, _ := range (m) {
+	for k := range c {
 		ret[i] = k
 		i++
 	}
@@ -325,18 +325,18 @@ func (m converterConfigReadMap) getOrderedKeys() (ret []string) {
 	return
 }
 
-func (i converterConfigReadMap) TransformAndValidate(
+func (c converterConfigReadMap) TransformAndValidate(
 	mqttClients []*MqttClientConfig,
 	influxDbClients []*InfluxDbClientConfig,
 ) (ret []*ConverterConfig, err []error) {
-	if len(i) < 1 {
-		return ret, []error{fmt.Errorf("Converters section must no be empty")}
+	if len(c) < 1 {
+		return ret, []error{fmt.Errorf("Converters section must no be empty.")}
 	}
 
-	ret = make([]*ConverterConfig, len(i))
+	ret = make([]*ConverterConfig, len(c))
 	j := 0
-	for _, name := range i.getOrderedKeys() {
-		r, e := i[name].TransformAndValidate(name, mqttClients, influxDbClients)
+	for _, name := range c.getOrderedKeys() {
+		r, e := c[name].TransformAndValidate(name, mqttClients, influxDbClients)
 		ret[j] = &r
 		err = append(err, e...)
 		j++
@@ -351,18 +351,18 @@ var implementationsAndDefaultMeasurement = map[string]string{
 	"tasmota-sensor": "floatValue",
 }
 
-func (i converterConfigRead) TransformAndValidate(
+func (c converterConfigRead) TransformAndValidate(
 	name string,
 	mqttClients []*MqttClientConfig,
 	influxDbClients []*InfluxDbClientConfig,
 ) (ret ConverterConfig, err []error) {
 	ret = ConverterConfig{
 		name:              name,
-		implementation:    i.Implementation,
-		targetMeasurement: i.TargetMeasurement,
-		mqttTopics:        i.MqttTopics,
-		mqttClients:       i.MqttClients,
-		influxDbClients:   i.InfluxDbClients,
+		implementation:    c.Implementation,
+		targetMeasurement: c.TargetMeasurement,
+		mqttTopics:        c.MqttTopics,
+		mqttClients:       c.MqttClients,
+		influxDbClients:   c.InfluxDbClients,
 	}
 
 	if !nameMatcher.MatchString(ret.name) {
@@ -409,7 +409,7 @@ func (i converterConfigRead) TransformAndValidate(
 		err = append(err, fmt.Errorf("Converters->%s->MqttTopics must not be empty", name))
 	}
 
-	if i.LogHandleOnce != nil && *i.LogHandleOnce {
+	if c.LogHandleOnce != nil && *c.LogHandleOnce {
 		ret.logHandleOnce = true
 	}
 

@@ -54,7 +54,7 @@ func TestGoVeSensor(t *testing.T) {
     "Power":{"Value":-18,"Unit":"W"}
   }
 }`,
-			ExpectedLines:     []string{"floatValue,device=24v-bmv,field=Power,sensor=bmv700,unit=W value=-18",},
+			ExpectedLines:     []string{"floatValue,device=24v-bmv,field=Power,sensor=bmv700,unit=W value=-18"},
 			ExpectedTimeStamp: time.Now(),
 		}, {
 			Topic:             "piegn/tele/ve/24v-bmv",

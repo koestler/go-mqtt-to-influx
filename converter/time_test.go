@@ -34,7 +34,6 @@ func TestParseInvalidTime(t *testing.T) {
 	}
 }
 
-
 func TestParseUpTime(t *testing.T) {
 	values := []struct {
 		Str     string

@@ -54,7 +54,8 @@ func Run(config Config, env *Environment) (httpServer *HttpServer) {
 }
 
 func (s *HttpServer) Shutdown() {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	err := s.server.Shutdown(ctx)
 	if err != nil {
 		log.Printf("httpServer: graceful shutdown failed: %s", err)

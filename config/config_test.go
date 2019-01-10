@@ -486,7 +486,9 @@ func TestReadConfig_Complex(t *testing.T) {
 	defer func() {
 		log.SetOutput(os.Stderr)
 	}()
-	config.PrintConfig()
+	if err := config.PrintConfig(); err != nil {
+		t.Errorf("expected no error. Got: %s", err)
+	}
 	t.Log(buf.String())
 }
 

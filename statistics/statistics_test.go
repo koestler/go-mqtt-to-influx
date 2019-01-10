@@ -79,7 +79,7 @@ func TestDisabled(t *testing.T) {
 	simulationCase0(t, s)
 
 	// must not crash even if module disabled
-	getHistorical(s, time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR");
+	getHistorical(s, time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR")
 	s.getHierarchicalCounts()
 }
 
