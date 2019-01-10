@@ -12,7 +12,7 @@ import (
 
 func runMqttClient(
 	cfg *config.Config,
-	statisticsInstance *statistics.Statistics,
+	statisticsInstance statistics.Statistics,
 	initiateShutdown chan<- error,
 ) map[string]*mqttClient.MqttClient {
 	mqtt.ERROR = log.New(os.Stdout, "MqttDebugLog: ", log.LstdFlags)

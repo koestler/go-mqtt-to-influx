@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func runHttpServer(cfg *config.Config, statisticsInstance *statistics.Statistics) *httpServer.HttpServer {
+func runHttpServer(cfg *config.Config, statisticsInstance statistics.Statistics) *httpServer.HttpServer {
 	if !cfg.HttpServer.Enabled() {
 		return nil
 	}

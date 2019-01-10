@@ -5,7 +5,13 @@ import (
 	"time"
 )
 
-type Statistics struct {
+type Statistics interface {
+	Enabled() bool
+	IncrementOne(module, name, field string)
+	GetHierarchicalCounts() interface{}
+}
+
+type InMemmoryStatistics struct {
 	config Config
 
 	total      map[Desc]int
@@ -17,6 +23,8 @@ type Statistics struct {
 	// output channels
 	requestHierarchicalCounts chan requestHierarchicalCounts
 }
+
+type DisabledStatistics struct{}
 
 type Config interface {
 	Enabled() bool
@@ -35,14 +43,12 @@ type HistoricalCount struct {
 	Count     map[Desc]int
 }
 
-func Run(config Config) (stats *Statistics) {
+func Run(config Config) (stats Statistics) {
 	if !config.Enabled() {
-		return &Statistics{
-			config: config,
-		}
+		return &DisabledStatistics{}
 	}
 
-	stats = &Statistics{
+	inMemoryStats := &InMemmoryStatistics{
 		config:                    config,
 		total:                     make(map[Desc]int),
 		historical:                list.New(),
@@ -51,23 +57,29 @@ func Run(config Config) (stats *Statistics) {
 	}
 
 	// start incrementer routine
-	go stats.countWorker()
+	go inMemoryStats.countWorker()
 
-	return stats
+	return inMemoryStats
 }
 
-func (s *Statistics) Enabled() bool {
-	return s.config.Enabled()
+func (s InMemmoryStatistics) Enabled() bool {
+	return true
 }
 
-func (s *Statistics) IncrementOne(module, name, field string) {
-	if !s.Enabled() {
-		return
-	}
-
+func (s *InMemmoryStatistics) IncrementOne(module, name, field string) {
 	s.incrementOne <- Desc{
 		module: module,
 		name:   name,
 		field:  field,
 	}
+}
+
+func (s DisabledStatistics) Enabled() bool {
+	return false
+}
+
+func (s *DisabledStatistics) IncrementOne(module, name, field string) {}
+
+func (s *DisabledStatistics) GetHierarchicalCounts() interface{} {
+	return struct{}{}
 }

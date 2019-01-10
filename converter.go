@@ -13,7 +13,7 @@ import (
 
 func connectConverters(
 	cfg *config.Config,
-	statisticsInstance *statistics.Statistics,
+	statisticsInstance statistics.Statistics,
 	mqttClientInstances map[string]*mqttClient.MqttClient,
 	influxDbClientPoolInstance *influxDbClient.ClientPool,
 	initiateShutdown chan<- error,
@@ -60,7 +60,7 @@ func connectConverters(
 func getMqttMessageHandler(
 	config converter.Config,
 	handleFunc converter.HandleFunc,
-	statisticsInstance *statistics.Statistics,
+	statisticsInstance statistics.Statistics,
 	influxDbClientPoolInstance *influxDbClient.ClientPool,
 ) mqtt.MessageHandler {
 	return func(client mqtt.Client, message mqtt.Message) {

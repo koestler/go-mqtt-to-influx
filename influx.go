@@ -10,7 +10,7 @@ import (
 
 func runInfluxClient(
 	cfg *config.Config,
-	statisticsInstance *statistics.Statistics,
+	statisticsInstance statistics.Statistics,
 	initiateShutdown chan<- error,
 ) *influxDbClient.ClientPool {
 	influxDbClientPoolInstance := influxDbClient.RunPool()
