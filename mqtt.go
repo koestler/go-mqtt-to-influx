@@ -30,12 +30,11 @@ func runMqttClient(
 			)
 		}
 
-		if client, err := mqttClient.Run(mqttClientConfig, statisticsInstance); err == nil {
-			mqttClientInstances[mqttClientConfig.Name()] = client
-
-			log.Printf("main: Mqtt[%s] started", mqttClientConfig.Name())
-		} else {
+		if client, err := mqttClient.Run(mqttClientConfig, statisticsInstance); err != nil {
 			log.Printf("main: Mqtt[%s] start failed: %s", mqttClientConfig.Name(), err)
+		} else {
+			mqttClientInstances[mqttClientConfig.Name()] = client
+			log.Printf("main: Mqtt[%s] started", mqttClientConfig.Name())
 		}
 	}
 

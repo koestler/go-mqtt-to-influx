@@ -43,10 +43,10 @@ func connectConverters(
 			}
 
 			for _, mqttTopic := range converterConfig.MqttTopics() {
-				if err := mqttClientInstance.Subscribe(mqttTopic, messageHandler); err == nil {
-					countStarted += 1
-				} else {
+				if err := mqttClientInstance.Subscribe(mqttTopic, messageHandler); err != nil {
 					log.Printf("Converter[%s]: error while subscribing: %s", converterConfig.Name(), err)
+				} else {
+					countStarted += 1
 				}
 			}
 		}

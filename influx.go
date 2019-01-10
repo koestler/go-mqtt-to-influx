@@ -26,7 +26,9 @@ func runInfluxClient(
 			)
 		}
 
-		if client, err := influxDbClient.RunClient(influxDbClientConfig, statisticsInstance); err == nil {
+		if client, err := influxDbClient.RunClient(influxDbClientConfig, statisticsInstance); err != nil {
+			log.Printf("main: InfluxDbClient[%s] start failed: %s", influxDbClientConfig.Name(), err)
+		} else {
 			influxDbClientPoolInstance.AddClient(client)
 			countStarted += 1
 			if cfg.LogWorkerStart {
@@ -35,8 +37,6 @@ func runInfluxClient(
 					influxDbClientConfig.Name(), client.ServerVersion(),
 				)
 			}
-		} else {
-			log.Printf("main: InfluxDbClient[%s] start failed: %s", influxDbClientConfig.Name(), err)
 		}
 	}
 

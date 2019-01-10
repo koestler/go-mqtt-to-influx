@@ -165,10 +165,7 @@ func (ic *Client) sendBatch() {
 	}
 
 	ic.lastTransmission = time.Now()
-	if err := ic.client.Write(ic.currentBatch); err == nil {
-		// all ok
-		ic.errorRetryDelay = 0
-	} else {
+	if err := ic.client.Write(ic.currentBatch); err != nil {
 		// retry with exponential backoff
 		if ic.errorRetryDelay < 1 {
 			ic.errorRetryDelay = ErrorDelayMin
@@ -187,6 +184,9 @@ func (ic *Client) sendBatch() {
 
 		// keep current batch for retransmission
 		return
+	} else {
+		// all ok
+		ic.errorRetryDelay = 0
 	}
 
 	// flush batch / start a new one

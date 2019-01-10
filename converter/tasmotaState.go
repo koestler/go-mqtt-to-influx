@@ -106,7 +106,9 @@ func tasmotaStateHandler(c Config, input Input, outputFunc OutputFunc) {
 	})
 
 	// save uptime
-	if upTime, err := parseUpTime(message.Uptime); err == nil {
+	if upTime, err := parseUpTime(message.Uptime); err != nil {
+		log.Printf("tasmota-state[%s]: cannot parse uptime='%s': %s", c.Name(), message.Uptime, err)
+	} else {
 		outputFunc(stateFloatOutputMessage{
 			timeStamp: timeStamp,
 			device:    device,
@@ -114,8 +116,6 @@ func tasmotaStateHandler(c Config, input Input, outputFunc OutputFunc) {
 			unit:      "s",
 			value:     float64(upTime),
 		})
-	} else {
-		log.Printf("tasmota-state[%s]: cannot parse uptime='%s': %s", c.Name(), message.Uptime, err)
 	}
 
 	// Vcc
