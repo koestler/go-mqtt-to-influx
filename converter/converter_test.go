@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-//go:generate mockgen -destination=mock/converter_mock.go -package converter_mock github.com/koestler/go-mqtt-to-influxdb/converter Config,Statistics,Input,Output
+//go:generate mockgen -destination=mock/converter_mock.go -package converter_mock github.com/koestler/go-mqtt-to-influxdb/converter Config,Input,Output
 
 const epsilon = time.Millisecond
 
