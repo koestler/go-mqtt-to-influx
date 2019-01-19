@@ -10,12 +10,12 @@ func (c Config) MarshalYAML() (interface{}, error) {
 			}
 			return mqttClients
 		}(),
-		InfluxDbClients: func() influxDbClientConfigReadMap {
-			influxDbClients := make(influxDbClientConfigReadMap, len(c.InfluxDbClients))
-			for _, c := range c.InfluxDbClients {
-				influxDbClients[c.Name()] = c.convertToRead()
+		InfluxClients: func() influxClientConfigReadMap {
+			influxClients := make(influxClientConfigReadMap, len(c.InfluxClients))
+			for _, c := range c.InfluxClients {
+				influxClients[c.Name()] = c.convertToRead()
 			}
-			return influxDbClients
+			return influxClients
 		}(),
 		Converters: func() converterConfigReadMap {
 			converters := make(converterConfigReadMap, len(c.Converters))
@@ -57,8 +57,8 @@ func (c MqttClientConfig) convertToRead() mqttClientConfigRead {
 	}
 }
 
-func (c InfluxDbClientConfig) convertToRead() influxDbClientConfigRead {
-	return influxDbClientConfigRead{
+func (c InfluxClientConfig) convertToRead() influxClientConfigRead {
+	return influxClientConfigRead{
 		Address:         c.address,
 		User:            c.user,
 		Password:        c.password,

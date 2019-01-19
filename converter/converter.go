@@ -11,7 +11,7 @@ type Config interface {
 	Implementation() string
 	TargetMeasurement() string
 	MqttTopics() []string
-	InfluxDbClients() []string
+	InfluxClients() []string
 	LogHandleOnce() bool
 }
 

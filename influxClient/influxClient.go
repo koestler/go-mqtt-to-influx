@@ -1,4 +1,4 @@
-package influxDbClient
+package influxClient
 
 import (
 	"fmt"
@@ -73,7 +73,7 @@ func RunClient(config Config, statistics Statistics) (*Client, error) {
 
 	// ping server
 	if _, client.serverVersion, err = dbClient.Ping(10 * time.Second); err != nil {
-		return nil, fmt.Errorf("InfluxDbClient: ping failed: %s", err)
+		return nil, fmt.Errorf("influxClient[%s]: ping failed: %s", client.Name(), err)
 	}
 
 	// start to send out points
@@ -161,7 +161,7 @@ func (ic *Client) sendBatch() {
 	}
 	// update statistics
 	for _, p := range points {
-		ic.statistics.IncrementOne("influxDb", ic.Name(), strings.Split(p.String(), " ")[0])
+		ic.statistics.IncrementOne("influx", ic.Name(), strings.Split(p.String(), " ")[0])
 	}
 
 	ic.lastTransmission = time.Now()

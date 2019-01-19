@@ -113,7 +113,7 @@ func simulationCase0(t *testing.T, s *InMemmoryStatistics) {
 
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR", 5)
 	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo2/SENSOR", 6)
-	incrementN(s, "influxDb", "foobar", "piegn/tele/bar/SENSOR", 3)
+	incrementN(s, "influx", "foobar", "piegn/tele/bar/SENSOR", 3)
 	time.Sleep(100 * time.Millisecond)
 
 	// t = 550ms

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"github.com/golang/mock/gomock"
 	"github.com/koestler/go-mqtt-to-influxdb/converter/mock"
-	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
+	"github.com/koestler/go-mqtt-to-influxdb/influxClient"
 	"log"
 	"reflect"
 	"sort"
@@ -54,7 +54,7 @@ func testStimuliResponse(
 		outputTestFunc := func(output Output) {
 			outputTestFuncCounter += 1
 
-			point, err := influxDbClient.ToInfluxPoint(output)
+			point, err := influxClient.ToInfluxPoint(output)
 			if err != nil {
 				t.Errorf("expect no error, got: %v", err)
 			}

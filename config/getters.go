@@ -38,35 +38,35 @@ func (c MqttClientConfig) LogMessages() bool {
 	return c.logMessages
 }
 
-func (c InfluxDbClientConfig) Name() string {
+func (c InfluxClientConfig) Name() string {
 	return c.name
 }
 
-func (c InfluxDbClientConfig) Address() string {
+func (c InfluxClientConfig) Address() string {
 	return c.address
 }
 
-func (c InfluxDbClientConfig) User() string {
+func (c InfluxClientConfig) User() string {
 	return c.user
 }
 
-func (c InfluxDbClientConfig) Password() string {
+func (c InfluxClientConfig) Password() string {
 	return c.password
 }
 
-func (c InfluxDbClientConfig) Database() string {
+func (c InfluxClientConfig) Database() string {
 	return c.database
 }
 
-func (c InfluxDbClientConfig) WriteInterval() time.Duration {
+func (c InfluxClientConfig) WriteInterval() time.Duration {
 	return c.writeInterval
 }
 
-func (c InfluxDbClientConfig) TimePrecision() time.Duration {
+func (c InfluxClientConfig) TimePrecision() time.Duration {
 	return c.timePrecision
 }
 
-func (c InfluxDbClientConfig) LogLineProtocol() bool {
+func (c InfluxClientConfig) LogLineProtocol() bool {
 	return c.logLineProtocol
 }
 
@@ -90,8 +90,8 @@ func (c ConverterConfig) MqttClients() []string {
 	return c.mqttClients
 }
 
-func (c ConverterConfig) InfluxDbClients() []string {
-	return c.influxDbClients
+func (c ConverterConfig) InfluxClients() []string {
+	return c.influxClients
 }
 
 func (c ConverterConfig) LogHandleOnce() bool {

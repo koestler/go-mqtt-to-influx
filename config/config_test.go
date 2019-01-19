@@ -23,7 +23,7 @@ MqttClients:
   m1:
     Broker: "tcp://example.com:1883"
 
-InfluxDbClients:
+InfluxClients:
   i0:
     Address: http://172.17.0.2:8086
   i1:
@@ -40,7 +40,7 @@ Converters:
 Version: 0
 MqttClients:
   m0:
-InfluxDbClients:
+InfluxClients:
   i0:
 Converters:
   c0:
@@ -52,7 +52,7 @@ MqttClients:
     Broker: "tcp://example.com:1883"
     Qos: 4
 
-InfluxDbClients:
+InfluxClients:
   piegn_foo:
     Address: http://172.17.0.2:8086
     WriteInterval: hello
@@ -74,7 +74,7 @@ Converters:
       - x
     MqttClients:
       - inexistant-mqtt-client
-    InfluxDbClients:
+    InfluxClients:
       - inexistant-influx-db-client
 `
 
@@ -84,7 +84,7 @@ MqttClients:
   piegn-mosquitto:
     Broker: "tcp://example.com:1883"
 
-InfluxDbClients:
+InfluxClients:
   piegn:
     Address: http://172.17.0.2:8086
 
@@ -125,7 +125,7 @@ MqttClients:
     TopicPrefix: wiedikon/
     LogMessages: True
 
-InfluxDbClients:
+InfluxClients:
   0-piegn:
     Address: http://172.17.0.2:8086
     User: Alice
@@ -148,7 +148,7 @@ Converters:
     MqttClients:
       - 0-piegn-mosquitto
       - 1-local-mosquitto
-    InfluxDbClients:
+    InfluxClients:
       - 0-piegn
       - 1-local
     LogHandleOnce: True
@@ -206,7 +206,7 @@ func TestReadConfig_NoVersion(t *testing.T) {
 func TestReadConfig_InvalidEmpty(t *testing.T) {
 	_, err := ReadConfig([]byte(InvalidEmptyConfig))
 	if len(err) != 3 {
-		t.Error("expect 3 errors; for empty MqttClients, empty InfluxDbClients, and empty Converters")
+		t.Error("expect 3 errors; for empty MqttClients, empty InfluxClients, and empty Converters")
 	}
 }
 
@@ -358,49 +358,49 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect LogMessages of second MqttClient to be True")
 	}
 
-	// influxDbClients section
-	if len(config.InfluxDbClients) != 2 {
-		t.Error("expect len(config.InfluxDbClients) == 2")
+	// influxClients section
+	if len(config.InfluxClients) != 2 {
+		t.Error("expect len(config.InfluxClients) == 2")
 	}
 
-	if config.InfluxDbClients[0].Name() != "0-piegn" {
-		t.Errorf("expect Name of first InfluxDbClient to be '0-piegn' but got '%s'",
-			config.InfluxDbClients[0].Name(),
+	if config.InfluxClients[0].Name() != "0-piegn" {
+		t.Errorf("expect Name of first InfluxClient to be '0-piegn' but got '%s'",
+			config.InfluxClients[0].Name(),
 		)
 	}
 
-	if config.InfluxDbClients[1].Name() != "1-local" {
-		t.Errorf("expect Name of first InfluxDbClient to be '1-local' but got '%s'",
-			config.InfluxDbClients[1].Name(),
+	if config.InfluxClients[1].Name() != "1-local" {
+		t.Errorf("expect Name of first InfluxClient to be '1-local' but got '%s'",
+			config.InfluxClients[1].Name(),
 		)
 	}
 
-	if config.InfluxDbClients[0].Address() != "http://172.17.0.2:8086" {
-		t.Error("expect Address of first InfluxdbClient to be 'http://172.17.0.2:8086'")
+	if config.InfluxClients[0].Address() != "http://172.17.0.2:8086" {
+		t.Error("expect Address of first InfluxClient to be 'http://172.17.0.2:8086'")
 	}
 
-	if config.InfluxDbClients[0].User() != "Alice" {
-		t.Error("expect User of first InfluxdbClient to be 'Alice'")
+	if config.InfluxClients[0].User() != "Alice" {
+		t.Error("expect User of first InfluxClient to be 'Alice'")
 	}
 
-	if config.InfluxDbClients[0].Password() != "An2iu2egheijeG" {
-		t.Error("expect Password of first InfluxDbClient to be 'An2iu2egheijeG'")
+	if config.InfluxClients[0].Password() != "An2iu2egheijeG" {
+		t.Error("expect Password of first InfluxClient to be 'An2iu2egheijeG'")
 	}
 
-	if config.InfluxDbClients[0].Database() != "test-database" {
-		t.Error("expect Database of first InfluxDbClient to be 'test-database'")
+	if config.InfluxClients[0].Database() != "test-database" {
+		t.Error("expect Database of first InfluxClient to be 'test-database'")
 	}
 
-	if config.InfluxDbClients[0].WriteInterval().String() != "400ms" {
-		t.Error("expect WriteInterval of first InfluxDbClient to be '400ms'")
+	if config.InfluxClients[0].WriteInterval().String() != "400ms" {
+		t.Error("expect WriteInterval of first InfluxClient to be '400ms'")
 	}
 
-	if config.InfluxDbClients[0].TimePrecision().String() != "1ms" {
-		t.Error("expect TimePrecision of first InfluxDbClient to be '1ms'")
+	if config.InfluxClients[0].TimePrecision().String() != "1ms" {
+		t.Error("expect TimePrecision of first InfluxClient to be '1ms'")
 	}
 
-	if !config.InfluxDbClients[0].LogLineProtocol() {
-		t.Error("expect LogLineProtocol of first InfluxDbClient to be True")
+	if !config.InfluxClients[0].LogLineProtocol() {
+		t.Error("expect LogLineProtocol of first InfluxClient to be True")
 	}
 
 	// Converters section
@@ -436,11 +436,11 @@ func TestReadConfig_Complex(t *testing.T) {
 		)
 	}
 
-	if len(config.Converters[0].InfluxDbClients()) != 2 ||
-		config.Converters[0].InfluxDbClients()[0] != "0-piegn" ||
-		config.Converters[0].InfluxDbClients()[1] != "1-local" {
-		t.Errorf("expect InfluxDbClients of first Converter to be ['0-piegn', '1-local'] got %v",
-			config.Converters[0].InfluxDbClients(),
+	if len(config.Converters[0].InfluxClients()) != 2 ||
+		config.Converters[0].InfluxClients()[0] != "0-piegn" ||
+		config.Converters[0].InfluxClients()[1] != "1-local" {
+		t.Errorf("expect InfluxClients of first Converter to be ['0-piegn', '1-local'] got %v",
+			config.Converters[0].InfluxClients(),
 		)
 	}
 
@@ -512,7 +512,7 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect LogMqttDebug to be False by default")
 	}
 
-	// influxDbClients section
+	// influxClients section
 	if config.MqttClients[0].User() != "" {
 		t.Error("expect default MqttClient->User to be empty")
 	}
@@ -542,29 +542,29 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default MqttClient->LogMessages to be False")
 	}
 
-	// influxDbClients section
-	if config.InfluxDbClients[0].User() != "" {
-		t.Error("expect default InfluxDbClient->User to be empty")
+	// influxClients section
+	if config.InfluxClients[0].User() != "" {
+		t.Error("expect default InfluxClient->User to be empty")
 	}
 
-	if config.InfluxDbClients[0].Password() != "" {
-		t.Error("expect default InfluxDbClient->Password to be empty")
+	if config.InfluxClients[0].Password() != "" {
+		t.Error("expect default InfluxClient->Password to be empty")
 	}
 
-	if config.InfluxDbClients[0].Database() != "go-mqtt-to-influxdb" {
-		t.Error("expect default InfluxDbClient->Database to be 'go-mqtt-to-influxdb'")
+	if config.InfluxClients[0].Database() != "go-mqtt-to-influxdb" {
+		t.Error("expect default InfluxClient->Database to be 'go-mqtt-to-influxdb'")
 	}
 
-	if config.InfluxDbClients[0].WriteInterval().String() != "200ms" {
-		t.Error("expect default InfluxDbClient->WriteInterval to be 200ms")
+	if config.InfluxClients[0].WriteInterval().String() != "200ms" {
+		t.Error("expect default InfluxClient->WriteInterval to be 200ms")
 	}
 
-	if config.InfluxDbClients[0].TimePrecision().String() != "1s" {
-		t.Error("expect default InfluxDbClient->TimePrecision to be 1s")
+	if config.InfluxClients[0].TimePrecision().String() != "1s" {
+		t.Error("expect default InfluxClient->TimePrecision to be 1s")
 	}
 
-	if config.InfluxDbClients[0].LogLineProtocol() {
-		t.Error("expect default InfluxDbClient->LogLineProtocol to be False")
+	if config.InfluxClients[0].LogLineProtocol() {
+		t.Error("expect default InfluxClient->LogLineProtocol to be False")
 	}
 
 	// Converters section
@@ -576,8 +576,8 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default Converter->MqttClients to be empty")
 	}
 
-	if len(config.Converters[0].InfluxDbClients()) != 0 {
-		t.Error("expect default Converter->InfluxDbClients to be empty")
+	if len(config.Converters[0].InfluxClients()) != 0 {
+		t.Error("expect default Converter->InfluxClients to be empty")
 	}
 
 	// HttpServer

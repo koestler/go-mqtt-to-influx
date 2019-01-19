@@ -1,4 +1,4 @@
-package influxDbClient
+package influxClient
 
 import (
 	influxClient "github.com/influxdata/influxdb/client/v2"

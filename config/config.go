@@ -53,10 +53,10 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	ret.MqttClients, e = c.MqttClients.TransformAndValidate()
 	err = append(err, e...)
 
-	ret.InfluxDbClients, e = c.InfluxDbClients.TransformAndValidate()
+	ret.InfluxClients, e = c.InfluxClients.TransformAndValidate()
 	err = append(err, e...)
 
-	ret.Converters, e = c.Converters.TransformAndValidate(ret.MqttClients, ret.InfluxDbClients)
+	ret.Converters, e = c.Converters.TransformAndValidate(ret.MqttClients, ret.InfluxClients)
 	err = append(err, e...)
 
 	ret.HttpServer, e = c.HttpServer.TransformAndValidate()
@@ -229,7 +229,7 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 	return
 }
 
-func (c influxDbClientConfigReadMap) getOrderedKeys() (ret []string) {
+func (c influxClientConfigReadMap) getOrderedKeys() (ret []string) {
 	ret = make([]string, len(c))
 	i := 0
 	for k := range c {
@@ -240,12 +240,12 @@ func (c influxDbClientConfigReadMap) getOrderedKeys() (ret []string) {
 	return
 }
 
-func (c influxDbClientConfigReadMap) TransformAndValidate() (ret []*InfluxDbClientConfig, err []error) {
+func (c influxClientConfigReadMap) TransformAndValidate() (ret []*InfluxClientConfig, err []error) {
 	if len(c) < 1 {
-		return ret, []error{fmt.Errorf("InfluxDbClients section must no be empty")}
+		return ret, []error{fmt.Errorf("InfluxClients section must no be empty")}
 	}
 
-	ret = make([]*InfluxDbClientConfig, len(c))
+	ret = make([]*InfluxClientConfig, len(c))
 	j := 0
 	for _, name := range c.getOrderedKeys() {
 		r, e := c[name].TransformAndValidate(name)
@@ -256,8 +256,8 @@ func (c influxDbClientConfigReadMap) TransformAndValidate() (ret []*InfluxDbClie
 	return
 }
 
-func (c influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxDbClientConfig, err []error) {
-	ret = InfluxDbClientConfig{
+func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxClientConfig, err []error) {
+	ret = InfluxClientConfig{
 		name:     name,
 		address:  c.Address,
 		user:     c.User,
@@ -266,11 +266,11 @@ func (c influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxD
 	}
 
 	if !nameMatcher.MatchString(ret.name) {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->Name='%s' does not match %s", ret.name, NameRegexp))
+		err = append(err, fmt.Errorf("InfluxClientConfig->Name='%s' does not match %s", ret.name, NameRegexp))
 	}
 
 	if len(ret.address) < 1 {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->Address must not be empty", name))
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->Address must not be empty", name))
 	}
 
 	if len(ret.database) < 1 {
@@ -281,11 +281,11 @@ func (c influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxD
 		// use default 0
 		ret.writeInterval = 200 * time.Millisecond
 	} else if writeInterval, e := time.ParseDuration(c.WriteInterval); e != nil {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->WriteInterval='%s' parse error: %s",
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->WriteInterval='%s' parse error: %s",
 			name, c.WriteInterval, e,
 		))
 	} else if writeInterval < 0 {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->WriteInterval='%s' must be positive",
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->WriteInterval='%s' must be positive",
 			name, c.WriteInterval,
 		))
 	} else {
@@ -296,11 +296,11 @@ func (c influxDbClientConfigRead) TransformAndValidate(name string) (ret InfluxD
 		// use default 1s
 		ret.timePrecision = time.Second
 	} else if timePrecision, e := time.ParseDuration(c.TimePrecision); e != nil {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->TimePrecision='%s' parse error: %s",
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->TimePrecision='%s' parse error: %s",
 			name, c.TimePrecision, e,
 		))
 	} else if timePrecision < 0 {
-		err = append(err, fmt.Errorf("InfluxDbClientConfig->%s->TimePrecision='%s' must be positive",
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->TimePrecision='%s' must be positive",
 			name, c.TimePrecision,
 		))
 	} else {
@@ -327,7 +327,7 @@ func (c converterConfigReadMap) getOrderedKeys() (ret []string) {
 
 func (c converterConfigReadMap) TransformAndValidate(
 	mqttClients []*MqttClientConfig,
-	influxDbClients []*InfluxDbClientConfig,
+	influxClients []*InfluxClientConfig,
 ) (ret []*ConverterConfig, err []error) {
 	if len(c) < 1 {
 		return ret, []error{fmt.Errorf("Converters section must no be empty.")}
@@ -336,7 +336,7 @@ func (c converterConfigReadMap) TransformAndValidate(
 	ret = make([]*ConverterConfig, len(c))
 	j := 0
 	for _, name := range c.getOrderedKeys() {
-		r, e := c[name].TransformAndValidate(name, mqttClients, influxDbClients)
+		r, e := c[name].TransformAndValidate(name, mqttClients, influxClients)
 		ret[j] = &r
 		err = append(err, e...)
 		j++
@@ -354,7 +354,7 @@ var implementationsAndDefaultMeasurement = map[string]string{
 func (c converterConfigRead) TransformAndValidate(
 	name string,
 	mqttClients []*MqttClientConfig,
-	influxDbClients []*InfluxDbClientConfig,
+	influxClients []*InfluxClientConfig,
 ) (ret ConverterConfig, err []error) {
 	ret = ConverterConfig{
 		name:              name,
@@ -362,7 +362,7 @@ func (c converterConfigRead) TransformAndValidate(
 		targetMeasurement: c.TargetMeasurement,
 		mqttTopics:        c.MqttTopics,
 		mqttClients:       c.MqttClients,
-		influxDbClients:   c.InfluxDbClients,
+		influxClients:     c.InfluxClients,
 	}
 
 	if !nameMatcher.MatchString(ret.name) {
@@ -390,10 +390,10 @@ func (c converterConfigRead) TransformAndValidate(
 		}
 	}
 
-	// validate that all listed influxDbClients exist
-	for _, clientName := range ret.influxDbClients {
+	// validate that all listed influxClients exist
+	for _, clientName := range ret.influxClients {
 		found := false
-		for _, client := range influxDbClients {
+		for _, client := range influxClients {
 			if clientName == client.name {
 				found = true
 				break
@@ -401,7 +401,7 @@ func (c converterConfigRead) TransformAndValidate(
 		}
 
 		if !found {
-			err = append(err, fmt.Errorf("Converters->%s->InfluxDbClient='%s' is not defined", name, clientName))
+			err = append(err, fmt.Errorf("Converters->%s->InfluxClient='%s' is not defined", name, clientName))
 		}
 	}
 

@@ -3,15 +3,15 @@ package config
 import "time"
 
 type Config struct {
-	Version         int                     `yaml:"Version"`         // must be 0
-	MqttClients     []*MqttClientConfig     `yaml:"MqttClient"`      // mandatory: at least 1 must be defined
-	InfluxDbClients []*InfluxDbClientConfig `yaml:"InfluxDbClients"` // mandatory: at least 1 must be defined
-	Converters      []*ConverterConfig      `yaml:"Converters"`      // mandatory: at least 1 must be defined
-	HttpServer      HttpServerConfig        `yaml:"HttpServer"`      // optional: default Disabled
-	Statistics      StatisticsConfig        `yaml:"Statistics"`      // optional: default Disabled
-	LogConfig       bool                    `yaml:"LogConfig"`       // optional: default False
-	LogWorkerStart  bool                    `yaml:"LogWorkerStart"`  // optional: default False
-	LogMqttDebug    bool                    `yaml:"LogMqttDebug"`    // optional: default False
+	Version        int                   `yaml:"Version"`         // must be 0
+	MqttClients    []*MqttClientConfig   `yaml:"MqttClient"`      // mandatory: at least 1 must be defined
+	InfluxClients  []*InfluxClientConfig `yaml:"InfluxClients"`   // mandatory: at least 1 must be defined
+	Converters     []*ConverterConfig    `yaml:"Converters"`      // mandatory: at least 1 must be defined
+	HttpServer     HttpServerConfig      `yaml:"HttpServer"`      // optional: default Disabled
+	Statistics     StatisticsConfig      `yaml:"Statistics"`      // optional: default Disabled
+	LogConfig      bool                  `yaml:"LogConfig"`       // optional: default False
+	LogWorkerStart bool                  `yaml:"LogWorkerStart"`  // optional: default False
+	LogMqttDebug    bool                    `yaml:"LogMqttDebug"` // optional: default False
 }
 
 type MqttClientConfig struct {
@@ -26,7 +26,7 @@ type MqttClientConfig struct {
 	logMessages       bool   // optional: default False
 }
 
-type InfluxDbClientConfig struct {
+type InfluxClientConfig struct {
 	name            string        // defined automatically by map key
 	address         string        // mandatory
 	user            string        // optional: default empty
@@ -43,7 +43,7 @@ type ConverterConfig struct {
 	targetMeasurement string   // optional: default depends on implementation
 	mqttTopics        []string // mandatory: at least 1 must be defined
 	mqttClients       []string // optional: defaults to all defined clients
-	influxDbClients   []string // optional: defaults to all defined clients
+	influxClients     []string // optional: defaults to all defined clients
 	logHandleOnce     bool     // optional: default False
 }
 
@@ -62,15 +62,15 @@ type StatisticsConfig struct {
 
 // Read structs are given to yaml for decoding and are slightly less exact in types
 type configRead struct {
-	Version         *int                        `yaml:"Version"`
-	MqttClients     mqttClientConfigReadMap     `yaml:"MqttClients"`
-	InfluxDbClients influxDbClientConfigReadMap `yaml:"InfluxDbClients"`
-	Converters      converterConfigReadMap      `yaml:"Converters"`
-	HttpServer      *httpServerConfigRead       `yaml:"HttpServer"`
-	Statistics      *statisticsConfigRead       `yaml:"Statistics"`
-	LogConfig       *bool                       `yaml:"LogConfig"`
-	LogWorkerStart  *bool                       `yaml:"LogWorkerStart"`
-	LogMqttDebug    *bool                       `yaml:"LogMqttDebug"`
+	Version        *int                      `yaml:"Version"`
+	MqttClients    mqttClientConfigReadMap   `yaml:"MqttClients"`
+	InfluxClients  influxClientConfigReadMap `yaml:"InfluxClients"`
+	Converters     converterConfigReadMap    `yaml:"Converters"`
+	HttpServer     *httpServerConfigRead     `yaml:"HttpServer"`
+	Statistics     *statisticsConfigRead     `yaml:"Statistics"`
+	LogConfig      *bool                     `yaml:"LogConfig"`
+	LogWorkerStart *bool                     `yaml:"LogWorkerStart"`
+	LogMqttDebug   *bool                     `yaml:"LogMqttDebug"`
 }
 
 type mqttClientConfigRead struct {
@@ -86,7 +86,7 @@ type mqttClientConfigRead struct {
 
 type mqttClientConfigReadMap map[string]mqttClientConfigRead
 
-type influxDbClientConfigRead struct {
+type influxClientConfigRead struct {
 	Address         string `yaml:"Address"`
 	User            string `yaml:"User"`
 	Password        string `yaml:"Password"`
@@ -96,14 +96,14 @@ type influxDbClientConfigRead struct {
 	LogLineProtocol *bool  `yaml:"LogLineProtocol"`
 }
 
-type influxDbClientConfigReadMap map[string]influxDbClientConfigRead
+type influxClientConfigReadMap map[string]influxClientConfigRead
 
 type converterConfigRead struct {
 	Implementation    string   `yaml:"Implementation"`
 	TargetMeasurement string   `yaml:"TargetMeasurement"`
 	MqttTopics        []string `yaml:"MqttTopics"`
 	MqttClients       []string `yaml:"MqttClients"`
-	InfluxDbClients   []string `yaml:"InfluxDbClients"`
+	InfluxClients     []string `yaml:"InfluxClients"`
 	LogHandleOnce     *bool    `yaml:"LogHandleOnce"`
 }
 

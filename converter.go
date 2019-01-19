@@ -4,7 +4,7 @@ import (
 	"github.com/eclipse/paho.mqtt.golang"
 	"github.com/koestler/go-mqtt-to-influxdb/config"
 	"github.com/koestler/go-mqtt-to-influxdb/converter"
-	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
+	"github.com/koestler/go-mqtt-to-influxdb/influxClient"
 	"github.com/koestler/go-mqtt-to-influxdb/mqttClient"
 	"github.com/koestler/go-mqtt-to-influxdb/statistics"
 	"github.com/pkg/errors"
@@ -15,7 +15,7 @@ func connectConverters(
 	cfg *config.Config,
 	statisticsInstance statistics.Statistics,
 	mqttClientInstances map[string]*mqttClient.MqttClient,
-	influxDbClientPoolInstance *influxDbClient.ClientPool,
+	influxClientPoolInstance *influxClient.ClientPool,
 	initiateShutdown chan<- error,
 ) {
 	countStarted := 0
@@ -23,7 +23,7 @@ func connectConverters(
 	for _, converterConfig := range cfg.Converters {
 		handleFunc, err := converter.GetHandler(converterConfig.Implementation())
 		messageHandler := getMqttMessageHandler(
-			converterConfig, handleFunc, statisticsInstance, influxDbClientPoolInstance,
+			converterConfig, handleFunc, statisticsInstance, influxClientPoolInstance,
 		)
 
 		if err != nil {
@@ -34,11 +34,11 @@ func connectConverters(
 		for _, mqttClientInstance := range getMqttClient(mqttClientInstances, converterConfig.MqttClients()) {
 			if cfg.LogWorkerStart {
 				log.Printf(
-					"converter[%s]: start: Implementation='%s', MqttClient='%s', InfluxDbClients=%v",
+					"converter[%s]: start: Implementation='%s', MqttClient='%s', InfluxClients=%v",
 					converterConfig.Name(),
 					converterConfig.Implementation(),
 					mqttClientInstance.Name(),
-					converterConfig.InfluxDbClients(),
+					converterConfig.InfluxClients(),
 				)
 			}
 
@@ -61,7 +61,7 @@ func getMqttMessageHandler(
 	config converter.Config,
 	handleFunc converter.HandleFunc,
 	statisticsInstance statistics.Statistics,
-	influxDbClientPoolInstance *influxDbClient.ClientPool,
+	influxClientPoolInstance *influxClient.ClientPool,
 ) mqtt.MessageHandler {
 	return func(client mqtt.Client, message mqtt.Message) {
 		if config.LogHandleOnce() {
@@ -72,9 +72,9 @@ func getMqttMessageHandler(
 			config,
 			message,
 			func(output converter.Output) {
-				influxDbClientPoolInstance.WritePoint(
+				influxClientPoolInstance.WritePoint(
 					output,
-					config.InfluxDbClients(),
+					config.InfluxClients(),
 				)
 			},
 		)

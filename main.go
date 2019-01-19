@@ -102,15 +102,15 @@ func main() {
 		}
 
 		// start influx clients
-		influxDbClientPoolInstance := runInfluxClient(cfg, statisticsInstance, initiateShutdown)
-		defer influxDbClientPoolInstance.Shutdown()
+		influxClientPoolInstance := runInfluxClient(cfg, statisticsInstance, initiateShutdown)
+		defer influxClientPoolInstance.Shutdown()
 
 		// subscribe to mqtt topics, connect converters methods
 		connectConverters(
 			cfg,
 			statisticsInstance,
 			mqttClientInstances,
-			influxDbClientPoolInstance,
+			influxClientPoolInstance,
 			initiateShutdown,
 		)
 

@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/koestler/go-mqtt-to-influxdb/config"
-	"github.com/koestler/go-mqtt-to-influxdb/influxDbClient"
+	"github.com/koestler/go-mqtt-to-influxdb/influxClient"
 	"github.com/koestler/go-mqtt-to-influxdb/statistics"
 	"github.com/pkg/errors"
 	"log"
@@ -12,29 +12,29 @@ func runInfluxClient(
 	cfg *config.Config,
 	statisticsInstance statistics.Statistics,
 	initiateShutdown chan<- error,
-) *influxDbClient.ClientPool {
-	influxDbClientPoolInstance := influxDbClient.RunPool()
+) *influxClient.ClientPool {
+	influxClientPoolInstance := influxClient.RunPool()
 
 	countStarted := 0
 
-	for _, influxDbClientConfig := range cfg.InfluxDbClients {
+	for _, influxClientConfig := range cfg.InfluxClients {
 		if cfg.LogWorkerStart {
 			log.Printf(
 				"influxClient[%s]: start: address='%s'",
-				influxDbClientConfig.Name(),
-				influxDbClientConfig.Address(),
+				influxClientConfig.Name(),
+				influxClientConfig.Address(),
 			)
 		}
 
-		if client, err := influxDbClient.RunClient(influxDbClientConfig, statisticsInstance); err != nil {
-			log.Printf("influxClient[%s]: start failed: %s", influxDbClientConfig.Name(), err)
+		if client, err := influxClient.RunClient(influxClientConfig, statisticsInstance); err != nil {
+			log.Printf("influxClient[%s]: start failed: %s", influxClientConfig.Name(), err)
 		} else {
-			influxDbClientPoolInstance.AddClient(client)
+			influxClientPoolInstance.AddClient(client)
 			countStarted += 1
 			if cfg.LogWorkerStart {
 				log.Printf(
 					"influxClient[%s]: started; serverVersion='%s'",
-					influxDbClientConfig.Name(), client.ServerVersion(),
+					influxClientConfig.Name(), client.ServerVersion(),
 				)
 			}
 		}
@@ -44,5 +44,5 @@ func runInfluxClient(
 		initiateShutdown <- errors.New("no influxClient was started")
 	}
 
-	return influxDbClientPoolInstance
+	return influxClientPoolInstance
 }
