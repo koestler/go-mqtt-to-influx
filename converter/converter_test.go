@@ -3,8 +3,8 @@ package converter
 import (
 	"bytes"
 	"github.com/golang/mock/gomock"
-	"github.com/koestler/go-mqtt-to-influxdb/converter/mock"
-	"github.com/koestler/go-mqtt-to-influxdb/influxClient"
+	"github.com/koestler/go-mqtt-to-influx/converter/mock"
+	"github.com/koestler/go-mqtt-to-influx/influxClient"
 	"log"
 	"reflect"
 	"sort"
@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-//go:generate mockgen -destination=mock/converter_mock.go -package converter_mock github.com/koestler/go-mqtt-to-influxdb/converter Config,Input,Output
+//go:generate mockgen -destination=mock/converter_mock.go -package converter_mock github.com/koestler/go-mqtt-to-influx/converter Config,Input,Output
 
 const epsilon = time.Millisecond
 

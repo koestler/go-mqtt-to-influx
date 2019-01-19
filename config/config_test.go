@@ -521,8 +521,8 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default MqttClient->Password to be empty")
 	}
 
-	if config.MqttClients[0].ClientId() != "go-mqtt-to-influxdb" {
-		t.Error("expect default MqttClient->ClientId to be 'go-mqtt-to-influxdb'")
+	if config.MqttClients[0].ClientId() != "go-mqtt-to-influx" {
+		t.Error("expect default MqttClient->ClientId to be 'go-mqtt-to-influx'")
 	}
 
 	if config.MqttClients[0].Qos() != 0 {
@@ -551,8 +551,8 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default InfluxClient->Password to be empty")
 	}
 
-	if config.InfluxClients[0].Database() != "go-mqtt-to-influxdb" {
-		t.Error("expect default InfluxClient->Database to be 'go-mqtt-to-influxdb'")
+	if config.InfluxClients[0].Database() != "go-mqtt-to-influx" {
+		t.Error("expect default InfluxClient->Database to be 'go-mqtt-to-influx'")
 	}
 
 	if config.InfluxClients[0].WriteInterval().String() != "200ms" {

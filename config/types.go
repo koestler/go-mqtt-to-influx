@@ -19,7 +19,7 @@ type MqttClientConfig struct {
 	broker            string // mandatory
 	user              string // optional: default empty
 	password          string // optional: default empty
-	clientId          string // optional: default go-mqtt-to-influxdb
+	clientId          string // optional: default go-mqtt-to-influx
 	qos               byte   // optional: default 0, must be 0, 1, 2
 	availabilityTopic string // optional: default %Prefix%tele/%clientId%/LWT
 	topicPrefix       string // optional: default empty
@@ -31,7 +31,7 @@ type InfluxClientConfig struct {
 	address         string        // mandatory
 	user            string        // optional: default empty
 	password        string        // optional: default empty
-	database        string        // optional: default go-mqtt-to-influxdb
+	database        string        // optional: default go-mqtt-to-influx
 	writeInterval   time.Duration // optional: default 200ms
 	timePrecision   time.Duration // optional: default 1s
 	logLineProtocol bool          // optional: default False

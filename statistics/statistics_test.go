@@ -2,12 +2,12 @@ package statistics
 
 import (
 	"github.com/golang/mock/gomock"
-	"github.com/koestler/go-mqtt-to-influxdb/statistics/mock"
+	"github.com/koestler/go-mqtt-to-influx/statistics/mock"
 	"testing"
 	"time"
 )
 
-//go:generate mockgen -destination=mock/config_mock.go -package statistics_mock github.com/koestler/go-mqtt-to-influxdb/statistics Config
+//go:generate mockgen -destination=mock/config_mock.go -package statistics_mock github.com/koestler/go-mqtt-to-influx/statistics Config
 
 func TestEnabled(t *testing.T) {
 	mockCtrl := gomock.NewController(t)

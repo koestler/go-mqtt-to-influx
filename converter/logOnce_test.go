@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/golang/mock/gomock"
-	"github.com/koestler/go-mqtt-to-influxdb/converter/mock"
+	"github.com/koestler/go-mqtt-to-influx/converter/mock"
 	"log"
 	"sync"
 	"testing"

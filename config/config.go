@@ -205,7 +205,7 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 		err = append(err, fmt.Errorf("MqttClientConfig->%s->Broker must not be empty", name))
 	}
 	if len(ret.clientId) < 1 {
-		ret.clientId = "go-mqtt-to-influxdb"
+		ret.clientId = "go-mqtt-to-influx"
 	}
 	if c.Qos == nil {
 		ret.qos = 0
@@ -274,7 +274,7 @@ func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxCli
 	}
 
 	if len(ret.database) < 1 {
-		ret.database = "go-mqtt-to-influxdb"
+		ret.database = "go-mqtt-to-influx"
 	}
 
 	if len(c.WriteInterval) < 1 {

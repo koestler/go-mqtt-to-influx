@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/jessevdk/go-flags"
-	"github.com/koestler/go-mqtt-to-influxdb/config"
+	"github.com/koestler/go-mqtt-to-influx/config"
 	"log"
 	"os"
 	"os/signal"
@@ -42,7 +42,7 @@ func getCmdOptions() (cmdOptions CmdOptions, cmdName string) {
 	}
 
 	if cmdOptions.Version {
-		fmt.Println("github.com/koestler/go-mqtt-to-influxdb version:", buildVersion)
+		fmt.Println("github.com/koestler/go-mqtt-to-influx version:", buildVersion)
 		fmt.Println("build at:", buildTime)
 		os.Exit(ExitSuccess)
 	}
@@ -80,7 +80,7 @@ func main() {
 		initiateShutdown := make(chan error, 4)
 
 		if cfg.LogWorkerStart {
-			log.Printf("main: start go-mqtt-to-influxdb version=%s", buildVersion)
+			log.Printf("main: start go-mqtt-to-influx version=%s", buildVersion)
 		}
 
 		// start cpu profiling if enabled
