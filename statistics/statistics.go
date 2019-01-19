@@ -8,7 +8,8 @@ import (
 type Statistics interface {
 	Enabled() bool
 	IncrementOne(module, name, field string)
-	GetHierarchicalCounts() interface{}
+	GetHierarchicalCountsStructless() interface{}
+	GetHierarchicalCounts() HierarchicalCounts
 }
 
 type InMemmoryStatistics struct {
@@ -48,6 +49,10 @@ func Run(config Config) (stats Statistics) {
 		return &DisabledStatistics{}
 	}
 
+	return RunInMemory(config)
+}
+
+func RunInMemory(config Config) (stats *InMemmoryStatistics) {
 	inMemoryStats := &InMemmoryStatistics{
 		config:                    config,
 		total:                     make(map[Desc]int),
@@ -80,6 +85,10 @@ func (s DisabledStatistics) Enabled() bool {
 
 func (s *DisabledStatistics) IncrementOne(module, name, field string) {}
 
-func (s *DisabledStatistics) GetHierarchicalCounts() interface{} {
+func (s *DisabledStatistics) GetHierarchicalCountsStructless() interface{} {
 	return struct{}{}
+}
+
+func (s *DisabledStatistics) GetHierarchicalCounts() HierarchicalCounts {
+	return nil
 }

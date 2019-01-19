@@ -12,11 +12,11 @@ type requestHierarchicalCounts struct {
 	response chan HierarchicalCounts
 }
 
-func (s *InMemmoryStatistics) GetHierarchicalCounts() interface{} {
-	return s.getHierarchicalCounts()
+func (s *InMemmoryStatistics) GetHierarchicalCountsStructless() interface{} {
+	return s.GetHierarchicalCounts()
 }
 
-func (s *InMemmoryStatistics) getHierarchicalCounts() HierarchicalCounts {
+func (s *InMemmoryStatistics) GetHierarchicalCounts() HierarchicalCounts {
 	if !s.Enabled() {
 		return nil
 	}

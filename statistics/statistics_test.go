@@ -19,7 +19,7 @@ func TestEnabled(t *testing.T) {
 	mockConfig.EXPECT().HistoryResolution().Return(100 * time.Millisecond).AnyTimes()
 	mockConfig.EXPECT().HistoryMaxAge().Return(600 * time.Millisecond).AnyTimes()
 
-	s := Run(mockConfig)
+	s := RunInMemory(mockConfig)
 	simulationCase0(t, s)
 
 	if c := getHistorical(s, 225*time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR"); c != 5 {
@@ -36,7 +36,7 @@ func TestEnabled(t *testing.T) {
 	}
 
 	{
-		counts := s.getHierarchicalCounts()
+		counts := s.GetHierarchicalCounts()
 		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo1/SENSOR"].Total; r != 23 {
 			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo1/SENSOR].Total == 23, got=%v", r)
 		}
@@ -57,7 +57,7 @@ func TestEnabled(t *testing.T) {
 	}
 
 	{
-		counts := s.getHierarchicalCounts()
+		counts := s.GetHierarchicalCounts()
 		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo1/SENSOR"].Total; r != 23 {
 			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo1/SENSOR].Total == 23, got=%v", r)
 		}
@@ -76,14 +76,13 @@ func TestDisabled(t *testing.T) {
 	mockConfig.EXPECT().Enabled().Return(false).AnyTimes()
 
 	s := Run(mockConfig)
-	simulationCase0(t, s)
 
 	// must not crash even if module disabled
-	getHistorical(s, time.Millisecond, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR")
-	s.getHierarchicalCounts()
+	incrementN(s, "mqtt", "0-piegn-mosquitto", "piegn/tele/foo1/SENSOR", 3)
+	s.GetHierarchicalCounts()
 }
 
-func simulationCase0(t *testing.T, s *Statistics) {
+func simulationCase0(t *testing.T, s *InMemmoryStatistics) {
 
 	// t = 0ms
 
@@ -155,17 +154,17 @@ func simulationCase0(t *testing.T, s *Statistics) {
 
 }
 
-func incrementN(s *Statistics, module, name, field string, n int) {
+func incrementN(s Statistics, module, name, field string, n int) {
 	for i := 0; i < n; i += 1 {
 		s.IncrementOne(module, name, field)
 	}
 }
 
-func getHistorical(s *Statistics, duration time.Duration, module, name, field string) int {
+func getHistorical(s *InMemmoryStatistics, duration time.Duration, module, name, field string) int {
 	return s.getHistoricalCounts(duration)[Desc{module, name, field}]
 }
 
-func printHistorical(t *testing.T, s *Statistics) {
+func printHistorical(t *testing.T, s *InMemmoryStatistics) {
 	if !s.Enabled() {
 		return
 	}

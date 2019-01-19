@@ -23,7 +23,7 @@ type Config interface {
 
 type Statistics interface {
 	Enabled() bool
-	GetHierarchicalCounts() interface{}
+	GetHierarchicalCountsStructless() interface{}
 }
 
 func Run(config Config, env *Environment) (httpServer *HttpServer) {
