@@ -3,15 +3,15 @@ package config
 import "time"
 
 type Config struct {
-	Version        int                   `yaml:"Version"`         // must be 0
-	MqttClients    []*MqttClientConfig   `yaml:"MqttClient"`      // mandatory: at least 1 must be defined
-	InfluxClients  []*InfluxClientConfig `yaml:"InfluxClients"`   // mandatory: at least 1 must be defined
-	Converters     []*ConverterConfig    `yaml:"Converters"`      // mandatory: at least 1 must be defined
-	HttpServer     HttpServerConfig      `yaml:"HttpServer"`      // optional: default Disabled
-	Statistics     StatisticsConfig      `yaml:"Statistics"`      // optional: default Disabled
-	LogConfig      bool                  `yaml:"LogConfig"`       // optional: default False
-	LogWorkerStart bool                  `yaml:"LogWorkerStart"`  // optional: default False
-	LogMqttDebug    bool                    `yaml:"LogMqttDebug"` // optional: default False
+	Version        int                   `yaml:"Version"`        // must be 0
+	MqttClients    []*MqttClientConfig   `yaml:"MqttClient"`     // mandatory: at least 1 must be defined
+	InfluxClients  []*InfluxClientConfig `yaml:"InfluxClients"`  // mandatory: at least 1 must be defined
+	Converters     []*ConverterConfig    `yaml:"Converters"`     // mandatory: at least 1 must be defined
+	HttpServer     HttpServerConfig      `yaml:"HttpServer"`     // optional: default Disabled
+	Statistics     StatisticsConfig      `yaml:"Statistics"`     // optional: default Disabled
+	LogConfig      bool                  `yaml:"LogConfig"`      // optional: default False
+	LogWorkerStart bool                  `yaml:"LogWorkerStart"` // optional: default False
+	LogMqttDebug   bool                  `yaml:"LogMqttDebug"`   // optional: default False
 }
 
 type MqttClientConfig struct {
