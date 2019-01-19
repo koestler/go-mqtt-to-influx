@@ -13,7 +13,7 @@ func runHttpServer(cfg *config.Config, statisticsInstance statistics.Statistics)
 	}
 
 	if cfg.LogWorkerStart {
-		log.Printf("main: start HttpServer, bind=%s, port=%d", cfg.HttpServer.Bind(), cfg.HttpServer.Port())
+		log.Printf("httpServer: start: bind=%s, port=%d", cfg.HttpServer.Bind(), cfg.HttpServer.Port())
 	}
 
 	return httpServer.Run(

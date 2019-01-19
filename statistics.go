@@ -8,7 +8,7 @@ import (
 
 func runStatistics(cfg *config.Config) statistics.Statistics {
 	if cfg.LogWorkerStart && cfg.Statistics.Enabled() {
-		log.Printf("main: start Statistisc module")
+		log.Printf("statitics: start")
 	}
 
 	return statistics.Run(cfg.Statistics)

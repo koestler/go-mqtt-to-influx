@@ -90,7 +90,7 @@ func (ic *Client) Shutdown() {
 
 	// shutdown client ressources
 	if err := ic.client.Close(); err != nil {
-		log.Printf("influxDbClient[%s]: error during shutdown: %s", ic.Name(), err)
+		log.Printf("influxClient[%s]: error during shutdown: %s", ic.Name(), err)
 	}
 }
 
@@ -132,7 +132,7 @@ func getBatch(config Config) (bp influxClient.BatchPoints) {
 		Precision: config.TimePrecision().String(),
 	})
 	if err != nil {
-		log.Printf("influxDbClient[%s]: cannot create batch: %s", config.Name(), err)
+		log.Printf("influxClient[%s]: cannot create batch: %s", config.Name(), err)
 	}
 	return
 }
@@ -151,11 +151,11 @@ func (ic *Client) sendBatch() {
 	points := ic.currentBatch.Points()
 	if ic.config.LogLineProtocol() {
 		if len(points) == 1 {
-			log.Printf("influxDbClient[%s]: %s", ic.Name(), points[0].String())
+			log.Printf("influxClient[%s]: %s", ic.Name(), points[0].String())
 		} else {
-			log.Printf("influxDbClient[%s]: write batch of %d points", ic.Name(), len(points))
+			log.Printf("influxClient[%s]: write batch of %d points", ic.Name(), len(points))
 			for _, p := range points {
-				log.Printf("influxDbClient[%s]:   %s", ic.Name(), p.String())
+				log.Printf("influxClient[%s]:   %s", ic.Name(), p.String())
 			}
 		}
 	}
@@ -176,7 +176,7 @@ func (ic *Client) sendBatch() {
 			ic.errorRetryDelay = ErrorDelayMax
 		}
 
-		log.Printf("influxDbClient[%s]: cannot write to db; retry no ealier than %s; err: %s",
+		log.Printf("influxClient[%s]: cannot write to db; retry no ealier than %s; err: %s",
 			ic.Name(),
 			ic.lastTransmission.Add(ic.errorRetryDelay).Format(time.UnixDate),
 			err,

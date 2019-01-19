@@ -41,9 +41,9 @@ func (c Config) PrintConfig() (err error) {
 		return fmt.Errorf("cannot encode yaml again: %s", err)
 	}
 
-	log.Print("c: use the following c:")
+	log.Print("config: use the following config:")
 	for _, line := range strings.Split(string(newYamlStr), "\n") {
-		log.Print("c: ", line)
+		log.Print("config: ", line)
 	}
 	return nil
 }

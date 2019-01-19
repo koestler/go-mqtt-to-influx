@@ -27,14 +27,14 @@ func connectConverters(
 		)
 
 		if err != nil {
-			log.Printf("Converter[%s]: cannot start: %s", converterConfig.Name(), err)
+			log.Printf("converter[%s]: cannot start: %s", converterConfig.Name(), err)
 			continue
 		}
 
 		for _, mqttClientInstance := range getMqttClient(mqttClientInstances, converterConfig.MqttClients()) {
 			if cfg.LogWorkerStart {
 				log.Printf(
-					"main: start Converter[%s], Implementation='%s', MqttClient='%s', InfluxDbClients=%v",
+					"converter[%s]: start: Implementation='%s', MqttClient='%s', InfluxDbClients=%v",
 					converterConfig.Name(),
 					converterConfig.Implementation(),
 					mqttClientInstance.Name(),
@@ -44,7 +44,7 @@ func connectConverters(
 
 			for _, mqttTopic := range converterConfig.MqttTopics() {
 				if err := mqttClientInstance.Subscribe(mqttTopic, messageHandler); err != nil {
-					log.Printf("Converter[%s]: error while subscribing: %s", converterConfig.Name(), err)
+					log.Printf("converter[%s]: error while subscribing: %s", converterConfig.Name(), err)
 				} else {
 					countStarted += 1
 				}

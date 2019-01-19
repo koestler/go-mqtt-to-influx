@@ -67,7 +67,7 @@ func ToInfluxPoint(point Point) (*influxClient.Point, error) {
 func (p *ClientPool) WritePoint(point Point, receiverNames []string) {
 	pt, err := ToInfluxPoint(point)
 	if err != nil {
-		log.Printf("InfluxDbClientPool: error creating a point: %s", err)
+		log.Printf("influxClientPool: error creating a point: %s", err)
 		return
 	}
 

@@ -25,21 +25,21 @@ func runMqttClient(
 	for _, mqttClientConfig := range cfg.MqttClients {
 		if cfg.LogWorkerStart {
 			log.Printf(
-				"main: Mqtt[%s] start, Broker='%s', ClientId='%s'",
+				"mqttClient[%s]: start: Broker='%s', ClientId='%s'",
 				mqttClientConfig.Name(), mqttClientConfig.Broker(), mqttClientConfig.ClientId(),
 			)
 		}
 
 		if client, err := mqttClient.Run(mqttClientConfig, statisticsInstance); err != nil {
-			log.Printf("main: Mqtt[%s] start failed: %s", mqttClientConfig.Name(), err)
+			log.Printf("mqttClient[%s]: start failed: %s", mqttClientConfig.Name(), err)
 		} else {
 			mqttClientInstances[mqttClientConfig.Name()] = client
-			log.Printf("main: Mqtt[%s] started", mqttClientConfig.Name())
+			log.Printf("mqttClient[%s]: started", mqttClientConfig.Name())
 		}
 	}
 
 	if len(mqttClientInstances) < 1 {
-		initiateShutdown <- errors.New("no mqtt client was started")
+		initiateShutdown <- errors.New("no mqttClient was started")
 	}
 
 	return mqttClientInstances
