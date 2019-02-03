@@ -82,7 +82,7 @@ func TestDisabled(t *testing.T) {
 	s.GetHierarchicalCounts()
 }
 
-func simulationCase0(t *testing.T, s *InMemmoryStatistics) {
+func simulationCase0(t *testing.T, s *InMemoryStatistics) {
 
 	// t = 0ms
 
@@ -160,11 +160,11 @@ func incrementN(s Statistics, module, name, field string, n int) {
 	}
 }
 
-func getHistorical(s *InMemmoryStatistics, duration time.Duration, module, name, field string) int {
+func getHistorical(s *InMemoryStatistics, duration time.Duration, module, name, field string) int {
 	return s.getHistoricalCounts(duration)[Desc{module, name, field}]
 }
 
-func printHistorical(t *testing.T, s *InMemmoryStatistics) {
+func printHistorical(t *testing.T, s *InMemoryStatistics) {
 	if !s.Enabled() {
 		return
 	}

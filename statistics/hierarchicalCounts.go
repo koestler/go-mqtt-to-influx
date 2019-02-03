@@ -12,11 +12,11 @@ type requestHierarchicalCounts struct {
 	response chan HierarchicalCounts
 }
 
-func (s *InMemmoryStatistics) GetHierarchicalCountsStructless() interface{} {
+func (s *InMemoryStatistics) GetHierarchicalCountsStructless() interface{} {
 	return s.GetHierarchicalCounts()
 }
 
-func (s *InMemmoryStatistics) GetHierarchicalCounts() HierarchicalCounts {
+func (s *InMemoryStatistics) GetHierarchicalCounts() HierarchicalCounts {
 	if !s.Enabled() {
 		return nil
 	}
@@ -27,7 +27,7 @@ func (s *InMemmoryStatistics) GetHierarchicalCounts() HierarchicalCounts {
 	return <-response
 }
 
-func (s *InMemmoryStatistics) handleRequestHierarchicalCounts(request requestHierarchicalCounts) {
+func (s *InMemoryStatistics) handleRequestHierarchicalCounts(request requestHierarchicalCounts) {
 	// copy / restructure data
 	ret := make(HierarchicalCounts)
 

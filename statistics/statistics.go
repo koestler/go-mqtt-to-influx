@@ -12,7 +12,7 @@ type Statistics interface {
 	GetHierarchicalCounts() HierarchicalCounts
 }
 
-type InMemmoryStatistics struct {
+type InMemoryStatistics struct {
 	config Config
 
 	total      map[Desc]int
@@ -52,8 +52,8 @@ func Run(config Config) (stats Statistics) {
 	return RunInMemory(config)
 }
 
-func RunInMemory(config Config) (stats *InMemmoryStatistics) {
-	inMemoryStats := &InMemmoryStatistics{
+func RunInMemory(config Config) (stats *InMemoryStatistics) {
+	inMemoryStats := &InMemoryStatistics{
 		config:                    config,
 		total:                     make(map[Desc]int),
 		historical:                list.New(),
@@ -67,11 +67,11 @@ func RunInMemory(config Config) (stats *InMemmoryStatistics) {
 	return inMemoryStats
 }
 
-func (s InMemmoryStatistics) Enabled() bool {
+func (s InMemoryStatistics) Enabled() bool {
 	return true
 }
 
-func (s *InMemmoryStatistics) IncrementOne(module, name, field string) {
+func (s *InMemoryStatistics) IncrementOne(module, name, field string) {
 	s.incrementOne <- Desc{
 		module: module,
 		name:   name,

@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-func (s *InMemmoryStatistics) countWorker() {
+func (s *InMemoryStatistics) countWorker() {
 	ticker := time.Tick(s.config.HistoryResolution())
 
 	s.historical.PushBack(&HistoricalCount{
@@ -24,7 +24,7 @@ func (s *InMemmoryStatistics) countWorker() {
 	}
 }
 
-func (s *InMemmoryStatistics) handleIncrementOne(desc Desc) {
+func (s *InMemoryStatistics) handleIncrementOne(desc Desc) {
 	// handle total
 	if count, ok := s.total[desc]; !ok {
 		s.total[desc] = 1
@@ -43,7 +43,7 @@ func (s *InMemmoryStatistics) handleIncrementOne(desc Desc) {
 	}
 }
 
-func (s *InMemmoryStatistics) handleHistoryTick(now time.Time) {
+func (s *InMemoryStatistics) handleHistoryTick(now time.Time) {
 	// create new historical list entry if newest one is outdated
 	back := s.historical.Back()
 	h := back.Value.(*HistoricalCount)
@@ -71,7 +71,7 @@ func (s *InMemmoryStatistics) handleHistoryTick(now time.Time) {
 	}
 }
 
-func (s *InMemmoryStatistics) getHistoricalCounts(duration time.Duration) (ret map[Desc]int) {
+func (s *InMemoryStatistics) getHistoricalCounts(duration time.Duration) (ret map[Desc]int) {
 	if !s.Enabled() {
 		return
 	}
