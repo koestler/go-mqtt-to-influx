@@ -50,7 +50,7 @@ func (p *ClientPool) getReceiverClients(receiversNames []string) (receivers []*C
 			i++
 		}
 	} else {
-		receivers = make([]*Client, len(receiversNames))
+		receivers = make([]*Client, 0, len(receiversNames))
 		for _, receiverName := range receiversNames {
 			if receiver, ok := p.clients[receiverName]; ok {
 				receivers = append(receivers, receiver)
