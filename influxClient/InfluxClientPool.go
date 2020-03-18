@@ -1,7 +1,7 @@
 package influxClient
 
 import (
-	influxClient "github.com/influxdata/influxdb/client/v2"
+	influxClient "github.com/influxdata/influxdb1-client/v2"
 	"log"
 	"sync"
 )

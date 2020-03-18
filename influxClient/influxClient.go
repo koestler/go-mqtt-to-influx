@@ -2,7 +2,7 @@ package influxClient
 
 import (
 	"fmt"
-	influxClient "github.com/influxdata/influxdb/client/v2"
+	influxClient "github.com/influxdata/influxdb1-client/v2"
 	"log"
 	"strings"
 	"time"
