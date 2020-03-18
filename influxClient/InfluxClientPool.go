@@ -1,7 +1,7 @@
 package influxClient
 
 import (
-	influxClient "github.com/influxdata/influxdb/client/v2"
+	influxClient "github.com/influxdata/influxdb1-client/v2"
 	"log"
 	"sync"
 )
@@ -50,7 +50,7 @@ func (p *ClientPool) getReceiverClients(receiversNames []string) (receivers []*C
 			i++
 		}
 	} else {
-		receivers = make([]*Client, len(receiversNames))
+		receivers = make([]*Client, 0, len(receiversNames))
 		for _, receiverName := range receiversNames {
 			if receiver, ok := p.clients[receiverName]; ok {
 				receivers = append(receivers, receiver)
