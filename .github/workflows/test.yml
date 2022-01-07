@@ -1,0 +1,29 @@
+name: Run tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.17
+
+    - name: Install tools
+      run: |
+        go install github.com/golang/mock/mockgen
+
+    - name: Genreate
+      run: go genreate -v ./...
+
+    - name: Test
+      run: go test -v ./...
