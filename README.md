@@ -280,6 +280,13 @@ docker run --rm --name go-mqtt-to-influx -p 127.0.0.1:8042:8042 \
   go-mqtt-to-influx
 ```
 
+### run tests
+```bash
+go install github.com/golang/mock/mockgen@v1.6.0
+go genreate ./...
+go test ./...
+```
+
 ### Update README.md
 ```bash
 npx embedme README.md
