@@ -20,10 +20,10 @@ jobs:
 
     - name: Install tools
       run: |
-        go install github.com/golang/mock/mockgen
+        go install github.com/golang/mock/mockgen@v1.6.0
 
-    - name: Genreate
-      run: go genreate -v ./...
+    - name: Generate Mocks
+      run: go generate -v ./...
 
     - name: Test
       run: go test -v ./...
