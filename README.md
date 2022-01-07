@@ -39,6 +39,23 @@ Help Options:
   -h, --help        Show this help message
 ```
 
+Setup like this:
+```bash
+# create configuration files
+mkdir -p /srv/dc/mqtt-to-influx
+cd /srv/dc/mqtt-to-influx
+curl https://raw.githubusercontent.com/koestler/mqtt-to-influx/main/documentation/docker-compose.yml -o docker-compose.yml
+curl https://raw.githubusercontent.com/koestler/mqtt-to-influx/main/documentation/config.yaml -o config.yaml
+# edit config.yaml
+
+# create htpasswd file
+sudo apt-get install apache2-utils
+htpasswd -c auth.passwd user
+
+# start it
+docker-compose up -d
+```
+
 ## Config
 The Configuration is stored in one yaml file. There are mandatory fields and there are optional fields which
 have a default value. 
@@ -254,6 +271,14 @@ Example:
   * `floatValue,device=elektronik/control0,field=Humidity,sensor=SI7021,unit=% value=27.7`
 
 ## Development
+
+### Compile and run inside docker
+```bash
+docker build -f docker/Dockerfile -t go-mqtt-to-influx .
+docker run --rm --name go-mqtt-to-influx -p 127.0.0.1:8042:8042 \
+  -v "$(pwd)"/documentation/config.yaml:/app/config.yaml:ro \
+  go-mqtt-to-influx
+```
 
 ### Update README.md
 ```bash
