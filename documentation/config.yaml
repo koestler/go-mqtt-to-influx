@@ -1,0 +1,74 @@
+Version: 0                                                 # mandatory, version is always 0 (reserved for later use)
+LogConfig: True                                            # optional, default False, outputs the configuration including defaults on startup
+LogWorkerStart: True                                       # optional, default False, write log for starting / stoping of workers
+LogMqttDebug: False                                        # optional, default False, enable debug output of the mqtt module
+HttpServer:                                                # optional, default Disabled, start the http server
+  Bind: 0.0.0.0                                            # optional, default ::1 (ipv6 loopback)
+  Port: 80                                                 # optional, default 8042
+  LogRequests: True                                        # optional, default False, log all requests to stdout
+Statistics:                                                # optional, default Disabled, start the statistics module (needs some additional memory/cpu)
+  Enabled: True                                            # mandatory, set to True to enable
+  HistoryResolution: 1s                                    # optional, default 1s, time resolution for aggregation, decrease with caution
+  HistoryMaxAge: 10m                                       # optional, default 10min, how many time steps to keep, increase with caution
+
+MqttClients:                                               # mandatory, a list of MQTT servers to connect to
+  0-piegn-mosquitto:                                       # mandatory, an arbitrary name used in log outputs and for reference in the converters section
+    Broker: "tcp://mqtt.exampel.com:1883"                  # mandatory, the address / port of the server
+    User: Bob                                              # optional, if given used for login
+    Password: Jeir2Jie4zee                                 # optional, if given used for login
+    ClientId: "config-tester"                              # optional, default go-mqtt-to-influx, client-id sent to the server
+    Qos: 2                                                 # optional, default 0, QOS-level used for subscriptions
+    AvailabilityTopic: test/%Prefix%tele/%clientId%/LWT    # optional, if given, a message with Online/Offline will be published on connect/disconnect
+                                                           # supported placeholders:
+                                                           # - %Prefix$   : as specified in this config section
+                                                           # - %clientId% : as specified in this config section
+    TopicPrefix: piegn/                                    # optional, default empty
+    LogMessages: False                                     # optional, default False, logs all received messages
+
+  1-local-mosquitto:                                       # optional, a second MQTT erver
+    Broker: "tcp://172.17.0.5:1883"                        # optional, the second MQTT servers broker...
+
+InfluxClients:                                             # mandatory, a list of Influx DB Client configuration
+  0-piegn:                                                 # mandatory, an arbitrary name used in log outputs and for reference in the converters section
+    Address: "http://influx.example.com:8086"              # mandatory, the address / port of the server
+    User: Alice                                            # optional, if given used for login
+    Password: An2iu2egheijeG                               # optional, if given used for login
+    Database: test-database                                # optional, default go-mqtt-to-influx, the db to be used
+    WriteInterval: 400ms                                   # optional, default 200ms, how often to write a batch of points, if 0, each point is sent immediately in a separate request
+    TimePrecision: 1ms                                     # optional, default 1s, influx db time precision
+    LogLineProtocol: True                                  # optional, default False, outputs the Influx Line Protocol of each point
+
+  1-local:                                                 # optional, a second Influx Server
+    Address: "http://[::1]:8086"                           # optional, the address of the second Influx server ...
+
+Converters:                                                # mandatory, a list of Converters to run
+  0-lwt:                                                   # mandatory, an arbitrary name used in log outputs
+    Implementation: lwt                                    # mandatory, which converter to use
+    TargetMeasurement: boolValue                           # optional, default depending on implementation
+    MqttTopics:                                            # mandatory, a list of topics to subscribe to
+      - "%Prefix%tele/+/+/LWT"
+    MqttClients:                                           # optional, default all configured, a list of MQTT Clients to receive data from
+      - 0-piegn-mosquitto
+      - 1-local-mosquitto
+    InfluxClients:                                         # optional, default all configured, a list of Influx Clients to send data to
+      - 0-piegn
+      - 1-local
+    LogHandleOnce: True                                    # optional, default False, if True each topic is logged once by each converter
+
+  1-ve:                                                    # optional, a second Converter
+    Implementation: go-ve-sensor
+    MqttTopics:
+      - "%Prefix%tele/ve/#"
+    LogHandleOnce: True
+
+  2-tasmota-state:
+    Implementation: tasmota-state
+    MqttTopics:
+      - "%Prefix%tele/+/+/STATE"
+    LogHandleOnce: True
+
+  3-tasmota-sensor:
+    Implementation: tasmota-sensor
+    MqttTopics:
+      - "%Prefix%tele/+/+/SENSOR"
+    LogHandleOnce: True

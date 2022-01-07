@@ -1,3 +1,2 @@
-config.yaml
 go-mqtt-to-influx
 *_mock.go

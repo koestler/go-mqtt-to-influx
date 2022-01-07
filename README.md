@@ -47,13 +47,9 @@ Setup like this:
 # create configuration files
 mkdir -p /srv/dc/mqtt-to-influx
 cd /srv/dc/mqtt-to-influx
-curl https://raw.githubusercontent.com/koestler/mqtt-to-influx/main/documentation/docker-compose.yml -o docker-compose.yml
-curl https://raw.githubusercontent.com/koestler/mqtt-to-influx/main/documentation/config.yaml -o config.yaml
+curl https://raw.githubusercontent.com/koestler/go-mqtt-to-influx/main/documentation/docker-compose.yml -o docker-compose.yml
+curl https://raw.githubusercontent.com/koestler/go-mqtt-to-influx/main/documentation/config.yaml -o config.yaml
 # edit config.yaml
-
-# create htpasswd file
-sudo apt-get install apache2-utils
-htpasswd -c auth.passwd user
 
 # start it
 docker-compose up -d
