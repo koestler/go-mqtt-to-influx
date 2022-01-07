@@ -5,11 +5,11 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
-	"os"
 )
 
 const NameRegexp = "^[a-zA-Z0-9\\-]{1,32}$"
@@ -31,7 +31,7 @@ func ReadConfig(yamlStr []byte) (config Config, err []error) {
 	yamlStr = []byte(os.ExpandEnv(string(yamlStr)))
 	e := yaml.Unmarshal(yamlStr, &configRead)
 	if e != nil {
-		return config, []error{fmt.Errorf("cannot parse yaml: %s", err)}
+		return config, []error{fmt.Errorf("cannot parse yaml: %s", e)}
 	}
 
 	return configRead.TransformAndValidate()
