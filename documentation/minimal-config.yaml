@@ -1,0 +1,34 @@
+Version: 0                                                 # mandatory, version is always 0 (reserved for later use)
+
+HttpServer:                                                # optional, default Disabled, start the http server
+  Port: 8042                                               # optional, default 8042
+Statistics:                                                # optional, default Disabled, start the statistics module (needs some additional memory/cpu)
+  Enabled: True                                            # mandatory, set to True to enable
+
+MqttClients:                                               # mandatory, a list of MQTT servers to connect to
+  example:                                                 # mandatory, an arbitrary name used in log outputs and for reference in the converters section
+    Broker: "tcp://mqtt.exampel.com:1883"                  # mandatory, the address / port of the server
+    User: Bob                                              # optional, if given used for login
+    Password: Jeir2Jie4zee                                 # optional, if given used for login
+
+InfluxClients:                                             # mandatory, a list of Influx DB Client configuration
+  example:                                                 # mandatory, an arbitrary name used in log outputs and for reference in the converters section
+    Address: "http://influx.example.com:8086"              # mandatory, the address / port of the server
+    User: Alice                                            # optional, if given used for login
+    Password: An2iu2egheijeG                               # optional, if given used for login
+
+Converters:                                                # mandatory, a list of Converters to run
+  lwt:                                                     # mandatory, an arbitrary name used in log outputs
+    Implementation: lwt                                    # mandatory, which converter to use
+    MqttTopics:                                            # mandatory, a list of topics to subscribe to
+      - tele/+/+/LWT
+
+  tasmota-state:
+    Implementation: tasmota-state
+    MqttTopics:
+      - tele/+/+/STATE
+
+  tasmota-sensor:
+    Implementation: tasmota-sensor
+    MqttTopics:
+      - tele/+/+/SENSOR

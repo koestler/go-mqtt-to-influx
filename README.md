@@ -45,6 +45,8 @@ have a default value.
 
 ### Minimalistic Example
 ```yaml
+# documentation/minimal-config.yaml
+
 Version: 0                                                 # mandatory, version is always 0 (reserved for later use)
 
 HttpServer:                                                # optional, default Disabled, start the http server
@@ -84,6 +86,8 @@ Converters:                                                # mandatory, a list o
 ### Complete, explained example
 
 ```yaml
+# documentation/config.yaml
+
 Version: 0                                                 # mandatory, version is always 0 (reserved for later use)
 LogConfig: True                                            # optional, default False, outputs the configuration including defaults on startup
 LogWorkerStart: True                                       # optional, default False, write log for starting / stoping of workers
@@ -248,6 +252,13 @@ Example:
 * Output lines:
   * `floatValue,device=elektronik/control0,field=Temperature,sensor=SI7021,unit=C value=5.4`
   * `floatValue,device=elektronik/control0,field=Humidity,sensor=SI7021,unit=% value=27.7`
+
+## Development
+
+### Update README.md
+```bash
+npx embedme README.md
+```
 
 # License
 MIT License
