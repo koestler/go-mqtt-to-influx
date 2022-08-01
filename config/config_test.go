@@ -116,7 +116,7 @@ MqttClients:
     Password: Jeir2Jie4zee
     ClientId: "config-tester"
     Qos: 2
-    AvailabilityTopic: test/%Prefix%tele/%clientId%/LWT
+    AvailabilityTopic: test/%Prefix%tele/%ClientId%/LWT
     TopicPrefix: piegn/
     LogMessages: False
 
@@ -341,7 +341,7 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect Qos of first MqttClient to be 2")
 	}
 
-	expectedTopic := "test/%Prefix%tele/%clientId%/LWT"
+	expectedTopic := "test/%Prefix%tele/%ClientId%/LWT"
 	if config.MqttClients[0].AvailabilityTopic() != expectedTopic {
 		t.Errorf("expect AvailabilityTopic of first MqttClient to be '%s'", expectedTopic)
 	}
@@ -529,7 +529,7 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default MqttClient->Qos to be 0")
 	}
 
-	expectedAvailabilityTopic := "%Prefix%tele/%clientId%/LWT"
+	expectedAvailabilityTopic := "%Prefix%tele/%ClientId%/LWT"
 	if config.MqttClients[0].AvailabilityTopic() != expectedAvailabilityTopic {
 		t.Errorf("expect default MqttClient->AvailabilityTopic to be '%s'", expectedAvailabilityTopic)
 	}

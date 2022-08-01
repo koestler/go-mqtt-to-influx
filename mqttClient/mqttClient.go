@@ -86,7 +86,7 @@ func (mq *MqttClient) Shutdown() {
 
 func replaceTemplate(template string, config Config) (r string) {
 	r = strings.Replace(template, "%Prefix%", config.TopicPrefix(), 1)
-	r = strings.Replace(r, "%clientId%", config.ClientId(), 1)
+	r = strings.Replace(r, "%ClientId%", config.ClientId(), 1)
 	return
 }
 

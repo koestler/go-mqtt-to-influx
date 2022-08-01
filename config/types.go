@@ -21,7 +21,7 @@ type MqttClientConfig struct {
 	password          string // optional: default empty
 	clientId          string // optional: default go-mqtt-to-influx
 	qos               byte   // optional: default 0, must be 0, 1, 2
-	availabilityTopic string // optional: default %Prefix%tele/%clientId%/LWT
+	availabilityTopic string // optional: default %Prefix%tele/%ClientId%/LWT
 	topicPrefix       string // optional: default empty
 	logMessages       bool   // optional: default False
 }
