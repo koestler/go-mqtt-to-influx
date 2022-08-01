@@ -1,8 +1,7 @@
 # build backend
-FROM golang:1.17 as go-builder
+FROM golang:1.18 as go-builder
 
 RUN apt-get update && apt-get install -y git upx
-RUN go install github.com/swaggo/swag/cmd/swag@latest
 
 WORKDIR /app
 COPY . /app
