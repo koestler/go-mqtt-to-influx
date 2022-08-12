@@ -32,7 +32,7 @@ type InfluxClientConfig struct {
 	token         string        // mandatory
 	org           string        // mandatory
 	bucket        string        // mandatory
-	writeInterval time.Duration // optional: default 5s
+	writeInterval time.Duration // optional: default 5s5
 	timePrecision time.Duration // optional: default 1s
 	logDebug      bool          // optional: default False
 }

@@ -3,6 +3,7 @@ package converter
 import (
 	"bytes"
 	"github.com/golang/mock/gomock"
+	influxdb2Write "github.com/influxdata/influxdb-client-go/v2/api/write"
 	"github.com/koestler/go-mqtt-to-influx/converter/mock"
 	"github.com/koestler/go-mqtt-to-influx/influxClient"
 	"log"
@@ -24,6 +25,11 @@ func checkTimeStamp(expected, response time.Time) bool {
 func getLineWoTime(line string) string {
 	parts := strings.Split(line, " ")
 	return strings.Join(parts[0:len(parts)-1], " ")
+}
+
+func pointToLine(output Output) string {
+	point := influxClient.ToInfluxPoint(output)
+	return influxdb2Write.PointToLineProtocol(point, time.Second)
 }
 
 type TestStimuliResponse []struct {
@@ -54,12 +60,7 @@ func testStimuliResponse(
 		outputTestFunc := func(output Output) {
 			outputTestFuncCounter += 1
 
-			point, err := influxClient.ToInfluxPoint(output)
-			if err != nil {
-				t.Errorf("expect no error, got: %v", err)
-			}
-
-			response := getLineWoTime(point.String())
+			response := getLineWoTime(pointToLine(output))
 			t.Logf("response: '%s'", response)
 
 			responseLines = append(responseLines, response)

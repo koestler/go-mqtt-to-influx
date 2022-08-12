@@ -25,9 +25,10 @@ MqttClients:
 
 InfluxClients:
   i0:
-    Address: http://172.17.0.2:8086
-  i1:
-    Address: http://172.17.0.2:8086
+    Url: http://172.17.0.2:8086
+    Token: foobar
+    Org: myorg
+    Bucket: mybucket
 
 Converters:
   c0:
@@ -86,7 +87,10 @@ MqttClients:
 
 InfluxClients:
   piegn:
-    Address: http://172.17.0.2:8086
+    Url: http://172.17.0.2:8086
+    Token: "foobar-token"
+    Org: Piegn
+    Bucket: iot
 
 Converters:
   piegn-ve-sensor:
@@ -127,17 +131,19 @@ MqttClients:
 
 InfluxClients:
   0-piegn:
-    Address: http://172.17.0.2:8086
-    User: Alice
-    Password: An2iu2egheijeG
-    Database: test-database
+    Url: http://172.17.0.2:8086
+    Token: mytoken
+    Org: myorg
+    Bucket: mybucket
     WriteInterval: 400ms
     TimePrecision: 1ms
-    LogLineProtocol: True
+    LogDebug: True
   1-local:
-    Address: http://172.17.0.4:8086
-    WriteInterval: 0ms
-    LogLineProtocol: False
+    Url: http://172.17.0.4:8086
+    Token: mytoken
+    Org: myorg
+    Bucket: mybucket
+    LogDebug: False
 
 Converters:
   0-piegn-ve-sensor:
@@ -226,8 +232,8 @@ func TestReadConfig_InvalidMandatoryFieldsMissing(t *testing.T) {
 		t.Error("expect an error for missing Broker")
 	}
 
-	if !containsError("Address", err) {
-		t.Error("expect an error for missing Address")
+	if !containsError("Url", err) {
+		t.Error("expect an error for missing Url")
 	}
 
 	if !containsError("Implementation", err) {
@@ -375,20 +381,20 @@ func TestReadConfig_Complex(t *testing.T) {
 		)
 	}
 
-	if config.InfluxClients[0].Address() != "http://172.17.0.2:8086" {
+	if config.InfluxClients[0].Url() != "http://172.17.0.2:8086" {
 		t.Error("expect Address of first InfluxClient to be 'http://172.17.0.2:8086'")
 	}
 
-	if config.InfluxClients[0].User() != "Alice" {
-		t.Error("expect User of first InfluxClient to be 'Alice'")
+	if config.InfluxClients[0].Token() != "mytoken" {
+		t.Error("expect Token of first InfluxClient to be 'mytoken'")
 	}
 
-	if config.InfluxClients[0].Password() != "An2iu2egheijeG" {
-		t.Error("expect Password of first InfluxClient to be 'An2iu2egheijeG'")
+	if config.InfluxClients[0].Org() != "myorg" {
+		t.Error("expect Org of first InfluxClient to be 'myorg'")
 	}
 
-	if config.InfluxClients[0].Database() != "test-database" {
-		t.Error("expect Database of first InfluxClient to be 'test-database'")
+	if config.InfluxClients[0].Bucket() != "mybucket" {
+		t.Error("expect Bucket of first InfluxClient to be 'mybucket'")
 	}
 
 	if config.InfluxClients[0].WriteInterval().String() != "400ms" {
@@ -399,8 +405,8 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect TimePrecision of first InfluxClient to be '1ms'")
 	}
 
-	if !config.InfluxClients[0].LogLineProtocol() {
-		t.Error("expect LogLineProtocol of first InfluxClient to be True")
+	if !config.InfluxClients[0].LogDebug() {
+		t.Error("expect LogDebug of first InfluxClient to be True")
 	}
 
 	// Converters section
@@ -543,28 +549,16 @@ func TestReadConfig_Default(t *testing.T) {
 	}
 
 	// influxClients section
-	if config.InfluxClients[0].User() != "" {
-		t.Error("expect default InfluxClient->User to be empty")
-	}
-
-	if config.InfluxClients[0].Password() != "" {
-		t.Error("expect default InfluxClient->Password to be empty")
-	}
-
-	if config.InfluxClients[0].Database() != "go-mqtt-to-influx" {
-		t.Error("expect default InfluxClient->Database to be 'go-mqtt-to-influx'")
-	}
-
-	if config.InfluxClients[0].WriteInterval().String() != "200ms" {
-		t.Error("expect default InfluxClient->WriteInterval to be 200ms")
+	if config.InfluxClients[0].WriteInterval().String() != "5s" {
+		t.Error("expect default InfluxClient->WriteInterval to be 5s")
 	}
 
 	if config.InfluxClients[0].TimePrecision().String() != "1s" {
 		t.Error("expect default InfluxClient->TimePrecision to be 1s")
 	}
 
-	if config.InfluxClients[0].LogLineProtocol() {
-		t.Error("expect default InfluxClient->LogLineProtocol to be False")
+	if config.InfluxClients[0].LogDebug() {
+		t.Error("expect default InfluxClient->LogDebug to be False")
 	}
 
 	// Converters section
