@@ -59,13 +59,13 @@ func (c MqttClientConfig) convertToRead() mqttClientConfigRead {
 
 func (c InfluxClientConfig) convertToRead() influxClientConfigRead {
 	return influxClientConfigRead{
-		Address:         c.address,
-		User:            c.user,
-		Password:        c.password,
-		Database:        c.database,
-		WriteInterval:   c.writeInterval.String(),
-		TimePrecision:   c.timePrecision.String(),
-		LogLineProtocol: &c.logLineProtocol,
+		Url:           c.url,
+		Token:         c.token,
+		Org:           c.org,
+		Bucket:        c.bucket,
+		WriteInterval: c.writeInterval.String(),
+		TimePrecision: c.timePrecision.String(),
+		LogDebug:      &c.logDebug,
 	}
 }
 

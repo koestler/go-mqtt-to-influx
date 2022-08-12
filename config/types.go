@@ -27,14 +27,14 @@ type MqttClientConfig struct {
 }
 
 type InfluxClientConfig struct {
-	name            string        // defined automatically by map key
-	address         string        // mandatory
-	user            string        // optional: default empty
-	password        string        // optional: default empty
-	database        string        // optional: default go-mqtt-to-influx
-	writeInterval   time.Duration // optional: default 200ms
-	timePrecision   time.Duration // optional: default 1s
-	logLineProtocol bool          // optional: default False
+	name          string        // defined automatically by map key
+	url           string        // mandatory
+	token         string        // mandatory
+	org           string        // mandatory
+	bucket        string        // mandatory
+	writeInterval time.Duration // optional: default 5s
+	timePrecision time.Duration // optional: default 1s
+	logDebug      bool          // optional: default False
 }
 
 type ConverterConfig struct {
@@ -87,13 +87,13 @@ type mqttClientConfigRead struct {
 type mqttClientConfigReadMap map[string]mqttClientConfigRead
 
 type influxClientConfigRead struct {
-	Address         string `yaml:"Address"`
-	User            string `yaml:"User"`
-	Password        string `yaml:"Password"`
-	Database        string `yaml:"Database"`
-	WriteInterval   string `yaml:"WriteInterval"`
-	TimePrecision   string `yaml:"TimePrecision"`
-	LogLineProtocol *bool  `yaml:"LogLineProtocol"`
+	Url           string `yaml:"Url"`
+	Token         string `yaml:"Token"`
+	Org           string `yaml:"Org"`
+	Bucket        string `yaml:"Bucket"`
+	WriteInterval string `yaml:"WriteInterval"`
+	TimePrecision string `yaml:"TimePrecision"`
+	LogDebug      *bool  `yaml:"LogDebug"`
 }
 
 type influxClientConfigReadMap map[string]influxClientConfigRead

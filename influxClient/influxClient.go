@@ -1,41 +1,37 @@
 package influxClient
 
 import (
-	"fmt"
-	influxClient "github.com/influxdata/influxdb1-client/v2"
+	"context"
+	"github.com/influxdata/influxdb-client-go/v2"
+	influxdb2Api "github.com/influxdata/influxdb-client-go/v2/api"
+	influxdbHttp2 "github.com/influxdata/influxdb-client-go/v2/api/http"
 	"log"
-	"strings"
 	"time"
 )
 
-const ErrorDelayMin = time.Second
-const ErrorDelayMax = time.Minute
-
 type Client struct {
-	config     Config
-	client     influxClient.Client
+	config   Config
+	client   influxdb2.Client
+	writeApi influxdb2Api.WriteAPI
+
 	statistics Statistics
 
 	lastTransmission time.Time
 	errorRetryDelay  time.Duration
 
-	shutdown           chan struct{}
-	closed             chan struct{}
-	pointToSendChannel chan *influxClient.Point
-	currentBatch       influxClient.BatchPoints
-
-	serverVersion string
+	shutdown chan struct{}
+	closed   chan struct{}
 }
 
 type Config interface {
 	Name() string
-	Address() string
-	User() string
-	Password() string
-	Database() string
+	Url() string
+	Token() string
+	Org() string
+	Bucket() string
 	WriteInterval() time.Duration
 	TimePrecision() time.Duration
-	LogLineProtocol() bool
+	LogDebug() bool
 }
 
 type Point interface {
@@ -49,37 +45,50 @@ type Statistics interface {
 	IncrementOne(module, name, field string)
 }
 
-func RunClient(config Config, statistics Statistics) (*Client, error) {
+func RunClient(config Config, statistics Statistics) *Client {
 	// Create a new HTTPClient
-	dbClient, err := influxClient.NewHTTPClient(influxClient.HTTPConfig{
-		Addr:     config.Address(),
-		Username: config.User(),
-		Password: config.Password(),
+	opts := influxdb2.DefaultOptions().SetUseGZip(true)
+	opts = opts.SetFlushInterval(uint(config.WriteInterval().Milliseconds()))
+	opts = opts.SetPrecision(config.TimePrecision())
+	if config.LogDebug() {
+		opts = opts.SetLogLevel(3)
+	}
+	dbClient := influxdb2.NewClientWithOptions(
+		config.Url(),
+		config.Token(),
+		opts,
+	)
+
+	// create asynchronous, auto-retry write api instance
+	writeApi := dbClient.WriteAPI(config.Org(), config.Bucket())
+
+	writeApi.SetWriteFailedCallback(func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
+		// log and retry forever
+		log.Printf("influxClient[%s]: write failed", config.Name())
+		return true
 	})
-	if err != nil {
-		return nil, err
+
+	// ping the api
+	if ok, err := dbClient.Ping(context.Background()); ok {
+		log.Printf("influxClient[%s]: ping successful", config.Name())
+	} else {
+		log.Printf("influxClient[%s]: ping failed: %s", config.Name(), err)
 	}
 
-	client := &Client{
+	c := Client{
 		config:     config,
 		client:     dbClient,
+		writeApi:   writeApi,
 		statistics: statistics,
 
-		shutdown:           make(chan struct{}),
-		closed:             make(chan struct{}),
-		pointToSendChannel: make(chan *influxClient.Point, 1024),
-		currentBatch:       getBatch(config),
+		shutdown: make(chan struct{}),
+		closed:   make(chan struct{}),
 	}
 
-	// ping server
-	if _, client.serverVersion, err = dbClient.Ping(10 * time.Second); err != nil {
-		return nil, fmt.Errorf("influxClient[%s]: ping failed: %s", client.Name(), err)
-	}
+	go c.worker()
 
-	// start to send out points
-	go client.worker(config.WriteInterval())
-
-	return client, nil
+	// create client object
+	return &c
 }
 
 func (ic *Client) Shutdown() {
@@ -88,107 +97,24 @@ func (ic *Client) Shutdown() {
 	// wait for worker to shut down
 	<-ic.closed
 
-	// shutdown client ressources
-	if err := ic.client.Close(); err != nil {
-		log.Printf("influxClient[%s]: error during shutdown: %s", ic.Name(), err)
-	}
+	ic.writeApi.Flush()
+	ic.client.Close()
+
+	log.Printf("influxClient[%s]: closed", ic.Name())
 }
 
 func (ic Client) Name() string {
 	return ic.config.Name()
 }
 
-func (ic Client) ServerVersion() string {
-	return ic.serverVersion
-}
-
-func (ic *Client) worker(writeInterval time.Duration) {
+func (ic *Client) worker() {
 	defer close(ic.closed)
-
-	writeTick := time.Tick(writeInterval)
 
 	for {
 		select {
-		case point := <-ic.pointToSendChannel:
-			ic.currentBatch.AddPoint(point)
-
-			// if interval = 0 -> send immediately
-			if writeInterval == 0 {
-				ic.sendBatch()
-			}
-		case <-writeTick:
-			ic.sendBatch()
 		case <-ic.shutdown:
-			ic.sendBatch()
 			return // shutdown
 		}
-
+		// todo: handle retry
 	}
-}
-
-func getBatch(config Config) (bp influxClient.BatchPoints) {
-	bp, err := influxClient.NewBatchPoints(influxClient.BatchPointsConfig{
-		Database:  config.Database(),
-		Precision: config.TimePrecision().String(),
-	})
-	if err != nil {
-		log.Printf("influxClient[%s]: cannot create batch: %s", config.Name(), err)
-	}
-	return
-}
-
-func (ic *Client) sendBatch() {
-	if len(ic.currentBatch.Points()) < 1 {
-		// nothing to send
-		return
-	}
-
-	if time.Now().Before(ic.lastTransmission.Add(ic.errorRetryDelay)) {
-		// in retransmission backoff: keep data & return
-		return
-	}
-
-	points := ic.currentBatch.Points()
-	if ic.config.LogLineProtocol() {
-		if len(points) == 1 {
-			log.Printf("influxClient[%s]: %s", ic.Name(), points[0].String())
-		} else {
-			log.Printf("influxClient[%s]: write batch of %d points", ic.Name(), len(points))
-			for _, p := range points {
-				log.Printf("influxClient[%s]:   %s", ic.Name(), p.String())
-			}
-		}
-	}
-	// update statistics
-	for _, p := range points {
-		ic.statistics.IncrementOne("influx", ic.Name(), strings.Split(p.String(), " ")[0])
-	}
-
-	ic.lastTransmission = time.Now()
-	if err := ic.client.Write(ic.currentBatch); err != nil {
-		// retry with exponential backoff
-		if ic.errorRetryDelay < 1 {
-			ic.errorRetryDelay = ErrorDelayMin
-		} else {
-			ic.errorRetryDelay *= 2
-		}
-		if ic.errorRetryDelay > ErrorDelayMax {
-			ic.errorRetryDelay = ErrorDelayMax
-		}
-
-		log.Printf("influxClient[%s]: cannot write to db; retry no ealier than %s; err: %s",
-			ic.Name(),
-			ic.lastTransmission.Add(ic.errorRetryDelay).Format(time.UnixDate),
-			err,
-		)
-
-		// keep current batch for retransmission
-		return
-	} else {
-		// all ok
-		ic.errorRetryDelay = 0
-	}
-
-	// flush batch / start a new one
-	ic.currentBatch = getBatch(ic.config)
 }

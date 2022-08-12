@@ -42,20 +42,20 @@ func (c InfluxClientConfig) Name() string {
 	return c.name
 }
 
-func (c InfluxClientConfig) Address() string {
-	return c.address
+func (c InfluxClientConfig) Url() string {
+	return c.url
 }
 
-func (c InfluxClientConfig) User() string {
-	return c.user
+func (c InfluxClientConfig) Token() string {
+	return c.token
 }
 
-func (c InfluxClientConfig) Password() string {
-	return c.password
+func (c InfluxClientConfig) Org() string {
+	return c.org
 }
 
-func (c InfluxClientConfig) Database() string {
-	return c.database
+func (c InfluxClientConfig) Bucket() string {
+	return c.bucket
 }
 
 func (c InfluxClientConfig) WriteInterval() time.Duration {
@@ -66,8 +66,8 @@ func (c InfluxClientConfig) TimePrecision() time.Duration {
 	return c.timePrecision
 }
 
-func (c InfluxClientConfig) LogLineProtocol() bool {
-	return c.logLineProtocol
+func (c InfluxClientConfig) LogDebug() bool {
+	return c.logDebug
 }
 
 func (c ConverterConfig) Name() string {

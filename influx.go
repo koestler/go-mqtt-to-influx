@@ -20,23 +20,23 @@ func runInfluxClient(
 	for _, influxClientConfig := range cfg.InfluxClients {
 		if cfg.LogWorkerStart {
 			log.Printf(
-				"influxClient[%s]: start: address='%s'",
+				"influxClient[%s]: start: url='%s', len(token)=%d, org='%s', bucket='%s'",
 				influxClientConfig.Name(),
-				influxClientConfig.Address(),
+				influxClientConfig.Url(),
+				len(influxClientConfig.Token()),
+				influxClientConfig.Org(),
+				influxClientConfig.Bucket(),
 			)
 		}
 
-		if client, err := influxClient.RunClient(influxClientConfig, statisticsInstance); err != nil {
-			log.Printf("influxClient[%s]: start failed: %s", influxClientConfig.Name(), err)
-		} else {
-			influxClientPoolInstance.AddClient(client)
-			countStarted += 1
-			if cfg.LogWorkerStart {
-				log.Printf(
-					"influxClient[%s]: started; serverVersion='%s'",
-					influxClientConfig.Name(), client.ServerVersion(),
-				)
-			}
+		client := influxClient.RunClient(influxClientConfig, statisticsInstance)
+
+		influxClientPoolInstance.AddClient(client)
+		countStarted += 1
+		if cfg.LogWorkerStart {
+			log.Printf(
+				"influxClient[%s]: started", influxClientConfig.Name(),
+			)
 		}
 	}
 

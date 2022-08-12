@@ -1,8 +1,8 @@
 package influxClient
 
 import (
-	influxClient "github.com/influxdata/influxdb1-client/v2"
-	"log"
+	"github.com/influxdata/influxdb-client-go/v2"
+	influxdb2Write "github.com/influxdata/influxdb-client-go/v2/api/write"
 	"sync"
 )
 
@@ -60,18 +60,12 @@ func (p *ClientPool) getReceiverClients(receiversNames []string) (receivers []*C
 	return
 }
 
-func ToInfluxPoint(point Point) (*influxClient.Point, error) {
-	return influxClient.NewPoint(point.Measurement(), point.Tags(), point.Fields(), point.Time())
+func ToInfluxPoint(point Point) *influxdb2Write.Point {
+	return influxdb2.NewPoint(point.Measurement(), point.Tags(), point.Fields(), point.Time())
 }
 
 func (p *ClientPool) WritePoint(point Point, receiverNames []string) {
-	pt, err := ToInfluxPoint(point)
-	if err != nil {
-		log.Printf("influxClientPool: error creating a point: %s", err)
-		return
-	}
-
 	for _, receiver := range p.getReceiverClients(receiverNames) {
-		receiver.pointToSendChannel <- pt
+		receiver.writeApi.WritePoint(ToInfluxPoint(point))
 	}
 }

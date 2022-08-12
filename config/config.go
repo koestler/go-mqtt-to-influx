@@ -260,28 +260,36 @@ func (c influxClientConfigReadMap) TransformAndValidate() (ret []*InfluxClientCo
 
 func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxClientConfig, err []error) {
 	ret = InfluxClientConfig{
-		name:     name,
-		address:  c.Address,
-		user:     c.User,
-		password: c.Password,
-		database: c.Database,
+		name:   name,
+		url:    c.Url,
+		token:  c.Token,
+		org:    c.Org,
+		bucket: c.Bucket,
 	}
 
 	if !nameMatcher.MatchString(ret.name) {
 		err = append(err, fmt.Errorf("InfluxClientConfig->Name='%s' does not match %s", ret.name, NameRegexp))
 	}
 
-	if len(ret.address) < 1 {
-		err = append(err, fmt.Errorf("InfluxClientConfig->%s->Address must not be empty", name))
+	if len(ret.url) < 1 {
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->Url must not be empty", name))
 	}
 
-	if len(ret.database) < 1 {
-		ret.database = "go-mqtt-to-influx"
+	if len(ret.token) < 1 {
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->Token must not be empty", name))
+	}
+
+	if len(ret.org) < 1 {
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->Org must not be empty", name))
+	}
+
+	if len(ret.bucket) < 1 {
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->Bucket must not be empty", name))
 	}
 
 	if len(c.WriteInterval) < 1 {
-		// use default 0
-		ret.writeInterval = 200 * time.Millisecond
+		// use default
+		ret.writeInterval = 5 * time.Second
 	} else if writeInterval, e := time.ParseDuration(c.WriteInterval); e != nil {
 		err = append(err, fmt.Errorf("InfluxClientConfig->%s->WriteInterval='%s' parse error: %s",
 			name, c.WriteInterval, e,
@@ -309,8 +317,8 @@ func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxCli
 		ret.timePrecision = timePrecision
 	}
 
-	if c.LogLineProtocol != nil && *c.LogLineProtocol {
-		ret.logLineProtocol = true
+	if c.LogDebug != nil && *c.LogDebug {
+		ret.logDebug = true
 	}
 
 	return
