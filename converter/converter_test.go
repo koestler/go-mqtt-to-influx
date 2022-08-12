@@ -16,7 +16,7 @@ import (
 
 //go:generate mockgen -destination=mock/converter_mock.go -package converter_mock github.com/koestler/go-mqtt-to-influx/converter Config,Input,Output
 
-const epsilon = time.Millisecond
+const epsilon = 10 * time.Millisecond
 
 func checkTimeStamp(expected, response time.Time) bool {
 	return response.After(expected.Add(-epsilon)) && response.Before(expected.Add(epsilon))

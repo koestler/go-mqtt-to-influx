@@ -8,7 +8,6 @@ import (
 	"log"
 	"sync"
 	"testing"
-	"time"
 )
 
 func TestLogOnce(t *testing.T) {
@@ -18,7 +17,8 @@ func TestLogOnce(t *testing.T) {
 	var logBuffer bytes.Buffer
 	log.SetOutput(&logBuffer)
 
-	var wg sync.WaitGroup
+	var wg0 sync.WaitGroup
+	var wg1 sync.WaitGroup
 
 	const numbTopics = 42
 	const numbPayloads = 11
@@ -26,11 +26,13 @@ func TestLogOnce(t *testing.T) {
 
 	// use LogTopicOnce as much in parallel as possible to check proper sync handling
 	for topic := 0; topic < numbTopics; topic += 1 {
+		wg0.Add(1)
 		go func(topic string) {
+			defer wg0.Done()
 			for payload := 0; payload < numbPayloads; payload += 1 {
-				wg.Add(1)
+				wg1.Add(1)
 				go func(payload string) {
-					defer wg.Done()
+					defer wg1.Done()
 					for repeat := 0; repeat < repeatPayload; repeat += 1 {
 						mockInput := converter_mock.NewMockInput(mockCtrl)
 						mockInput.EXPECT().Topic().Return(topic).MinTimes(1)
@@ -43,8 +45,8 @@ func TestLogOnce(t *testing.T) {
 		}(fmt.Sprintf("/a/%d/foo", topic))
 	}
 
-	wg.Wait()
-	time.Sleep(200 * time.Millisecond)
+	wg0.Wait()
+	wg1.Wait()
 
 	if cnt := bytes.Count(logBuffer.Bytes(), []byte{'\n'}); cnt != numbTopics {
 		t.Errorf("expected number of lines to match numbTopics=%d, but go %d lines", numbTopics, cnt)
