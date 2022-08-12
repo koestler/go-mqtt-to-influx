@@ -8,6 +8,7 @@ import (
 	"log"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestLogOnce(t *testing.T) {
@@ -43,6 +44,7 @@ func TestLogOnce(t *testing.T) {
 	}
 
 	wg.Wait()
+	time.Sleep(200 * time.Millisecond)
 
 	if cnt := bytes.Count(logBuffer.Bytes(), []byte{'\n'}); cnt != numbTopics {
 		t.Errorf("expected number of lines to match numbTopics=%d, but go %d lines", numbTopics, cnt)
