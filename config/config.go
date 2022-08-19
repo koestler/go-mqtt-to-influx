@@ -219,7 +219,7 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 
 	if c.AvailabilityTopic == nil {
 		// use default
-		ret.availabilityTopic = "%Prefix%tele/%ClientId%/LWT"
+		ret.availabilityTopic = "%Prefix%tele/%ClientId%/status"
 	} else {
 		ret.availabilityTopic = *c.AvailabilityTopic
 	}

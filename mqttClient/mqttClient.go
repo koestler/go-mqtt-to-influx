@@ -31,8 +31,8 @@ type Statistics interface {
 }
 
 const (
-	OfflinePayload string = "Offline"
-	OnlinePayload  string = "Online"
+	OfflinePayload string = "offline"
+	OnlinePayload  string = "online"
 )
 
 func Run(config Config, statistics Statistics) (*MqttClient, error) {
