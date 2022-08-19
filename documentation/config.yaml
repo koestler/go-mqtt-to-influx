@@ -55,8 +55,8 @@ Converters:                                                # mandatory, a list o
       - 1-local
     LogHandleOnce: True                                    # optional, default False, if True each topic is logged once by each converter
 
-  1-ve:                                                    # optional, a second Converter
-    Implementation: go-ve-sensor
+  1-iot:                                                    # optional, a second Converter
+    Implementation: go-iotdevice
     MqttTopics:
       - "%Prefix%tele/ve/#"
     LogHandleOnce: True

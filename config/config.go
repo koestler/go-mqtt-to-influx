@@ -355,10 +355,10 @@ func (c converterConfigReadMap) TransformAndValidate(
 }
 
 var implementationsAndDefaultMeasurement = map[string]string{
-	"go-ve-sensor":   "floatValue",
-	"lwt":            "boolValue",
-	"tasmota-state":  "boolValue",
-	"tasmota-sensor": "floatValue",
+	"lwt":            "availability",
+	"go-iotdevice":   "telemetry",
+	"tasmota-state":  "telemetry",
+	"tasmota-sensor": "telemetry",
 }
 
 func (c converterConfigRead) TransformAndValidate(

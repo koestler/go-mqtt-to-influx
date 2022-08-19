@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	timeFormat   string = "2006-01-02T15:04:05"
-	uptimeFormat string = "^(([0-9]+)T)?([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})$"
+	timeFormat         string = "2006-01-02T15:04:05"
+	uptimeFormat       string = "^(([0-9]+)T)?([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})$"
+	timeWithZoneFormat string = "2006-01-02T15:04:05Z"
 )
 
 func parseTime(timeStr string) (res time.Time, err error) {
@@ -48,4 +49,16 @@ func parseUpTime(timeStr string) (res int, err error) {
 	}
 
 	return 24*60*60*days + 60*60*hours + 60*minutes + seconds, nil
+}
+
+func parseTimeWithZone(timeStr string) (res time.Time, err error) {
+	if len(timeStr) < 1 {
+		return res, errors.New("empty timeStr")
+	}
+
+	res, err = time.Parse(timeWithZoneFormat, timeStr)
+	if err != nil {
+		log.Printf("time: cannot parse timeString='%s': %s : expect format %s", timeStr, err, timeWithZoneFormat)
+	}
+	return
 }
