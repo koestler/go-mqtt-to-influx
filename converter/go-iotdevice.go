@@ -174,16 +174,18 @@ func (m goVeSensorOutputMessage) Tags() map[string]string {
 	return ret
 }
 
-func (m goVeSensorOutputMessage) Fields() map[string]interface{} {
+func (m goVeSensorOutputMessage) Fields() (ret map[string]interface{}) {
+	ret = make(map[string]interface{}, 2)
+
 	if m.floatValue != nil {
-		return map[string]interface{}{
-			"value": *m.floatValue,
-		}
+		ret["floatValue"] = *m.floatValue
 	}
 
-	return map[string]interface{}{
-		"value": *m.stringValue,
+	if m.stringValue != nil {
+		ret["stringValue"] = *m.stringValue
 	}
+
+	return
 }
 
 func (m goVeSensorOutputMessage) Time() time.Time {

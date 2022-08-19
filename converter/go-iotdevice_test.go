@@ -68,16 +68,16 @@ func TestGoVeSensor(t *testing.T) {
 }
 `,
 			ExpectedLines: []string{
-				"telemetry,device=24v-bmv,field=AmountOfChargedEnergy,sensor=BMV-702,unit=kWh value=1883.52",
-				"telemetry,device=24v-bmv,field=CurrentHighRes,sensor=BMV-702,unit=A value=-0.58",
-				"telemetry,device=24v-bmv,field=ModelName,sensor=BMV-702 value=\"BMV-702\"",
-				"telemetry,device=24v-bmv,field=NumberOfCycles,sensor=BMV-702,unit= value=241",
-				"telemetry,device=24v-bmv,field=ProductId,sensor=BMV-702,unit= value=4.26154496e+09",
-				"telemetry,device=24v-bmv,field=SOC,sensor=BMV-702,unit=% value=58.16",
-				"telemetry,device=24v-bmv,field=SerialNumber,sensor=BMV-702 value=\"HQ15149CFQI,HQ1515RP6L7,\"",
-				"telemetry,device=24v-bmv,field=SynchronizationState,sensor=BMV-702 value=\"true\"",
-				"telemetry,device=24v-bmv,field=TTG,sensor=BMV-702,unit=min value=5742",
-				"telemetry,device=24v-bmv,field=Uptime,sensor=BMV-702,unit=s value=1.718279e+07",
+				"telemetry,device=24v-bmv,field=AmountOfChargedEnergy,sensor=BMV-702,unit=kWh floatValue=1883.52",
+				"telemetry,device=24v-bmv,field=CurrentHighRes,sensor=BMV-702,unit=A floatValue=-0.58",
+				"telemetry,device=24v-bmv,field=ModelName,sensor=BMV-702 stringValue=\"BMV-702\"",
+				"telemetry,device=24v-bmv,field=NumberOfCycles,sensor=BMV-702,unit= floatValue=241",
+				"telemetry,device=24v-bmv,field=ProductId,sensor=BMV-702,unit= floatValue=4.26154496e+09",
+				"telemetry,device=24v-bmv,field=SOC,sensor=BMV-702,unit=% floatValue=58.16",
+				"telemetry,device=24v-bmv,field=SerialNumber,sensor=BMV-702 stringValue=\"HQ15149CFQI,HQ1515RP6L7,\"",
+				"telemetry,device=24v-bmv,field=SynchronizationState,sensor=BMV-702 stringValue=\"true\"",
+				"telemetry,device=24v-bmv,field=TTG,sensor=BMV-702,unit=min floatValue=5742",
+				"telemetry,device=24v-bmv,field=Uptime,sensor=BMV-702,unit=s floatValue=1.718279e+07",
 			},
 			ExpectedTimeStamp: time.Date(2022, time.August, 19, 14, 52, 19, 0, time.UTC),
 		}, {
@@ -90,8 +90,8 @@ func TestGoVeSensor(t *testing.T) {
   }
 }`,
 			ExpectedLines: []string{
-				"telemetry,device=24v-bmv,field=Power,sensor=SmartSolar,unit=W value=-18",
-				"telemetry,device=24v-bmv,field=Model,sensor=SmartSolar value=\"SmartSolar MPPT VE.Can 250/100\"",
+				"telemetry,device=24v-bmv,field=Power,sensor=SmartSolar,unit=W floatValue=-18",
+				"telemetry,device=24v-bmv,field=Model,sensor=SmartSolar stringValue=\"SmartSolar MPPT VE.Can 250/100\"",
 			},
 			ExpectedTimeStamp: time.Now(),
 		}, {
