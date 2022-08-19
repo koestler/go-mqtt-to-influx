@@ -108,6 +108,6 @@ func TestRegisterTwice(t *testing.T) {
 	registerHandler("empty", func(c Config, input Input, outputFunc OutputFunc) {})
 
 	if !strings.Contains(logBuffer.String(), "twice") {
-		t.Errorf("expected a log output that we registered go-ve-sensor twice")
+		t.Errorf("expected a log output that we registered go-iotdevice twice")
 	}
 }

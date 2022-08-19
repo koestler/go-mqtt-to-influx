@@ -14,7 +14,7 @@ Victron Energy battery monitors / solar chargers. The devices send the data to a
 [Eclipse Mosquitto](https://github.com/eclipse/mosquitto) MQTT server, `go-mqtt-to-influx` writes the data
 to a local Influx Db Server for making it available by [Grafana](https://grafana.com/) and a second Influx Db
 Server for long term data storage. It, therefore, supports the following inputs:
-* Telemetry and sensor data produced by [go-ve-sensors](https://github.com/koestler/go-ve-sensor)
+* Telemetry and sensor data produced by [go-iotdevice](https://github.com/koestler/go-iotdevice)
 * Telemetry and sensor data produced by devices running [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
 
 However, you are more than welcome to help support new devices. Send push requests of converters including some tests
@@ -162,7 +162,7 @@ Converters:                                                # mandatory, a list o
     LogHandleOnce: True                                    # optional, default False, if True each topic is logged once by each converter
 
   1-ve:                                                    # optional, a second Converter
-    Implementation: go-ve-sensor
+    Implementation: go-iotdevice
     MqttTopics:
       - %Prefix%tele/ve/#
     LogHandleOnce: True
@@ -189,13 +189,13 @@ LWT (Last Will Topic) Messages are used to broadcast the availability (online/of
 This follows the format used by [Tasmota](https://github.com/arendst/Sonoff-Tasmota/wiki/MQTT-Overview).
 
 Example:
-* Topic: `piegn/tele/software/srv1-go-ve-sensor/LWT`
+* Topic: `piegn/tele/software/srv1-go-iotdevice/LWT`
 * Payload: `Online`,
-* Output: `boolValue,device=software/srv1-go-ve-sensor,field=Available value=true`
+* Output: `boolValue,device=software/srv1-go-iotdevice,field=Available value=true`
 
-### go-ve-sensor
+### go-iotdevice
 
-**go-ve-sensor** can read out various sensor values like voltages, currents, and power from BMV-702 battery monitors and
+**go-iotdevice** can read out various sensor values like voltages, currents, and power from BMV-702 battery monitors and
 solar chargers made by [Victron Energy](https://www.victronenergy.com/) and send them to an MQTT server. This
 converter can read and parse those.
 

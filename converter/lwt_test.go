@@ -20,9 +20,9 @@ func TestLwt(t *testing.T) {
 
 	stimuli := TestStimuliResponse{
 		{
-			Topic:             "piegn/tele/software/srv1-go-ve-sensor/LWT",
+			Topic:             "piegn/tele/software/srv1-go-iotdevice/LWT",
 			Payload:           "Online",
-			ExpectedLines:     []string{"boolValue,device=software/srv1-go-ve-sensor,field=Available value=true"},
+			ExpectedLines:     []string{"boolValue,device=software/srv1-go-iotdevice,field=Available value=true"},
 			ExpectedTimeStamp: now,
 		}, {
 			Topic:             "piegn/tele/mezzo/stube-licht1/LWT",
@@ -30,17 +30,17 @@ func TestLwt(t *testing.T) {
 			ExpectedLines:     []string{"boolValue,device=mezzo/stube-licht1,field=Available value=true"},
 			ExpectedTimeStamp: now,
 		}, {
-			Topic:             "piegn/tele/software/srv1-go-ve-sensor/LWT",
+			Topic:             "piegn/tele/software/srv1-go-iotdevice/LWT",
 			Payload:           "Offline",
-			ExpectedLines:     []string{"boolValue,device=software/srv1-go-ve-sensor,field=Available value=false"},
+			ExpectedLines:     []string{"boolValue,device=software/srv1-go-iotdevice,field=Available value=false"},
 			ExpectedTimeStamp: now,
 		}, {
-			Topic:             "piegn/tele/software/srv1-go-ve-sensor/LWT",
+			Topic:             "piegn/tele/software/srv1-go-iotdevice/LWT",
 			Payload:           "invalid",
 			ExpectedLines:     []string{},
 			ExpectedTimeStamp: now,
 		}, {
-			Topic:             "piegn/tele/software/srv1-go-ve-sensor/LWT-invalid-topic",
+			Topic:             "piegn/tele/software/srv1-go-iotdevice/LWT-invalid-topic",
 			Payload:           "Online",
 			ExpectedLines:     []string{},
 			ExpectedTimeStamp: now,

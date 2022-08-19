@@ -84,12 +84,15 @@ func TestGoVeSensor(t *testing.T) {
 			Topic: "piegn/tele/ve/24v-bmv",
 			Payload: `{
   "NextTelemetry": "2022-08-19T14:52:24Z",
-  "Model":"bmv700",
+  "Model":"SmartSolar MPPT VE.Can 250/100",
   "NumericValues":{
     "Power":{"Value":-18,"Unit":"W"}
   }
 }`,
-			ExpectedLines:     []string{"telemetry,device=24v-bmv,field=Power,sensor=bmv700,unit=W value=-18"},
+			ExpectedLines: []string{
+				"telemetry,device=24v-bmv,field=Power,sensor=SmartSolar,unit=W value=-18",
+				"telemetry,device=24v-bmv,field=Model,sensor=SmartSolar value=\"SmartSolar MPPT VE.Can 250/100\"",
+			},
 			ExpectedTimeStamp: time.Now(),
 		}, {
 			Topic:             "piegn/tele/ve/24v-bmv",

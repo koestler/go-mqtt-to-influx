@@ -32,7 +32,7 @@ InfluxClients:
 
 Converters:
   c0:
-    Implementation: go-ve-sensor
+    Implementation: go-iotdevice
     MqttTopics:
      - t0
 `
@@ -70,7 +70,7 @@ Statistics:
 
 Converters:
   äöü:
-    Implementation: go-ve-sensor
+    Implementation: go-iotdevice
     MqttTopics:
       - x
     MqttClients:
@@ -94,7 +94,7 @@ InfluxClients:
 
 Converters:
   piegn-ve-sensor:
-    Implementation: go-ve-sensor
+    Implementation: go-iotdevice
     MqttTopics:
       - piegn/tele/+/SENSOR
 `
@@ -147,7 +147,7 @@ InfluxClients:
 
 Converters:
   0-piegn-ve-sensor:
-    Implementation: go-ve-sensor
+    Implementation: go-iotdevice
     TargetMeasurement: testfloatValue
     MqttTopics:
       - piegn/tele/ve/#
@@ -420,8 +420,8 @@ func TestReadConfig_Complex(t *testing.T) {
 		)
 	}
 
-	if config.Converters[0].Implementation() != "go-ve-sensor" {
-		t.Error("expect Implementation of first Converter to be 'go-ve-sensor'")
+	if config.Converters[0].Implementation() != "go-iotdevice" {
+		t.Error("expect Implementation of first Converter to be 'go-iotdevice'")
 	}
 
 	if config.Converters[0].TargetMeasurement() != "testfloatValue" {
@@ -562,8 +562,8 @@ func TestReadConfig_Default(t *testing.T) {
 	}
 
 	// Converters section
-	if config.Converters[0].TargetMeasurement() != "floatValue" {
-		t.Error("expect default Converter->TargetMeasurement to be 'floatValue'")
+	if config.Converters[0].TargetMeasurement() != "telemetry" {
+		t.Error("expect default Converter->TargetMeasurement to be 'telemetry'")
 	}
 
 	if len(config.Converters[0].MqttClients()) != 0 {

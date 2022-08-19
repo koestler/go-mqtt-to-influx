@@ -23,7 +23,7 @@ func init() {
 // example inputs:
 // - piegn/tele/mezzo/zimmer-klein/LWT Offline
 // - piegn/tele/software/hass0/LWT Online
-// - piegn/tele/software/srv1-go-ve-sensor/LWT Online
+// - piegn/tele/software/srv1-go-iotdevice/LWT Online
 func lwtHandler(c Config, input Input, outputFunc OutputFunc) {
 	// parse topic
 	matches := lwtTopicMatcher.FindStringSubmatch(input.Topic())

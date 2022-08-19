@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -31,7 +32,7 @@ type goVeSensorOutputMessage struct {
 	device      string
 	field       string
 	unit        *string
-	model       string
+	sensor      string
 	stringValue *string
 	floatValue  *float64
 }
@@ -114,6 +115,22 @@ func goIotdeviceHandler(c Config, input Input, outputFunc OutputFunc) {
 		timeStamp = time.Now()
 	}
 
+	// only use BMV-700, BlueSolar etc. as sensor variable
+	sensor := strings.Split(message.Model, " ")[0]
+
+	if sensor != message.Model {
+		// and safe detailed model string as field
+		outputFunc(goVeSensorOutputMessage{
+			timeStamp:   timeStamp,
+			measurement: c.TargetMeasurement(),
+			device:      device,
+			field:       "Model",
+			unit:        nil,
+			sensor:      sensor,
+			stringValue: &message.Model,
+		})
+	}
+
 	for field, value := range message.NumericValues {
 		outputFunc(goVeSensorOutputMessage{
 			timeStamp:   timeStamp,
@@ -121,7 +138,7 @@ func goIotdeviceHandler(c Config, input Input, outputFunc OutputFunc) {
 			device:      device,
 			field:       field,
 			unit:        &value.Unit,
-			model:       message.Model,
+			sensor:      sensor,
 			floatValue:  &value.Value,
 		})
 	}
@@ -133,10 +150,9 @@ func goIotdeviceHandler(c Config, input Input, outputFunc OutputFunc) {
 			device:      device,
 			field:       field,
 			unit:        nil,
-			model:       message.Model,
+			sensor:      sensor,
 			stringValue: &value.Value,
 		})
-
 	}
 }
 
@@ -146,7 +162,7 @@ func (m goVeSensorOutputMessage) Measurement() string {
 
 func (m goVeSensorOutputMessage) Tags() map[string]string {
 	ret := map[string]string{
-		"sensor": m.model,
+		"sensor": m.sensor,
 		"device": m.device,
 		"field":  m.field,
 	}
