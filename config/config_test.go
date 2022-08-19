@@ -535,7 +535,7 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default MqttClient->Qos to be 0")
 	}
 
-	expectedAvailabilityTopic := "%Prefix%tele/%ClientId%/LWT"
+	expectedAvailabilityTopic := "%Prefix%tele/%ClientId%/status"
 	if config.MqttClients[0].AvailabilityTopic() != expectedAvailabilityTopic {
 		t.Errorf("expect default MqttClient->AvailabilityTopic to be '%s'", expectedAvailabilityTopic)
 	}
