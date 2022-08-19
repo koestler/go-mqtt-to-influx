@@ -18,7 +18,7 @@ func TestGoVeSensor(t *testing.T) {
 
 	stimuli := TestStimuliResponse{
 		{
-			Topic: "piegn/tele/iot-device/24v-bmv",
+			Topic: "piegn/tele/iot-device/24v-bmv/state",
 			Payload: `{
   "Time": "2022-08-19T14:52:19Z",
   "NextTelemetry": "2022-08-19T14:52:24Z",
@@ -95,7 +95,7 @@ func TestGoVeSensor(t *testing.T) {
 			},
 			ExpectedTimeStamp: time.Now(),
 		}, {
-			Topic:             "piegn/tele/ve/24v-bmv",
+			Topic:             "piegn/tele/ve/24v-bmv/state",
 			Payload:           "invalid",
 			ExpectedLines:     []string{},
 			ExpectedTimeStamp: time.Now(),

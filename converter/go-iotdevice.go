@@ -37,9 +37,9 @@ type goVeSensorOutputMessage struct {
 	floatValue  *float64
 }
 
-// example input: piegn/tele/24v-bmv
+// example input: piegn/tele/24v-bmv/state
 // -> use 24v-bmv as device identifier
-var topicMatcher = regexp.MustCompile("^(.*)/([^/]*)$")
+var topicMatcher = regexp.MustCompile("/([^/]*)(/state)?$")
 
 func init() {
 	registerHandler("go-iotdevice", goIotdeviceHandler)
@@ -97,11 +97,11 @@ func init() {
 func goIotdeviceHandler(c Config, input Input, outputFunc OutputFunc) {
 	// parse topic
 	matches := topicMatcher.FindStringSubmatch(input.Topic())
-	if len(matches) < 3 {
+	if len(matches) < 2 {
 		log.Printf("go-iotdevice[%s]: cannot extract device from topic='%s", c.Name(), input.Topic())
 		return
 	}
-	device := matches[2]
+	device := matches[1]
 
 	// parse payload
 	var message goIotdeviceTelemetryMessage
