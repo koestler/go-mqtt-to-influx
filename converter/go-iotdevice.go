@@ -112,6 +112,7 @@ func goIotdeviceHandler(c Config, input Input, outputFunc OutputFunc) {
 
 	timeStamp, err := parseTimeWithZone(message.Time)
 	if err != nil {
+		log.Printf("message:%v", message)
 		timeStamp = time.Now()
 	}
 

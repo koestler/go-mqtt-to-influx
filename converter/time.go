@@ -12,7 +12,7 @@ import (
 const (
 	timeFormat         string = "2006-01-02T15:04:05"
 	uptimeFormat       string = "^(([0-9]+)T)?([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})$"
-	timeWithZoneFormat string = "2006-01-02T15:04:05Z"
+	timeWithZoneFormat string = time.RFC3339
 )
 
 func parseTime(timeStr string) (res time.Time, err error) {

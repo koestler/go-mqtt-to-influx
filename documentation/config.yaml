@@ -58,8 +58,8 @@ Converters:                                                # mandatory, a list o
   1-iot:                                                    # optional, a second Converter
     Implementation: go-iotdevice
     MqttTopics:
-      - "%Prefix%tele/ve/#"
-    LogHandleOnce: True
+      - "%Prefix%tele/go-iotdevice/+/state"
+    LogHandleOnce: False
 
   2-tasmota-state:
     Implementation: tasmota-state
