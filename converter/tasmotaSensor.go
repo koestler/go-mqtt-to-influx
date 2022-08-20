@@ -8,8 +8,8 @@ import (
 )
 
 type TemperatureHumidity struct {
-	Temperature float64
-	Humidity    float64
+	Temperature *float64
+	Humidity    *float64
 }
 
 type SensorMessage struct {
@@ -27,7 +27,7 @@ type tasmotaSensorOutputMessage struct {
 	measurement string
 	device      string
 	field       string
-	unit        string
+	unit        *string
 	sensor      string
 	value       float64
 }
@@ -67,7 +67,7 @@ func tasmotaSensorHandler(c Config, input Input, outputFunc OutputFunc) {
 	// send points
 	count := 0
 
-	output := func(field, unit, sensor string, value float64) {
+	output := func(field string, unit *string, sensor string, value float64) {
 		count += 1
 		outputFunc(tasmotaSensorOutputMessage{
 			timeStamp:   timeStamp,
@@ -80,40 +80,50 @@ func tasmotaSensorHandler(c Config, input Input, outputFunc OutputFunc) {
 		})
 	}
 
+	percentStr := "%"
+
 	if message.AM2301 != nil {
-		output(
-			"Temperature",
-			message.TempUnit,
-			"AM2301",
-			message.AM2301.Temperature,
-		)
-		output(
-			"Humidity",
-			"%",
-			"AM2301",
-			message.AM2301.Humidity,
-		)
+		if message.AM2301.Temperature != nil {
+			output(
+				"Temperature",
+				&message.TempUnit,
+				"AM2301",
+				*message.AM2301.Temperature,
+			)
+		}
+		if message.AM2301.Humidity != nil {
+			output(
+				"Humidity",
+				&percentStr,
+				"AM2301",
+				*message.AM2301.Humidity,
+			)
+		}
 	}
 
 	if message.SI7021 != nil {
-		output(
-			"Temperature",
-			message.TempUnit,
-			"SI7021",
-			message.SI7021.Temperature,
-		)
-		output(
-			"Humidity",
-			"%",
-			"SI7021",
-			message.SI7021.Humidity,
-		)
+		if message.SI7021.Temperature != nil {
+			output(
+				"Temperature",
+				&message.TempUnit,
+				"SI7021",
+				*message.SI7021.Temperature,
+			)
+		}
+		if message.SI7021.Humidity != nil {
+			output(
+				"Humidity",
+				&percentStr,
+				"SI7021",
+				*message.SI7021.Humidity,
+			)
+		}
 	}
 
 	if message.DS18B20 != nil {
 		output(
 			"Temperature",
-			message.TempUnit,
+			&message.TempUnit,
 			"DS18B20",
 			message.DS18B20.Temperature,
 		)
@@ -135,17 +145,22 @@ func (m tasmotaSensorOutputMessage) Measurement() string {
 }
 
 func (m tasmotaSensorOutputMessage) Tags() map[string]string {
-	return map[string]string{
+	ret := map[string]string{
+		"sensor": m.sensor,
 		"device": m.device,
 		"field":  m.field,
-		"unit":   m.unit,
-		"sensor": m.sensor,
 	}
+
+	if m.unit != nil {
+		ret["unit"] = *m.unit
+	}
+
+	return ret
 }
 
 func (m tasmotaSensorOutputMessage) Fields() map[string]interface{} {
 	return map[string]interface{}{
-		"value": m.value,
+		"floatValue": m.value,
 	}
 }
 
