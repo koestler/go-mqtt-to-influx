@@ -459,3 +459,12 @@ func (c mqttTopicConfigRead) TransformAndValidate() (ret MqttTopicConfig, err []
 
 	return
 }
+
+type ApplyTopicReplaceFunc func(string) string
+
+func (c MqttTopicConfig) ApplyTopicReplace(f ApplyTopicReplaceFunc) MqttTopicConfig {
+	return MqttTopicConfig{
+		topic:  f(c.topic),
+		device: c.device,
+	}
+}

@@ -40,7 +40,7 @@ func connectConverters(
 			}
 
 			for _, mqttTopic := range converterConfig.MqttTopics() {
-				topicMatcher, err := converter.CreateTopicMatcher(mqttTopic)
+				topicMatcher, err := converter.CreateTopicMatcher(mqttTopic.ApplyTopicReplace(mqttClientInstance.ReplaceTemplate))
 				if err != nil {
 					log.Printf("converter[%s]: error: %s", converterConfig.Name(), err)
 					continue
@@ -94,7 +94,8 @@ func getMqttMessageHandler(
 }
 
 func getMqttClient(mqttClientInstances map[string]*mqttClient.MqttClient, clientNames []string) (
-	clients []*mqttClient.MqttClient) {
+	clients []*mqttClient.MqttClient,
+) {
 	if len(clientNames) < 1 {
 		clients = make([]*mqttClient.MqttClient, len(mqttClientInstances))
 		i := 0
