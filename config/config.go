@@ -355,7 +355,7 @@ func (c converterConfigReadMap) TransformAndValidate(
 }
 
 var implementationsAndDefaultMeasurement = map[string]string{
-	"lwt":            "availability",
+	"availability":   "availability",
 	"go-iotdevice":   "telemetry",
 	"tasmota-state":  "telemetry",
 	"tasmota-sensor": "telemetry",

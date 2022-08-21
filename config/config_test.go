@@ -159,8 +159,8 @@ Converters:
       - 1-local
     LogHandleOnce: True
 
-  1-piegn-tasmota-lwt:
-    Implementation: lwt
+  1-piegn-tasmota-availability:
+    Implementation: availability
     TargetMeasurement: boolValue
     MqttTopics:
       - piegn/tele/+/LWT

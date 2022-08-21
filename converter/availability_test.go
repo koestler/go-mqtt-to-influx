@@ -14,7 +14,7 @@ func TestLwt(t *testing.T) {
 	mockConfig := converter_mock.NewMockConfig(mockCtrl)
 
 	mockConfig.EXPECT().Name().Return("test-converter").AnyTimes()
-	mockConfig.EXPECT().TargetMeasurement().Return("boolValue").MinTimes(1)
+	mockConfig.EXPECT().TargetMeasurement().Return("availability").MinTimes(1)
 
 	now := time.Now()
 
@@ -22,17 +22,17 @@ func TestLwt(t *testing.T) {
 		{
 			Topic:             "piegn/tele/software/srv1-go-iotdevice/LWT",
 			Payload:           "Online",
-			ExpectedLines:     []string{"boolValue,device=software/srv1-go-iotdevice,field=Available value=true"},
+			ExpectedLines:     []string{"availability,device=software/srv1-go-iotdevice boolValue=true"},
 			ExpectedTimeStamp: now,
 		}, {
 			Topic:             "piegn/tele/mezzo/stube-licht1/LWT",
 			Payload:           "Online",
-			ExpectedLines:     []string{"boolValue,device=mezzo/stube-licht1,field=Available value=true"},
+			ExpectedLines:     []string{"availability,device=mezzo/stube-licht1 boolValue=true"},
 			ExpectedTimeStamp: now,
 		}, {
 			Topic:             "piegn/tele/software/srv1-go-iotdevice/LWT",
 			Payload:           "Offline",
-			ExpectedLines:     []string{"boolValue,device=software/srv1-go-iotdevice,field=Available value=false"},
+			ExpectedLines:     []string{"availability,device=software/srv1-go-iotdevice boolValue=false"},
 			ExpectedTimeStamp: now,
 		}, {
 			Topic:             "piegn/tele/software/srv1-go-iotdevice/LWT",
@@ -47,7 +47,7 @@ func TestLwt(t *testing.T) {
 		},
 	}
 
-	if h, err := GetHandler("lwt"); err != nil {
+	if h, err := GetHandler("availability"); err != nil {
 		t.Errorf("did not expect an error while getting handler: %s", err)
 	} else {
 		testStimuliResponse(t, mockCtrl, mockConfig, h, stimuli)
