@@ -72,9 +72,22 @@ func (c InfluxClientConfig) convertToRead() influxClientConfigRead {
 func (c ConverterConfig) convertToRead() converterConfigRead {
 	return converterConfigRead{
 		Implementation: c.implementation,
-		MqttTopics:     c.mqttTopics,
-		MqttClients:    c.mqttClients,
-		LogHandleOnce:  &c.logHandleOnce,
+		MqttTopics: func() []mqttTopicConfigRead {
+			ret := make([]mqttTopicConfigRead, len(c.mqttTopics))
+			for i, t := range c.mqttTopics {
+				ret[i] = t.convertToRead()
+			}
+			return ret
+		}(),
+		MqttClients:   c.mqttClients,
+		LogHandleOnce: &c.logHandleOnce,
+	}
+}
+
+func (c MqttTopicConfig) convertToRead() mqttTopicConfigRead {
+	return mqttTopicConfigRead{
+		Topic:  c.topic,
+		Device: &c.device,
 	}
 }
 

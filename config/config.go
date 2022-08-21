@@ -362,7 +362,6 @@ func (c converterConfigRead) TransformAndValidate(
 	ret = ConverterConfig{
 		name:           name,
 		implementation: c.Implementation,
-		mqttTopics:     c.MqttTopics,
 		mqttClients:    c.MqttClients,
 		influxClients:  c.InfluxClients,
 	}
@@ -374,6 +373,10 @@ func (c converterConfigRead) TransformAndValidate(
 	if len(ret.implementation) < 1 {
 		err = append(err, fmt.Errorf("Converters->%s->Implementation='%s' is unkown", name, ret.implementation))
 	}
+
+	var e []error
+	ret.mqttTopics, e = c.MqttTopics.TransformAndValidate()
+	err = append(err, e...)
 
 	// validate that all listed mqttClients exist
 	for _, clientName := range ret.mqttClients {
@@ -411,6 +414,49 @@ func (c converterConfigRead) TransformAndValidate(
 
 	if c.LogHandleOnce != nil && *c.LogHandleOnce {
 		ret.logHandleOnce = true
+	}
+
+	return
+}
+
+func (c mqttTopicConfigReadList) TransformAndValidate() (ret []*MqttTopicConfig, err []error) {
+	if len(c) < 1 {
+		return ret, []error{fmt.Errorf("mqttTopics section must no be empty.")}
+	}
+
+	ret = make([]*MqttTopicConfig, len(c))
+	for i, t := range c {
+		r, e := t.TransformAndValidate()
+		ret[i] = &r
+		err = append(err, e...)
+	}
+	return
+}
+
+var deviceDynamicMatcher = regexp.MustCompile("^\\+(/\\+)*$")
+
+func (c mqttTopicConfigRead) TransformAndValidate() (ret MqttTopicConfig, err []error) {
+	ret = MqttTopicConfig{
+		topic: c.Topic,
+	}
+
+	if c.Device == nil {
+		ret.device = "+"
+	} else {
+		ret.device = *c.Device
+	}
+
+	// is dynamic
+	if deviceDynamicMatcher.MatchString(ret.device) {
+		// we have a dynamic device name
+		if !strings.Contains(ret.topic, "%Device%") {
+			err = append(err, fmt.Errorf("topic '%s' must contain '%%Device%%'", ret.topic))
+		}
+	} else {
+		// we have a static device name, name must not contain +
+		if strings.Contains(ret.device, "+") {
+			err = append(err, fmt.Errorf("invalid device=%s", ret.device))
+		}
 	}
 
 	return

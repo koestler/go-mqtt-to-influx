@@ -78,7 +78,7 @@ func (c ConverterConfig) Implementation() string {
 	return c.implementation
 }
 
-func (c ConverterConfig) MqttTopics() []string {
+func (c ConverterConfig) MqttTopics() []*MqttTopicConfig {
 	return c.mqttTopics
 }
 
@@ -92,6 +92,14 @@ func (c ConverterConfig) InfluxClients() []string {
 
 func (c ConverterConfig) LogHandleOnce() bool {
 	return c.logHandleOnce
+}
+
+func (c MqttTopicConfig) Topic() string {
+	return c.topic
+}
+
+func (c MqttTopicConfig) Device() string {
+	return c.device
 }
 
 func (c HttpServerConfig) Enabled() bool {

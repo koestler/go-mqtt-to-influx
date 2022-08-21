@@ -34,7 +34,7 @@ Converters:
   c0:
     Implementation: go-iotdevice
     MqttTopics:
-     - t0
+     - Topic: t0/%Device%
 `
 
 	InvalidMandatoryFieldsMissingConfig = `
@@ -72,7 +72,7 @@ Converters:
   äöü:
     Implementation: go-iotdevice
     MqttTopics:
-      - x
+      - Topic: x/%Device%
     MqttClients:
       - inexistant-mqtt-client
     InfluxClients:
@@ -96,7 +96,7 @@ Converters:
   piegn-ve-sensor:
     Implementation: go-iotdevice
     MqttTopics:
-      - piegn/tele/+/SENSOR
+      - Topic: piegn/tele/%Device%/SENSOR
 `
 
 	ValidComplexConfig = `
@@ -149,7 +149,8 @@ Converters:
   0-piegn-ve-sensor:
     Implementation: go-iotdevice
     MqttTopics:
-      - piegn/tele/ve/#
+      - Topic: piegn/tele/ve/#
+        Device: fixed-ve
     MqttClients:
       - 0-piegn-mosquitto
       - 1-local-mosquitto
@@ -161,23 +162,28 @@ Converters:
   1-piegn-tasmota-availability:
     Implementation: availability
     MqttTopics:
-      - piegn/tele/+/LWT
-      - piegn/tele/+/+/LWT
-      - piegn/tele/+/+/+/LWT
+      - Topic: piegn/tele/%Device%/LWT
+        Device: +
+      - Topic: piegn/tele/%Device%/LWT
+        Device: +/+
+      - Topic: piegn/tele/%Device%/LWT
+        Device: +/+/+
 
   2-piegn-tasmota-state:
     Implementation: tasmota-state
     MqttTopics:
-      - piegn/tele/+/STATE
-      - piegn/tele/+/+/STATE
-      - piegn/tele/+/+/+/STATE
+      - Topic: piegn/tele/%Device%/STATE
+        Device: +
+      - Topic: piegn/tele/%Device%/STATE
+        Device: +/+
+      - Topic: piegn/tele/%Device%/STATE
+        Device: +/+/+
 
   3-piegn-tasmota-sensor:
     Implementation: tasmota-sensor
     MqttTopics:
-      - piegn/tele/+/SENSOR
-      - piegn/tele/+/+/SENSOR
-      - piegn/tele/+/+/+/SENSOR
+      - Topic: piegn/tele/foobar/SENSOR
+        Device: fixed-device
 `
 )
 
@@ -420,9 +426,27 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect Implementation of first Converter to be 'go-iotdevice'")
 	}
 
-	if len(config.Converters[0].MqttTopics()) != 1 || config.Converters[0].MqttTopics()[0] != "piegn/tele/ve/#" {
-		t.Errorf("expect MqttTopics of first Converter to be ['piegn/tele/ve/#'] got %v",
-			config.Converters[0].MqttTopics(),
+	if len(config.Converters[0].MqttTopics()) != 1 || config.Converters[0].MqttTopics()[0].Topic() != "piegn/tele/ve/#" {
+		t.Errorf("expect Topic of first MqttTopics of first Converter to be 'piegn/tele/ve/#' got '%s'",
+			config.Converters[0].MqttTopics()[0].Topic(),
+		)
+	}
+
+	if len(config.Converters[0].MqttTopics()) != 1 || config.Converters[0].MqttTopics()[0].Device() != "fixed-ve" {
+		t.Errorf("expect Device of first MqttTopics of first Converter to be 'fixed-ve' got '%s'",
+			config.Converters[0].MqttTopics()[0].Device(),
+		)
+	}
+
+	if config.Converters[1].MqttTopics()[0].Topic() != "piegn/tele/%Device%/LWT" {
+		t.Errorf("expect Topic of first MqttTopics of second Converter to be 'piegn/tele/%%Device%%/LWT' got '%s'",
+			config.Converters[1].MqttTopics()[0].Topic(),
+		)
+	}
+
+	if config.Converters[1].MqttTopics()[0].Device() != "+" {
+		t.Errorf("expect Device of first MqttTopics of second Converter to be '+' got '%s'",
+			config.Converters[1].MqttTopics()[0].Device(),
 		)
 	}
 
@@ -560,6 +584,10 @@ func TestReadConfig_Default(t *testing.T) {
 
 	if len(config.Converters[0].InfluxClients()) != 0 {
 		t.Error("expect default Converter->InfluxClients to be empty")
+	}
+
+	if config.Converters[0].MqttTopics()[0].Device() != "+" {
+		t.Error("expect default Converter->MqttTopics->Device to be '+'")
 	}
 
 	// HttpServer

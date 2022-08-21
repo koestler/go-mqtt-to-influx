@@ -38,12 +38,17 @@ type InfluxClientConfig struct {
 }
 
 type ConverterConfig struct {
-	name           string   // defined automatically by map key
-	implementation string   // mandatory
-	mqttTopics     []string // mandatory: at least 1 must be defined
-	mqttClients    []string // optional: defaults to all defined clients
-	influxClients  []string // optional: defaults to all defined clients
-	logHandleOnce  bool     // optional: default False
+	name           string             // defined automatically by map key
+	implementation string             // mandatory
+	mqttTopics     []*MqttTopicConfig // mandatory: at least 1 must be defined
+	mqttClients    []string           // optional: defaults to all defined clients
+	influxClients  []string           // optional: defaults to all defined clients
+	logHandleOnce  bool               // optional: default False
+}
+
+type MqttTopicConfig struct {
+	topic  string // mandatory: must contain %Device%
+	device string // optional: default "+"
 }
 
 type HttpServerConfig struct {
@@ -98,14 +103,21 @@ type influxClientConfigRead struct {
 type influxClientConfigReadMap map[string]influxClientConfigRead
 
 type converterConfigRead struct {
-	Implementation string   `yaml:"Implementation"`
-	MqttTopics     []string `yaml:"MqttTopics"`
-	MqttClients    []string `yaml:"MqttClients"`
-	InfluxClients  []string `yaml:"InfluxClients"`
-	LogHandleOnce  *bool    `yaml:"LogHandleOnce"`
+	Implementation string                  `yaml:"Implementation"`
+	MqttTopics     mqttTopicConfigReadList `yaml:"MqttTopics"`
+	MqttClients    []string                `yaml:"MqttClients"`
+	InfluxClients  []string                `yaml:"InfluxClients"`
+	LogHandleOnce  *bool                   `yaml:"LogHandleOnce"`
 }
 
 type converterConfigReadMap map[string]converterConfigRead
+
+type mqttTopicConfigRead struct {
+	Topic  string  `yaml:"Topic"`
+	Device *string `yaml:"Device"`
+}
+
+type mqttTopicConfigReadList []mqttTopicConfigRead
 
 type httpServerConfigRead struct {
 	Bind        string `yaml:"Bind"`
