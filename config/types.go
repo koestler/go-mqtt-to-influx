@@ -38,13 +38,12 @@ type InfluxClientConfig struct {
 }
 
 type ConverterConfig struct {
-	name              string   // defined automatically by map key
-	implementation    string   // mandatory
-	targetMeasurement string   // optional: default depends on implementation
-	mqttTopics        []string // mandatory: at least 1 must be defined
-	mqttClients       []string // optional: defaults to all defined clients
-	influxClients     []string // optional: defaults to all defined clients
-	logHandleOnce     bool     // optional: default False
+	name           string   // defined automatically by map key
+	implementation string   // mandatory
+	mqttTopics     []string // mandatory: at least 1 must be defined
+	mqttClients    []string // optional: defaults to all defined clients
+	influxClients  []string // optional: defaults to all defined clients
+	logHandleOnce  bool     // optional: default False
 }
 
 type HttpServerConfig struct {
@@ -99,12 +98,11 @@ type influxClientConfigRead struct {
 type influxClientConfigReadMap map[string]influxClientConfigRead
 
 type converterConfigRead struct {
-	Implementation    string   `yaml:"Implementation"`
-	TargetMeasurement string   `yaml:"TargetMeasurement"`
-	MqttTopics        []string `yaml:"MqttTopics"`
-	MqttClients       []string `yaml:"MqttClients"`
-	InfluxClients     []string `yaml:"InfluxClients"`
-	LogHandleOnce     *bool    `yaml:"LogHandleOnce"`
+	Implementation string   `yaml:"Implementation"`
+	MqttTopics     []string `yaml:"MqttTopics"`
+	MqttClients    []string `yaml:"MqttClients"`
+	InfluxClients  []string `yaml:"InfluxClients"`
+	LogHandleOnce  *bool    `yaml:"LogHandleOnce"`
 }
 
 type converterConfigReadMap map[string]converterConfigRead

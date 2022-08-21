@@ -8,10 +8,9 @@ import (
 )
 
 type availabilityOutputMessage struct {
-	timeStamp   time.Time
-	measurement string
-	device      string
-	value       bool
+	timeStamp time.Time
+	device    string
+	value     bool
 }
 
 var availabilityTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/LWT$")
@@ -53,15 +52,14 @@ func availabilityHandler(c Config, input Input, outputFunc OutputFunc) {
 	}
 
 	outputFunc(availabilityOutputMessage{
-		timeStamp:   timeStamp,
-		measurement: c.TargetMeasurement(),
-		device:      device,
-		value:       value,
+		timeStamp: timeStamp,
+		device:    device,
+		value:     value,
 	})
 }
 
 func (m availabilityOutputMessage) Measurement() string {
-	return m.measurement
+	return "availability"
 }
 
 func (m availabilityOutputMessage) Tags() map[string]string {

@@ -28,7 +28,6 @@ type goIotdeviceTextTelemetryValue struct {
 
 type goVeSensorOutputMessage struct {
 	timeStamp   time.Time
-	measurement string
 	device      string
 	field       string
 	unit        *string
@@ -130,7 +129,6 @@ func goIotdeviceHandler(c Config, input Input, outputFunc OutputFunc) {
 		// and safe detailed model string as field
 		outputFunc(goVeSensorOutputMessage{
 			timeStamp:   timeStamp,
-			measurement: c.TargetMeasurement(),
 			device:      device,
 			field:       "Model",
 			unit:        nil,
@@ -141,20 +139,18 @@ func goIotdeviceHandler(c Config, input Input, outputFunc OutputFunc) {
 
 	for field, value := range message.NumericValues {
 		outputFunc(goVeSensorOutputMessage{
-			timeStamp:   timeStamp,
-			measurement: c.TargetMeasurement(),
-			device:      device,
-			field:       field,
-			unit:        &value.Unit,
-			sensor:      sensor,
-			floatValue:  &value.Value,
+			timeStamp:  timeStamp,
+			device:     device,
+			field:      field,
+			unit:       &value.Unit,
+			sensor:     sensor,
+			floatValue: &value.Value,
 		})
 	}
 
 	for field, value := range message.TextValues {
 		outputFunc(goVeSensorOutputMessage{
 			timeStamp:   timeStamp,
-			measurement: c.TargetMeasurement(),
 			device:      device,
 			field:       field,
 			unit:        nil,
@@ -165,7 +161,7 @@ func goIotdeviceHandler(c Config, input Input, outputFunc OutputFunc) {
 }
 
 func (m goVeSensorOutputMessage) Measurement() string {
-	return m.measurement
+	return "telemetry"
 }
 
 func (m goVeSensorOutputMessage) Tags() map[string]string {

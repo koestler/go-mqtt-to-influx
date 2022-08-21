@@ -12,7 +12,6 @@ func TestTasmotaState(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockConfig := converter_mock.NewMockConfig(mockCtrl)
-
 	mockConfig.EXPECT().Name().Return("test-converter").AnyTimes()
 
 	stimuli := TestStimuliResponse{

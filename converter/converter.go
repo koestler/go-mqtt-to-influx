@@ -9,7 +9,6 @@ import (
 type Config interface {
 	Name() string
 	Implementation() string
-	TargetMeasurement() string
 	MqttTopics() []string
 	InfluxClients() []string
 	LogHandleOnce() bool

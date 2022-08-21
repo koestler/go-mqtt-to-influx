@@ -71,11 +71,10 @@ func (c InfluxClientConfig) convertToRead() influxClientConfigRead {
 
 func (c ConverterConfig) convertToRead() converterConfigRead {
 	return converterConfigRead{
-		Implementation:    c.implementation,
-		TargetMeasurement: c.targetMeasurement,
-		MqttTopics:        c.mqttTopics,
-		MqttClients:       c.mqttClients,
-		LogHandleOnce:     &c.logHandleOnce,
+		Implementation: c.implementation,
+		MqttTopics:     c.mqttTopics,
+		MqttClients:    c.mqttClients,
+		LogHandleOnce:  &c.logHandleOnce,
 	}
 }
 

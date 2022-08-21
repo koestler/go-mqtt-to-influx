@@ -148,7 +148,6 @@ InfluxClients:
 Converters:
   0-piegn-ve-sensor:
     Implementation: go-iotdevice
-    TargetMeasurement: testfloatValue
     MqttTopics:
       - piegn/tele/ve/#
     MqttClients:
@@ -161,7 +160,6 @@ Converters:
 
   1-piegn-tasmota-availability:
     Implementation: availability
-    TargetMeasurement: boolValue
     MqttTopics:
       - piegn/tele/+/LWT
       - piegn/tele/+/+/LWT
@@ -169,7 +167,6 @@ Converters:
 
   2-piegn-tasmota-state:
     Implementation: tasmota-state
-    TargetMeasurement: tasmotaState
     MqttTopics:
       - piegn/tele/+/STATE
       - piegn/tele/+/+/STATE
@@ -177,7 +174,6 @@ Converters:
 
   3-piegn-tasmota-sensor:
     Implementation: tasmota-sensor
-    TargetMeasurement: floatValue
     MqttTopics:
       - piegn/tele/+/SENSOR
       - piegn/tele/+/+/SENSOR
@@ -424,10 +420,6 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect Implementation of first Converter to be 'go-iotdevice'")
 	}
 
-	if config.Converters[0].TargetMeasurement() != "testfloatValue" {
-		t.Error("expect TargetMeasurement of first Converter to be 'testfloatValue'")
-	}
-
 	if len(config.Converters[0].MqttTopics()) != 1 || config.Converters[0].MqttTopics()[0] != "piegn/tele/ve/#" {
 		t.Errorf("expect MqttTopics of first Converter to be ['piegn/tele/ve/#'] got %v",
 			config.Converters[0].MqttTopics(),
@@ -562,10 +554,6 @@ func TestReadConfig_Default(t *testing.T) {
 	}
 
 	// Converters section
-	if config.Converters[0].TargetMeasurement() != "telemetry" {
-		t.Error("expect default Converter->TargetMeasurement to be 'telemetry'")
-	}
-
 	if len(config.Converters[0].MqttClients()) != 0 {
 		t.Error("expect default Converter->MqttClients to be empty")
 	}

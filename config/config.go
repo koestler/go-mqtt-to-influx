@@ -354,35 +354,25 @@ func (c converterConfigReadMap) TransformAndValidate(
 	return
 }
 
-var implementationsAndDefaultMeasurement = map[string]string{
-	"availability":   "availability",
-	"go-iotdevice":   "telemetry",
-	"tasmota-state":  "telemetry",
-	"tasmota-sensor": "telemetry",
-}
-
 func (c converterConfigRead) TransformAndValidate(
 	name string,
 	mqttClients []*MqttClientConfig,
 	influxClients []*InfluxClientConfig,
 ) (ret ConverterConfig, err []error) {
 	ret = ConverterConfig{
-		name:              name,
-		implementation:    c.Implementation,
-		targetMeasurement: c.TargetMeasurement,
-		mqttTopics:        c.MqttTopics,
-		mqttClients:       c.MqttClients,
-		influxClients:     c.InfluxClients,
+		name:           name,
+		implementation: c.Implementation,
+		mqttTopics:     c.MqttTopics,
+		mqttClients:    c.MqttClients,
+		influxClients:  c.InfluxClients,
 	}
 
 	if !nameMatcher.MatchString(ret.name) {
 		err = append(err, fmt.Errorf("Converters->Name='%s' does not match %s", ret.name, NameRegexp))
 	}
 
-	if def, ok := implementationsAndDefaultMeasurement[ret.implementation]; !ok {
+	if len(ret.implementation) < 1 {
 		err = append(err, fmt.Errorf("Converters->%s->Implementation='%s' is unkown", name, ret.implementation))
-	} else if len(ret.targetMeasurement) < 1 {
-		ret.targetMeasurement = def
 	}
 
 	// validate that all listed mqttClients exist

@@ -23,13 +23,12 @@ type SensorMessage struct {
 }
 
 type tasmotaSensorOutputMessage struct {
-	timeStamp   time.Time
-	measurement string
-	device      string
-	field       string
-	unit        *string
-	sensor      string
-	value       float64
+	timeStamp time.Time
+	device    string
+	field     string
+	unit      *string
+	sensor    string
+	value     float64
 }
 
 const tasmotaSensorTopicRegex = "^([^/]*/)*tele/(.*)/SENSOR$"
@@ -78,13 +77,12 @@ func tasmotaSensorHandler(c Config, input Input, outputFunc OutputFunc) {
 	output := func(field string, unit *string, sensor string, value float64) {
 		count += 1
 		outputFunc(tasmotaSensorOutputMessage{
-			timeStamp:   timeStamp,
-			measurement: c.TargetMeasurement(),
-			device:      device,
-			field:       field,
-			unit:        unit,
-			sensor:      sensor,
-			value:       value,
+			timeStamp: timeStamp,
+			device:    device,
+			field:     field,
+			unit:      unit,
+			sensor:    sensor,
+			value:     value,
 		})
 	}
 
@@ -149,7 +147,7 @@ func tasmotaSensorHandler(c Config, input Input, outputFunc OutputFunc) {
 }
 
 func (m tasmotaSensorOutputMessage) Measurement() string {
-	return m.measurement
+	return "telemetry"
 }
 
 func (m tasmotaSensorOutputMessage) Tags() map[string]string {

@@ -78,10 +78,6 @@ func (c ConverterConfig) Implementation() string {
 	return c.implementation
 }
 
-func (c ConverterConfig) TargetMeasurement() string {
-	return c.targetMeasurement
-}
-
 func (c ConverterConfig) MqttTopics() []string {
 	return c.mqttTopics
 }

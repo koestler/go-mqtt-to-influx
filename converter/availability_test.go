@@ -12,9 +12,7 @@ func TestLwt(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	mockConfig := converter_mock.NewMockConfig(mockCtrl)
-
 	mockConfig.EXPECT().Name().Return("test-converter").AnyTimes()
-	mockConfig.EXPECT().TargetMeasurement().Return("availability").MinTimes(1)
 
 	now := time.Now()
 
