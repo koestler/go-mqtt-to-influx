@@ -9,7 +9,6 @@ import (
 type Config interface {
 	Name() string
 	Implementation() string
-	MqttTopics() []string
 	InfluxClients() []string
 	LogHandleOnce() bool
 }
@@ -27,7 +26,7 @@ type Output interface {
 }
 
 type OutputFunc func(output Output)
-type HandleFunc func(c Config, input Input, outputFunc OutputFunc)
+type HandleFunc func(c Config, topicMatcher TopicMatcher, input Input, outputFunc OutputFunc)
 
 var converterImplementations = make(map[string]HandleFunc)
 

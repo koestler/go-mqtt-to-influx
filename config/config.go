@@ -433,8 +433,6 @@ func (c mqttTopicConfigReadList) TransformAndValidate() (ret []*MqttTopicConfig,
 	return
 }
 
-var deviceDynamicMatcher = regexp.MustCompile("^\\+(/\\+)*$")
-
 func (c mqttTopicConfigRead) TransformAndValidate() (ret MqttTopicConfig, err []error) {
 	ret = MqttTopicConfig{
 		topic: c.Topic,

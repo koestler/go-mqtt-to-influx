@@ -3,7 +3,6 @@ package converter
 import (
 	"encoding/json"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -59,27 +58,20 @@ type stateBoolOutputMessage struct {
 	value     bool
 }
 
-const tasmotaStateTopicRegexp = "^([^/]*/)*tele/(.*)/STATE$"
-
-var tasmotaStateTopicMatcher = regexp.MustCompile(tasmotaStateTopicRegexp)
-
 func init() {
 	registerHandler("tasmota-state", tasmotaStateHandler)
 }
 
-func tasmotaStateHandler(c Config, input Input, outputFunc OutputFunc) {
+func tasmotaStateHandler(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
 	// use our time
 	timeStamp := time.Now()
 
 	// parse topic
-	matches := tasmotaStateTopicMatcher.FindStringSubmatch(input.Topic())
-	if len(matches) < 3 {
-		log.Printf("tasmota-state[%s]: cannot extract device from topic='%s', regex='%s'",
-			c.Name(), input.Topic(), tasmotaStateTopicRegexp,
-		)
+	device, err := tm.MatchDevice(input.Topic())
+	if err != nil {
+		log.Printf("tasmota-state[%s]: cannot extract device from topic='%s err=%s", c.Name(), input.Topic(), err)
 		return
 	}
-	device := matches[2]
 
 	// parse payload
 	var message StateMessage

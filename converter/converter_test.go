@@ -43,9 +43,15 @@ func testStimuliResponse(
 	t *testing.T,
 	mockCtrl *gomock.Controller,
 	config Config,
+	tmConfig TopicMatcherConfig,
 	dut HandleFunc,
 	stimuli TestStimuliResponse,
 ) {
+	tm, err := CreateTopicMatcher(tmConfig)
+	if err != nil {
+		t.Error(err)
+	}
+
 	for _, s := range stimuli {
 		t.Logf("stimuli: Topic='%s'", s.Topic)
 		t.Logf("stimuli: Payload='%s'", s.Payload)
@@ -73,7 +79,7 @@ func testStimuliResponse(
 				t.Errorf("expect timestamp to %s but got %s", s.ExpectedTimeStamp, output.Time())
 			}
 		}
-		dut(config, mockInput, outputTestFunc)
+		dut(config, tm, mockInput, outputTestFunc)
 
 		// sort strings before comparison
 		sort.Strings(s.ExpectedLines)
@@ -104,8 +110,8 @@ func TestRegisterTwice(t *testing.T) {
 	var logBuffer bytes.Buffer
 	log.SetOutput(&logBuffer)
 
-	registerHandler("empty", func(c Config, input Input, outputFunc OutputFunc) {})
-	registerHandler("empty", func(c Config, input Input, outputFunc OutputFunc) {})
+	registerHandler("empty", func(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {})
+	registerHandler("empty", func(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {})
 
 	if !strings.Contains(logBuffer.String(), "twice") {
 		t.Errorf("expected a log output that we registered go-iotdevice twice")

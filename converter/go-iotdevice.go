@@ -3,7 +3,6 @@ package converter
 import (
 	"encoding/json"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -35,10 +34,6 @@ type goVeSensorOutputMessage struct {
 	stringValue *string
 	floatValue  *float64
 }
-
-// example input: piegn/tele/24v-bmv/state
-// -> use 24v-bmv as device identifier
-var topicMatcher = regexp.MustCompile("/([^/]*)(/state)?$")
 
 func init() {
 	registerHandler("go-iotdevice", goIotdeviceHandler)
@@ -93,17 +88,16 @@ func init() {
 //      "Value": "true"
 //    }
 // }
-func goIotdeviceHandler(c Config, input Input, outputFunc OutputFunc) {
+func goIotdeviceHandler(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
 	// use our time
 	timeStamp := time.Now()
 
 	// parse topic
-	matches := topicMatcher.FindStringSubmatch(input.Topic())
-	if len(matches) < 2 {
-		log.Printf("go-iotdevice[%s]: cannot extract device from topic='%s", c.Name(), input.Topic())
+	device, err := tm.MatchDevice(input.Topic())
+	if err != nil {
+		log.Printf("go-iotdevice[%s]: cannot extract device from topic='%s err=%s", c.Name(), input.Topic(), err)
 		return
 	}
-	device := matches[1]
 
 	// parse payload
 	var message goIotdeviceTelemetryMessage
@@ -119,7 +113,7 @@ func goIotdeviceHandler(c Config, input Input, outputFunc OutputFunc) {
 			value:     sentClock,
 		})
 	} else {
-		log.Printf("tasmota-state[%s]: cannot parse time='%s': %s", c.Name(), message.Time, err)
+		log.Printf("go-iotdevice[%s]: cannot parse time='%s': %s", c.Name(), message.Time, err)
 	}
 
 	// only use BMV-700, BlueSolar etc. as sensor variable

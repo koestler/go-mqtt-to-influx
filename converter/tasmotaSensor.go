@@ -3,7 +3,6 @@ package converter
 import (
 	"encoding/json"
 	"log"
-	"regexp"
 	"time"
 )
 
@@ -31,27 +30,20 @@ type tasmotaSensorOutputMessage struct {
 	value     float64
 }
 
-const tasmotaSensorTopicRegex = "^([^/]*/)*tele/(.*)/SENSOR$"
-
-var tasmotaSensorTopicMatcher = regexp.MustCompile(tasmotaSensorTopicRegex)
-
 func init() {
 	registerHandler("tasmota-sensor", tasmotaSensorHandler)
 }
 
-func tasmotaSensorHandler(c Config, input Input, outputFunc OutputFunc) {
+func tasmotaSensorHandler(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
 	// use our time
 	timeStamp := time.Now()
 
 	// parse topic
-	matches := tasmotaSensorTopicMatcher.FindStringSubmatch(input.Topic())
-	if len(matches) < 3 {
-		log.Printf("tasmota-sensor[%s]: cannot extract device from topic='%s', regex='%s'",
-			c.Name(), input.Topic(), tasmotaSensorTopicRegex,
-		)
+	device, err := tm.MatchDevice(input.Topic())
+	if err != nil {
+		log.Printf("tasmota-sensor[%s]: cannot extract device from topic='%s err=%s", c.Name(), input.Topic(), err)
 		return
 	}
-	device := matches[2]
 
 	// parse payload
 	var message SensorMessage

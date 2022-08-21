@@ -14,6 +14,11 @@ func TestLwt(t *testing.T) {
 	mockConfig := converter_mock.NewMockConfig(mockCtrl)
 	mockConfig.EXPECT().Name().Return("test-converter").AnyTimes()
 
+	mockTMConfig := converter_mock.NewMockTopicMatcherConfig(mockCtrl)
+	mockTMConfig.EXPECT().Topic().Return("piegn/tele/%Device%/LWT").AnyTimes()
+	mockTMConfig.EXPECT().Device().Return("+/+").AnyTimes()
+	mockTMConfig.EXPECT().DeviceIsDynamic().Return(true).AnyTimes()
+
 	now := time.Now()
 
 	stimuli := TestStimuliResponse{
@@ -48,6 +53,6 @@ func TestLwt(t *testing.T) {
 	if h, err := GetHandler("availability"); err != nil {
 		t.Errorf("did not expect an error while getting handler: %s", err)
 	} else {
-		testStimuliResponse(t, mockCtrl, mockConfig, h, stimuli)
+		testStimuliResponse(t, mockCtrl, mockConfig, mockTMConfig, h, stimuli)
 	}
 }

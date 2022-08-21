@@ -1,6 +1,9 @@
 package config
 
-import "time"
+import (
+	"regexp"
+	"time"
+)
 
 func (c MqttClientConfig) Name() string {
 	return c.name
@@ -100,6 +103,12 @@ func (c MqttTopicConfig) Topic() string {
 
 func (c MqttTopicConfig) Device() string {
 	return c.device
+}
+
+var deviceDynamicMatcher = regexp.MustCompile("^\\+(/\\+)*$")
+
+func (c MqttTopicConfig) DeviceIsDynamic() bool {
+	return deviceDynamicMatcher.MatchString(c.device)
 }
 
 func (c HttpServerConfig) Enabled() bool {

@@ -14,6 +14,11 @@ func TestTasmotaSensor(t *testing.T) {
 	mockConfig := converter_mock.NewMockConfig(mockCtrl)
 	mockConfig.EXPECT().Name().Return("test-converter").AnyTimes()
 
+	mockTMConfig := converter_mock.NewMockTopicMatcherConfig(mockCtrl)
+	mockTMConfig.EXPECT().Topic().Return("piegn/tele/%Device%/SENSOR").AnyTimes()
+	mockTMConfig.EXPECT().Device().Return("+/+").AnyTimes()
+	mockTMConfig.EXPECT().DeviceIsDynamic().Return(true).AnyTimes()
+
 	stimuli := TestStimuliResponse{
 		{
 			Topic:   "piegn/tele/elektronik/control0/SENSOR",
@@ -68,6 +73,6 @@ func TestTasmotaSensor(t *testing.T) {
 	if h, err := GetHandler("tasmota-sensor"); err != nil {
 		t.Errorf("did not expect an error while getting handler: %s", err)
 	} else {
-		testStimuliResponse(t, mockCtrl, mockConfig, h, stimuli)
+		testStimuliResponse(t, mockCtrl, mockConfig, mockTMConfig, h, stimuli)
 	}
 }

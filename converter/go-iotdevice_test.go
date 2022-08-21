@@ -14,6 +14,11 @@ func TestGoVeSensor(t *testing.T) {
 	mockConfig := converter_mock.NewMockConfig(mockCtrl)
 	mockConfig.EXPECT().Name().Return("test-converter").AnyTimes()
 
+	mockTMConfig := converter_mock.NewMockTopicMatcherConfig(mockCtrl)
+	mockTMConfig.EXPECT().Topic().Return("piegn/tele/iot-device/%Device%/state").AnyTimes()
+	mockTMConfig.EXPECT().Device().Return("+").AnyTimes()
+	mockTMConfig.EXPECT().DeviceIsDynamic().Return(true).AnyTimes()
+
 	stimuli := TestStimuliResponse{
 		{
 			Topic: "piegn/tele/iot-device/24v-bmv/state",
@@ -80,7 +85,7 @@ func TestGoVeSensor(t *testing.T) {
 			},
 			ExpectedTimeStamp: time.Now(),
 		}, {
-			Topic: "piegn/tele/ve/24v-bmv",
+			Topic: "piegn/tele/iot-device/12v-solar/state",
 			Payload: `{
   "NextTelemetry": "2022-08-19T14:52:24Z",
   "Model":"SmartSolar MPPT VE.Can 250/100",
@@ -89,12 +94,12 @@ func TestGoVeSensor(t *testing.T) {
   }
 }`,
 			ExpectedLines: []string{
-				"telemetry,device=24v-bmv,field=Power,sensor=SmartSolar,unit=W floatValue=-18",
-				"telemetry,device=24v-bmv,field=Model,sensor=SmartSolar stringValue=\"SmartSolar MPPT VE.Can 250/100\"",
+				"telemetry,device=12v-solar,field=Power,sensor=SmartSolar,unit=W floatValue=-18",
+				"telemetry,device=12v-solar,field=Model,sensor=SmartSolar stringValue=\"SmartSolar MPPT VE.Can 250/100\"",
 			},
 			ExpectedTimeStamp: time.Now(),
 		}, {
-			Topic:             "piegn/tele/ve/24v-bmv/state",
+			Topic:             "piegn/tele/iot-device/24v-bmv/state",
 			Payload:           "invalid",
 			ExpectedLines:     []string{},
 			ExpectedTimeStamp: time.Now(),
@@ -109,6 +114,6 @@ func TestGoVeSensor(t *testing.T) {
 	if h, err := GetHandler("go-iotdevice"); err != nil {
 		t.Errorf("did not expect an error while getting handler: %s", err)
 	} else {
-		testStimuliResponse(t, mockCtrl, mockConfig, h, stimuli)
+		testStimuliResponse(t, mockCtrl, mockConfig, mockTMConfig, h, stimuli)
 	}
 }

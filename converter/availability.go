@@ -2,7 +2,6 @@ package converter
 
 import (
 	"log"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -13,8 +12,6 @@ type availabilityOutputMessage struct {
 	value     bool
 }
 
-var availabilityTopicMatcher = regexp.MustCompile("^([^/]*/)*tele/(.*)/LWT$")
-
 func init() {
 	registerHandler("availability", availabilityHandler)
 }
@@ -24,19 +21,18 @@ func init() {
 // - piegn/tele/mezzo/zimmer-klein/LWT Offline
 // - piegn/tele/software/hass0/LWT Online
 // - piegn/tele/software/srv1-go-iotdevice/LWT Online
-func availabilityHandler(c Config, input Input, outputFunc OutputFunc) {
+func availabilityHandler(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
 	// use our time
 	timeStamp := time.Now()
 
 	// parse topic
-	matches := availabilityTopicMatcher.FindStringSubmatch(input.Topic())
-	if len(matches) < 3 {
-		log.Printf("availability[%s]: cannot extract device from topic='%s", c.Name(), input.Topic())
+	device, err := tm.MatchDevice(input.Topic())
+	if err != nil {
+		log.Printf("availability[%s]: error: %s", c.Name(), err)
 		return
 	}
-	device := matches[2]
 
-	// parse payload
+	// parse pay load
 	var value bool
 	payload := string(input.Payload())
 	payload = strings.ToLower(payload)

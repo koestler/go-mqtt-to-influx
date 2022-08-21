@@ -22,9 +22,6 @@ func connectConverters(
 
 	for _, converterConfig := range cfg.Converters {
 		handleFunc, err := converter.GetHandler(converterConfig.Implementation())
-		messageHandler := getMqttMessageHandler(
-			converterConfig, handleFunc, statisticsInstance, influxClientPoolInstance,
-		)
 
 		if err != nil {
 			log.Printf("converter[%s]: cannot start: %s", converterConfig.Name(), err)
@@ -43,11 +40,24 @@ func connectConverters(
 			}
 
 			for _, mqttTopic := range converterConfig.MqttTopics() {
-				if err := mqttClientInstance.Subscribe(mqttTopic.Topic(), messageHandler); err != nil {
-					log.Printf("converter[%s]: error while subscribing: %s", converterConfig.Name(), err)
-				} else {
-					countStarted += 1
+				topicMatcher, err := converter.CreateTopicMatcher(mqttTopic)
+				if err != nil {
+					log.Printf("converter[%s]: error: %s", converterConfig.Name(), err)
+					continue
 				}
+
+				topic := topicMatcher.GetSubscribeTopic()
+				messageHandler := getMqttMessageHandler(
+					converterConfig, topicMatcher, handleFunc, statisticsInstance, influxClientPoolInstance,
+				)
+
+				log.Printf("converter[%s]: subscreibed to: %s", converterConfig.Name(), topic)
+				if err := mqttClientInstance.Subscribe(topic, messageHandler); err != nil {
+					log.Printf("converter[%s]: error while subscribing: %s", converterConfig.Name(), err)
+					continue
+				}
+
+				countStarted += 1
 			}
 		}
 	}
@@ -59,6 +69,7 @@ func connectConverters(
 
 func getMqttMessageHandler(
 	config converter.Config,
+	topicMatcher converter.TopicMatcher,
 	handleFunc converter.HandleFunc,
 	statisticsInstance statistics.Statistics,
 	influxClientPoolInstance *influxClient.ClientPool,
@@ -70,6 +81,7 @@ func getMqttMessageHandler(
 		statisticsInstance.IncrementOne("converter", config.Name(), message.Topic())
 		handleFunc(
 			config,
+			topicMatcher,
 			message,
 			func(output converter.Output) {
 				influxClientPoolInstance.WritePoint(
