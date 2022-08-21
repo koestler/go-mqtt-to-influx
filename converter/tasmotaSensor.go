@@ -41,6 +41,9 @@ func init() {
 }
 
 func tasmotaSensorHandler(c Config, input Input, outputFunc OutputFunc) {
+	// use our time
+	timeStamp := time.Now()
+
 	// parse topic
 	matches := tasmotaSensorTopicMatcher.FindStringSubmatch(input.Topic())
 	if len(matches) < 3 {
@@ -58,10 +61,15 @@ func tasmotaSensorHandler(c Config, input Input, outputFunc OutputFunc) {
 		return
 	}
 
-	// get timestamp
-	timeStamp, err := parseTime(message.Time)
-	if err != nil {
-		timeStamp = time.Now()
+	// save clock
+	if sentClock, err := parseTime(message.Time); err == nil {
+		outputFunc(stateClockOutputMessage{
+			timeStamp: timeStamp,
+			device:    device,
+			value:     sentClock,
+		})
+	} else {
+		log.Printf("tasmota-sensor[%s]: cannot parse time='%s': %s", c.Name(), message.Time, err)
 	}
 
 	// send points

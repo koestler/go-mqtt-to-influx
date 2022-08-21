@@ -95,6 +95,9 @@ func init() {
 //    }
 // }
 func goIotdeviceHandler(c Config, input Input, outputFunc OutputFunc) {
+	// use our time
+	timeStamp := time.Now()
+
 	// parse topic
 	matches := topicMatcher.FindStringSubmatch(input.Topic())
 	if len(matches) < 2 {
@@ -110,10 +113,14 @@ func goIotdeviceHandler(c Config, input Input, outputFunc OutputFunc) {
 		return
 	}
 
-	timeStamp, err := parseTimeWithZone(message.Time)
-	if err != nil {
-		log.Printf("message:%v", message)
-		timeStamp = time.Now()
+	if sentClock, err := parseTimeWithZone(message.Time); err == nil {
+		outputFunc(stateClockOutputMessage{
+			timeStamp: timeStamp,
+			device:    device,
+			value:     sentClock,
+		})
+	} else {
+		log.Printf("tasmota-state[%s]: cannot parse time='%s': %s", c.Name(), message.Time, err)
 	}
 
 	// only use BMV-700, BlueSolar etc. as sensor variable

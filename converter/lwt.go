@@ -25,6 +25,9 @@ func init() {
 // - piegn/tele/software/hass0/LWT Online
 // - piegn/tele/software/srv1-go-iotdevice/LWT Online
 func lwtHandler(c Config, input Input, outputFunc OutputFunc) {
+	// use our time
+	timeStamp := time.Now()
+
 	// parse topic
 	matches := lwtTopicMatcher.FindStringSubmatch(input.Topic())
 	if len(matches) < 3 {
@@ -46,7 +49,7 @@ func lwtHandler(c Config, input Input, outputFunc OutputFunc) {
 	}
 
 	outputFunc(lwtOutputMessage{
-		timeStamp:   time.Now(),
+		timeStamp:   timeStamp,
 		measurement: c.TargetMeasurement(),
 		device:      device,
 		value:       value,

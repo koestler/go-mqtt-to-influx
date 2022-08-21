@@ -44,12 +44,6 @@ type stateWifiOutputMessage struct {
 	wifi      Wifi
 }
 
-type stateTimeOutputMessage struct {
-	timeStamp time.Time
-	device    string
-	value     time.Time
-}
-
 type stateFloatOutputMessage struct {
 	timeStamp time.Time
 	device    string
@@ -74,6 +68,9 @@ func init() {
 }
 
 func tasmotaStateHandler(c Config, input Input, outputFunc OutputFunc) {
+	// use our time
+	timeStamp := time.Now()
+
 	// parse topic
 	matches := tasmotaStateTopicMatcher.FindStringSubmatch(input.Topic())
 	if len(matches) < 3 {
@@ -91,18 +88,15 @@ func tasmotaStateHandler(c Config, input Input, outputFunc OutputFunc) {
 		return
 	}
 
-	// setup timestamps
-	now := time.Now()
-	timeStamp, err := parseTime(message.Time)
-	if err != nil {
-		timeStamp = time.Now()
-	} else {
-		// save time given vs time now
-		outputFunc(stateTimeOutputMessage{
-			timeStamp: now,
+	// save clock
+	if sentClock, err := parseTime(message.Time); err == nil {
+		outputFunc(stateClockOutputMessage{
+			timeStamp: timeStamp,
 			device:    device,
-			value:     timeStamp,
+			value:     sentClock,
 		})
+	} else {
+		log.Printf("tasmota-state[%s]: cannot parse time='%s': %s", c.Name(), message.Time, err)
 	}
 
 	// save uptime
@@ -192,32 +186,13 @@ func (m stateWifiOutputMessage) Time() time.Time {
 	return m.timeStamp
 }
 
-func (m stateTimeOutputMessage) Measurement() string {
-	return "timeValue"
-}
-
-func (m stateTimeOutputMessage) Tags() map[string]string {
-	return map[string]string{
-		"device": m.device,
-	}
-}
-
-func (m stateTimeOutputMessage) Fields() map[string]interface{} {
-	return map[string]interface{}{
-		"value": m.value,
-	}
-}
-
-func (m stateTimeOutputMessage) Time() time.Time {
-	return m.timeStamp
-}
-
 func (m stateFloatOutputMessage) Measurement() string {
-	return "floatValue"
+	return "telemetry"
 }
 
 func (m stateFloatOutputMessage) Tags() map[string]string {
 	return map[string]string{
+		"sensor": "tasmota",
 		"device": m.device,
 		"field":  m.field,
 		"unit":   m.unit,
@@ -226,7 +201,7 @@ func (m stateFloatOutputMessage) Tags() map[string]string {
 
 func (m stateFloatOutputMessage) Fields() map[string]interface{} {
 	return map[string]interface{}{
-		"value": m.value,
+		"floatValue": m.value,
 	}
 }
 
@@ -235,11 +210,12 @@ func (m stateFloatOutputMessage) Time() time.Time {
 }
 
 func (m stateBoolOutputMessage) Measurement() string {
-	return "boolValue"
+	return "telemetry"
 }
 
 func (m stateBoolOutputMessage) Tags() map[string]string {
 	return map[string]string{
+		"sensor": "tasmota",
 		"device": m.device,
 		"field":  m.field,
 	}
@@ -247,7 +223,7 @@ func (m stateBoolOutputMessage) Tags() map[string]string {
 
 func (m stateBoolOutputMessage) Fields() map[string]interface{} {
 	return map[string]interface{}{
-		"value": m.value,
+		"boolValue": m.value,
 	}
 }
 

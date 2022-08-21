@@ -68,6 +68,7 @@ func TestGoVeSensor(t *testing.T) {
 }
 `,
 			ExpectedLines: []string{
+				"clock,device=24v-bmv timeValue=\"2022-08-19T14:52:19Z\"",
 				"telemetry,device=24v-bmv,field=AmountOfChargedEnergy,sensor=BMV-702,unit=kWh floatValue=1883.52",
 				"telemetry,device=24v-bmv,field=CurrentHighRes,sensor=BMV-702,unit=A floatValue=-0.58",
 				"telemetry,device=24v-bmv,field=ModelName,sensor=BMV-702 stringValue=\"BMV-702\"",
@@ -79,7 +80,7 @@ func TestGoVeSensor(t *testing.T) {
 				"telemetry,device=24v-bmv,field=TTG,sensor=BMV-702,unit=min floatValue=5742",
 				"telemetry,device=24v-bmv,field=Uptime,sensor=BMV-702,unit=s floatValue=1.718279e+07",
 			},
-			ExpectedTimeStamp: time.Date(2022, time.August, 19, 14, 52, 19, 0, time.UTC),
+			ExpectedTimeStamp: time.Now(),
 		}, {
 			Topic: "piegn/tele/ve/24v-bmv",
 			Payload: `{
