@@ -10,6 +10,7 @@ type telemetryOutputMessage struct {
 	sensor      string
 	stringValue *string
 	floatValue  *float64
+	boolValue   *bool
 }
 
 func (m telemetryOutputMessage) Measurement() string {
@@ -39,6 +40,10 @@ func (m telemetryOutputMessage) Fields() (ret map[string]interface{}) {
 
 	if m.stringValue != nil {
 		ret["stringValue"] = *m.stringValue
+	}
+
+	if m.boolValue != nil {
+		ret["boolValue"] = *m.boolValue
 	}
 
 	return

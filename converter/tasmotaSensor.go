@@ -6,15 +6,15 @@ import (
 	"time"
 )
 
-type TemperatureHumidity struct {
+type tasmotaSensorTemperatureHumidity struct {
 	Temperature *float64
 	Humidity    *float64
 }
 
-type SensorMessage struct {
+type tasmotaSensorMessage struct {
 	Time    string
-	AM2301  *TemperatureHumidity
-	SI7021  *TemperatureHumidity
+	AM2301  *tasmotaSensorTemperatureHumidity
+	SI7021  *tasmotaSensorTemperatureHumidity
 	DS18B20 *struct {
 		Temperature float64
 	}
@@ -37,7 +37,7 @@ func tasmotaSensorHandler(c Config, tm TopicMatcher, input Input, outputFunc Out
 	}
 
 	// parse payload
-	var message SensorMessage
+	var message tasmotaSensorMessage
 	if err := json.Unmarshal(input.Payload(), &message); err != nil {
 		log.Printf("tasmota-sensor[%s]: cannot json decode: %s", c.Name(), err)
 		return
