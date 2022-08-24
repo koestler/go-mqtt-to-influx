@@ -15,6 +15,7 @@ import (
 )
 
 //go:generate mockgen -destination=mock/converter_mock.go -package converter_mock github.com/koestler/go-mqtt-to-influx/converter Config,Input,Output
+//go:generate mockgen -destination=mock/topicMatcher_mock.go -package converter_mock github.com/koestler/go-mqtt-to-influx/converter TopicMatcherConfig
 
 const epsilon = 10 * time.Millisecond
 
