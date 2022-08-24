@@ -25,16 +25,6 @@ type goIotdeviceTextTelemetryValue struct {
 	Value string
 }
 
-type goVeSensorOutputMessage struct {
-	timeStamp   time.Time
-	device      string
-	field       string
-	unit        *string
-	sensor      string
-	stringValue *string
-	floatValue  *float64
-}
-
 func init() {
 	registerHandler("go-iotdevice", goIotdeviceHandler)
 }
@@ -121,7 +111,7 @@ func goIotdeviceHandler(c Config, tm TopicMatcher, input Input, outputFunc Outpu
 
 	if sensor != message.Model {
 		// and safe detailed model string as field
-		outputFunc(goVeSensorOutputMessage{
+		outputFunc(telemetryOutputMessage{
 			timeStamp:   timeStamp,
 			device:      device,
 			field:       "Model",
@@ -132,7 +122,7 @@ func goIotdeviceHandler(c Config, tm TopicMatcher, input Input, outputFunc Outpu
 	}
 
 	for field, value := range message.NumericValues {
-		outputFunc(goVeSensorOutputMessage{
+		outputFunc(telemetryOutputMessage{
 			timeStamp:  timeStamp,
 			device:     device,
 			field:      field,
@@ -143,7 +133,7 @@ func goIotdeviceHandler(c Config, tm TopicMatcher, input Input, outputFunc Outpu
 	}
 
 	for field, value := range message.TextValues {
-		outputFunc(goVeSensorOutputMessage{
+		outputFunc(telemetryOutputMessage{
 			timeStamp:   timeStamp,
 			device:      device,
 			field:       field,
@@ -152,40 +142,4 @@ func goIotdeviceHandler(c Config, tm TopicMatcher, input Input, outputFunc Outpu
 			stringValue: &value.Value,
 		})
 	}
-}
-
-func (m goVeSensorOutputMessage) Measurement() string {
-	return "telemetry"
-}
-
-func (m goVeSensorOutputMessage) Tags() map[string]string {
-	ret := map[string]string{
-		"sensor": m.sensor,
-		"device": m.device,
-		"field":  m.field,
-	}
-
-	if m.unit != nil {
-		ret["unit"] = *m.unit
-	}
-
-	return ret
-}
-
-func (m goVeSensorOutputMessage) Fields() (ret map[string]interface{}) {
-	ret = make(map[string]interface{}, 2)
-
-	if m.floatValue != nil {
-		ret["floatValue"] = *m.floatValue
-	}
-
-	if m.stringValue != nil {
-		ret["stringValue"] = *m.stringValue
-	}
-
-	return
-}
-
-func (m goVeSensorOutputMessage) Time() time.Time {
-	return m.timeStamp
 }

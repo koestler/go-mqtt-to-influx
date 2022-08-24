@@ -21,15 +21,6 @@ type SensorMessage struct {
 	TempUnit string
 }
 
-type tasmotaSensorOutputMessage struct {
-	timeStamp time.Time
-	device    string
-	field     string
-	unit      *string
-	sensor    string
-	value     float64
-}
-
 func init() {
 	registerHandler("tasmota-sensor", tasmotaSensorHandler)
 }
@@ -68,13 +59,13 @@ func tasmotaSensorHandler(c Config, tm TopicMatcher, input Input, outputFunc Out
 
 	output := func(field string, unit *string, sensor string, value float64) {
 		count += 1
-		outputFunc(tasmotaSensorOutputMessage{
-			timeStamp: timeStamp,
-			device:    device,
-			field:     field,
-			unit:      unit,
-			sensor:    sensor,
-			value:     value,
+		outputFunc(telemetryOutputMessage{
+			timeStamp:  timeStamp,
+			device:     device,
+			field:      field,
+			unit:       unit,
+			sensor:     sensor,
+			floatValue: &value,
 		})
 	}
 
@@ -136,32 +127,4 @@ func tasmotaSensorHandler(c Config, tm TopicMatcher, input Input, outputFunc Out
 		)
 		return
 	}
-}
-
-func (m tasmotaSensorOutputMessage) Measurement() string {
-	return "telemetry"
-}
-
-func (m tasmotaSensorOutputMessage) Tags() map[string]string {
-	ret := map[string]string{
-		"sensor": m.sensor,
-		"device": m.device,
-		"field":  m.field,
-	}
-
-	if m.unit != nil {
-		ret["unit"] = *m.unit
-	}
-
-	return ret
-}
-
-func (m tasmotaSensorOutputMessage) Fields() map[string]interface{} {
-	return map[string]interface{}{
-		"floatValue": m.value,
-	}
-}
-
-func (m tasmotaSensorOutputMessage) Time() time.Time {
-	return m.timeStamp
 }
