@@ -64,7 +64,7 @@ func RunClient(config Config, statistics Statistics) *Client {
 
 	writeApi.SetWriteFailedCallback(func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
 		// log and retry forever
-		log.Printf("influxClient[%s]: write failed", config.Name())
+		log.Printf("influxClient[%s]: write failed, retry", config.Name())
 		return true
 	})
 
