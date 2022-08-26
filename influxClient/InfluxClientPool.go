@@ -75,6 +75,6 @@ func ToInfluxPoint(point Point) *influxdb2Write.Point {
 
 func (p *ClientPool) WritePoint(point Point, receiverNames []string) {
 	for _, receiver := range p.getReceiverClients(receiverNames) {
-		receiver.writeApi.WritePoint(ToInfluxPoint(point))
+		receiver.WritePoint(point)
 	}
 }

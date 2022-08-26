@@ -19,13 +19,8 @@ var httpRoutes = []HttpRoute{
 	{
 		"StatsCounts",
 		"GET",
-		"/api/v0/Stats/Counts",
+		"/api/v1/statistics/counts",
 		HandleStatsCounts,
-	}, {
-		"ApiIndex",
-		"GET",
-		"/api{Path:.*}",
-		HandleApiNotFound,
 	}, {
 		"expvar",
 		"GET",
@@ -52,7 +47,6 @@ func newRouter(logger io.Writer, env *Environment) *mux.Router {
 			Path(route.Pattern).
 			Name(route.Name).
 			Handler(handler)
-
 	}
 
 	return router

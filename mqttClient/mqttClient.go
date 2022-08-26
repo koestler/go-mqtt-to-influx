@@ -94,10 +94,10 @@ func replaceTemplate(template string, config Config) (r string) {
 	return
 }
 
-func (mq *MqttClient) wrapCallBack(callback mqtt.MessageHandler) mqtt.MessageHandler {
+func (mq *MqttClient) wrapCallBack(callback mqtt.MessageHandler, subscribeTopic string) mqtt.MessageHandler {
 	if !mq.config.LogMessages() {
 		return func(client mqtt.Client, message mqtt.Message) {
-			mq.statistics.IncrementOne("mqtt", mq.Name(), message.Topic())
+			mq.statistics.IncrementOne("mqtt", mq.Name(), subscribeTopic)
 			callback(client, message)
 		}
 	}
@@ -107,16 +107,16 @@ func (mq *MqttClient) wrapCallBack(callback mqtt.MessageHandler) mqtt.MessageHan
 			"mqttClient[%s]: received qos=%d: %s %s",
 			mq.Name(), message.Qos(), message.Topic(), message.Payload(),
 		)
-		mq.statistics.IncrementOne("mqtt", mq.Name(), message.Topic())
+		mq.statistics.IncrementOne("mqtt", mq.Name(), subscribeTopic)
 		callback(client, message)
 	}
 }
 
-func (mq *MqttClient) Subscribe(topicWithPlaceholders string, callback mqtt.MessageHandler) (topic string, err error) {
-	topic = replaceTemplate(topicWithPlaceholders, mq.config)
+func (mq *MqttClient) Subscribe(topicWithPlaceholders string, callback mqtt.MessageHandler) (subscribeTopic string, err error) {
+	subscribeTopic = replaceTemplate(topicWithPlaceholders, mq.config)
 	if token := mq.client.Subscribe(
-		topic,
-		mq.config.Qos(), mq.wrapCallBack(callback),
+		subscribeTopic,
+		mq.config.Qos(), mq.wrapCallBack(callback, subscribeTopic),
 	); token.Wait() && token.Error() != nil {
 		err = token.Error()
 		return

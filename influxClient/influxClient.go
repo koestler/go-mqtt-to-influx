@@ -5,7 +5,9 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2"
 	influxdb2Api "github.com/influxdata/influxdb-client-go/v2/api"
 	influxdbHttp2 "github.com/influxdata/influxdb-client-go/v2/api/http"
+	influxdb2Write "github.com/influxdata/influxdb-client-go/v2/api/write"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -105,6 +107,16 @@ func (ic *Client) Shutdown() {
 
 func (ic Client) Name() string {
 	return ic.config.Name()
+}
+
+func (ic Client) WritePoint(point Point) {
+	p := ToInfluxPoint(point)
+	ic.writeApi.WritePoint(p)
+
+	// statistics
+	line := influxdb2Write.PointToLineProtocol(p, time.Second)
+	measurement := strings.Fields(line)[0]
+	ic.statistics.IncrementOne("influx", ic.Name(), measurement)
 }
 
 func (ic *Client) worker() {

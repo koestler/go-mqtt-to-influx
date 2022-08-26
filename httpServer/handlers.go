@@ -11,11 +11,6 @@ func writeJsonHeaders(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 }
 
-func HandleApiNotFound(env *Environment, w http.ResponseWriter, r *http.Request) Error {
-	err := errors.New("api method not found")
-	return StatusError{404, err}
-}
-
 func HandleStatsCounts(env *Environment, w http.ResponseWriter, r *http.Request) Error {
 	if !env.Statistics.Enabled() {
 		// Statistics module not available -> return 404

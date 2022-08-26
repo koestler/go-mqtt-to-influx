@@ -1,12 +1,11 @@
 package statistics
 
-type HierarchicalCount struct {
-	Total     int
-	Last10Res int
-	LastMax   int
-}
+import (
+	"strings"
+	"time"
+)
 
-type HierarchicalCounts map[string]map[string]map[string]HierarchicalCount
+type HierarchicalCounts map[string]map[string]map[string]map[string]int
 
 type requestHierarchicalCounts struct {
 	response chan HierarchicalCounts
@@ -31,23 +30,38 @@ func (s *InMemoryStatistics) handleRequestHierarchicalCounts(request requestHier
 	// copy / restructure data
 	ret := make(HierarchicalCounts)
 
-	last10Res := s.getHistoricalCounts(s.config.HistoryResolution() * 10)
-	lastMax := s.getHistoricalCounts(s.config.HistoryMaxAge())
+	d0 := s.config.HistoryResolution() * 10
+	d1 := s.config.HistoryMaxAge()
+	last0 := s.getHistoricalCounts(d0)
+	last1 := s.getHistoricalCounts(d1)
+	d0Str := "last" + shortDur(d0)
+	d1Str := "last" + shortDur(d1)
 
 	for desc, count := range s.total {
 		if _, ok := ret[desc.module]; !ok {
-			ret[desc.module] = make(map[string]map[string]HierarchicalCount)
+			ret[desc.module] = make(map[string]map[string]map[string]int)
 		}
 		if _, ok := ret[desc.module][desc.name]; !ok {
-			ret[desc.module][desc.name] = make(map[string]HierarchicalCount)
+			ret[desc.module][desc.name] = make(map[string]map[string]int)
 		}
-		ret[desc.module][desc.name][desc.field] = HierarchicalCount{
-			Total:     count,
-			Last10Res: last10Res[desc],
-			LastMax:   lastMax[desc],
+		ret[desc.module][desc.name][desc.field] = map[string]int{
+			"total": count,
+			d0Str:   last0[desc],
+			d1Str:   last1[desc],
 		}
 	}
 
 	request.response <- ret
 	close(request.response)
+}
+
+func shortDur(d time.Duration) string {
+	s := d.String()
+	if strings.HasSuffix(s, "m0s") {
+		s = s[:len(s)-2]
+	}
+	if strings.HasSuffix(s, "h0m") {
+		s = s[:len(s)-2]
+	}
+	return s
 }
