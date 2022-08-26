@@ -35,25 +35,33 @@ func connectConverters(
 					converterConfig.Name(),
 					converterConfig.Implementation(),
 					mqttClientInstance.Name(),
-					converterConfig.InfluxClients(),
+					influxClientPoolInstance.GetReceiverClientsNames(converterConfig.InfluxClients()),
 				)
 			}
 
 			for _, mqttTopic := range converterConfig.MqttTopics() {
 				topicMatcher, err := converter.CreateTopicMatcher(mqttTopic.ApplyTopicReplace(mqttClientInstance.ReplaceTemplate))
 				if err != nil {
-					log.Printf("converter[%s]: error: %s", converterConfig.Name(), err)
+					log.Printf("converter[%s]mqtt[%s]: error: %s", converterConfig.Name(), mqttClientInstance.Name(), err)
 					continue
 				}
 
-				topic := topicMatcher.GetSubscribeTopic()
 				messageHandler := getMqttMessageHandler(
 					converterConfig, topicMatcher, handleFunc, statisticsInstance, influxClientPoolInstance,
 				)
 
-				log.Printf("converter[%s]: subscreibed to: %s", converterConfig.Name(), topic)
-				if err := mqttClientInstance.Subscribe(topic, messageHandler); err != nil {
-					log.Printf("converter[%s]: error while subscribing: %s", converterConfig.Name(), err)
+				if topic, err := mqttClientInstance.Subscribe(topicMatcher.GetSubscribeTopic(), messageHandler); err == nil {
+					log.Printf("converter[%s]mqtt[%s]: subscribed to: %s",
+						converterConfig.Name(),
+						mqttClientInstance.Name(),
+						topic,
+					)
+				} else {
+					log.Printf("converter[%s]mqtt[%s]: error while subscribing: %s",
+						converterConfig.Name(),
+						mqttClientInstance.Name(),
+						err,
+					)
 					continue
 				}
 

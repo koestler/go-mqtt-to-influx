@@ -112,17 +112,16 @@ func (mq *MqttClient) wrapCallBack(callback mqtt.MessageHandler) mqtt.MessageHan
 	}
 }
 
-func (mq *MqttClient) Subscribe(topic string, callback mqtt.MessageHandler) error {
-	topic = replaceTemplate(topic, mq.config)
-	log.Printf("mqttClient[%s]: subscribe to topic='%s'", mq.Name(), topic)
-
+func (mq *MqttClient) Subscribe(topicWithPlaceholders string, callback mqtt.MessageHandler) (topic string, err error) {
+	topic = replaceTemplate(topicWithPlaceholders, mq.config)
 	if token := mq.client.Subscribe(
 		topic,
 		mq.config.Qos(), mq.wrapCallBack(callback),
 	); token.Wait() && token.Error() != nil {
-		return token.Error()
+		err = token.Error()
+		return
 	}
-	return nil
+	return
 }
 
 func (mq *MqttClient) Name() string {

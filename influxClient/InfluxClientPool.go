@@ -60,6 +60,15 @@ func (p *ClientPool) getReceiverClients(receiversNames []string) (receivers []*C
 	return
 }
 
+func (p *ClientPool) GetReceiverClientsNames(receiverNames []string) (ret []string) {
+	receivers := p.getReceiverClients(receiverNames)
+	ret = make([]string, len(receivers))
+	for i, r := range receivers {
+		ret[i] = r.Name()
+	}
+	return
+}
+
 func ToInfluxPoint(point Point) *influxdb2Write.Point {
 	return influxdb2.NewPoint(point.Measurement(), point.Tags(), point.Fields(), point.Time())
 }
