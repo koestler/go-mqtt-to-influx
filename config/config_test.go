@@ -145,6 +145,16 @@ InfluxClients:
     Bucket: mybucket
     LogDebug: False
 
+InfluxTags:
+  - DeviceName: foo
+    TagValues:
+      a: foo
+      b: bar
+      c: "another String"
+  - DeviceNamePattern: ^sensor[0-9]+
+    TagValues:
+      sort: sensor
+
 Converters:
   0-piegn-ve-sensor:
     Implementation: go-iotdevice
@@ -409,6 +419,57 @@ func TestReadConfig_Complex(t *testing.T) {
 
 	if !config.InfluxClients[0].LogDebug() {
 		t.Error("expect LogDebug of first InfluxClient to be True")
+	}
+
+	// influxTags section
+	if len(config.InfluxTags) != 2 {
+		t.Error("expect len(config.InfluxTags) == 2")
+	}
+
+	{
+		deviceName := config.InfluxTags[0].DeviceName()
+		if deviceName == nil || *deviceName != "foo" {
+			t.Error("expect DeviceName to be foo")
+		}
+	}
+
+	if !config.InfluxTags[0].DeviceNameMatcher().MatchString("foo") {
+		t.Error("expect DeviceNameMatcher of first InfluxTags to match foo")
+	}
+
+	if config.InfluxTags[0].DeviceNameMatcher().MatchString("bar") {
+		t.Error("expect DeviceNameMatcher of first InfluxTags not to match bar")
+	}
+
+	if config.InfluxTags[0].DeviceNameMatcher().MatchString("fooBar") {
+		t.Error("expect DeviceNameMatcher of first InfluxTags not to match fooBar")
+	}
+
+	if len(config.InfluxTags[0].tagValues) != 3 {
+		t.Error("expect len(TagValues) of first InfluxTags to be 3")
+	}
+
+	{
+		deviceName := config.InfluxTags[1].DeviceName()
+		if deviceName != nil {
+			t.Error("expect DeviceName to be nil")
+		}
+	}
+
+	if len(config.InfluxTags[1].tagValues) != 1 {
+		t.Error("expect len(TagValues) of second InfluxTags to be 1")
+	}
+
+	if !config.InfluxTags[1].DeviceNameMatcher().MatchString("sensor1") {
+		t.Error("expect DeviceNameMatcher of second InfluxTags to match sensor1")
+	}
+
+	if !config.InfluxTags[1].DeviceNameMatcher().MatchString("sensor1-a") {
+		t.Error("expect DeviceNameMatcher of second InfluxTags to match sensor1-a")
+	}
+
+	if config.InfluxTags[1].DeviceNameMatcher().MatchString("sensorA") {
+		t.Error("expect DeviceNameMatcher of second InfluxTags not to match sensorA")
 	}
 
 	// Converters section

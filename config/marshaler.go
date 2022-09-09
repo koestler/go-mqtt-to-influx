@@ -17,6 +17,13 @@ func (c Config) MarshalYAML() (interface{}, error) {
 			}
 			return influxClients
 		}(),
+		InfluxTags: func() []influxTagsRead {
+			influxTags := make([]influxTagsRead, len(c.InfluxTags))
+			for i, c := range c.InfluxTags {
+				influxTags[i] = c.convertToRead()
+			}
+			return influxTags
+		}(),
 		Converters: func() converterConfigReadMap {
 			converters := make(converterConfigReadMap, len(c.Converters))
 			for _, c := range c.Converters {
@@ -66,6 +73,14 @@ func (c InfluxClientConfig) convertToRead() influxClientConfigRead {
 		WriteInterval: c.writeInterval.String(),
 		TimePrecision: c.timePrecision.String(),
 		LogDebug:      &c.logDebug,
+	}
+}
+
+func (c InfluxTags) convertToRead() influxTagsRead {
+	return influxTagsRead{
+		DeviceName:        c.deviceName,
+		DeviceNamePattern: c.deviceNamePattern,
+		TagValues:         c.tagValues,
 	}
 }
 

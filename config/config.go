@@ -58,6 +58,9 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	ret.InfluxClients, e = c.InfluxClients.TransformAndValidate()
 	err = append(err, e...)
 
+	ret.InfluxTags, e = c.InfluxTags.TransformAndValidate()
+	err = append(err, e...)
+
 	ret.Converters, e = c.Converters.TransformAndValidate(ret.MqttClients, ret.InfluxClients)
 	err = append(err, e...)
 
@@ -319,6 +322,46 @@ func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxCli
 
 	if c.LogDebug != nil && *c.LogDebug {
 		ret.logDebug = true
+	}
+
+	return
+}
+
+func (c influxTagsReadList) TransformAndValidate() (ret []*InfluxTags, err []error) {
+	ret = make([]*InfluxTags, len(c))
+	for i, t := range c {
+		r, e := t.TransformAndValidate()
+		ret[i] = &r
+		err = append(err, e...)
+	}
+	return
+}
+
+func (c influxTagsRead) TransformAndValidate() (ret InfluxTags, err []error) {
+	ret = InfluxTags{
+		deviceName:        c.DeviceName,
+		deviceNamePattern: c.DeviceNamePattern,
+		tagValues:         c.TagValues,
+	}
+
+	if len(c.TagValues) < 1 {
+		err = append(err, fmt.Errorf("InfluxTags->TagValues must not be empty"))
+	}
+
+	var expr string
+	if c.DeviceName != nil && c.DeviceNamePattern == nil {
+		expr = "^" + regexp.QuoteMeta(*c.DeviceName) + "$"
+	} else if c.DeviceName == nil && c.DeviceNamePattern != nil {
+		expr = *c.DeviceNamePattern
+	} else {
+		err = append(err, fmt.Errorf("InfluxTags DeviceName xor DeviceNamePattern must be set"))
+		return
+	}
+
+	if m, e := regexp.Compile(expr); e != nil {
+		err = append(err, fmt.Errorf("InfluxTags: invalid DeviceNamePattern='%s': %s", expr, e))
+	} else {
+		ret.deviceNameMatcher = m
 	}
 
 	return

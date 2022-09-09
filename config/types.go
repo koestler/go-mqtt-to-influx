@@ -1,11 +1,15 @@
 package config
 
-import "time"
+import (
+	"regexp"
+	"time"
+)
 
 type Config struct {
-	Version        int                   `yaml:"Version"`        // must be 0
-	MqttClients    []*MqttClientConfig   `yaml:"MqttClient"`     // mandatory: at least 1 must be defined
-	InfluxClients  []*InfluxClientConfig `yaml:"InfluxClients"`  // mandatory: at least 1 must be defined
+	Version        int                   `yaml:"Version"`       // must be 0
+	MqttClients    []*MqttClientConfig   `yaml:"MqttClient"`    // mandatory: at least 1 must be defined
+	InfluxClients  []*InfluxClientConfig `yaml:"InfluxClients"` // mandatory: at least 1 must be defined
+	InfluxTags     []*InfluxTags         `yaml:"InfluxTags"`
 	Converters     []*ConverterConfig    `yaml:"Converters"`     // mandatory: at least 1 must be defined
 	HttpServer     HttpServerConfig      `yaml:"HttpServer"`     // optional: default Disabled
 	Statistics     StatisticsConfig      `yaml:"Statistics"`     // optional: default Disabled
@@ -35,6 +39,13 @@ type InfluxClientConfig struct {
 	writeInterval time.Duration // optional: default 5s
 	timePrecision time.Duration // optional: default 1s
 	logDebug      bool          // optional: default False
+}
+
+type InfluxTags struct {
+	deviceName        *string
+	deviceNamePattern *string
+	deviceNameMatcher *regexp.Regexp
+	tagValues         map[string]string
 }
 
 type ConverterConfig struct {
@@ -69,6 +80,7 @@ type configRead struct {
 	Version        *int                      `yaml:"Version"`
 	MqttClients    mqttClientConfigReadMap   `yaml:"MqttClients"`
 	InfluxClients  influxClientConfigReadMap `yaml:"InfluxClients"`
+	InfluxTags     influxTagsReadList        `yaml:"InfluxTags"`
 	Converters     converterConfigReadMap    `yaml:"Converters"`
 	HttpServer     *httpServerConfigRead     `yaml:"HttpServer"`
 	Statistics     *statisticsConfigRead     `yaml:"Statistics"`
@@ -101,6 +113,14 @@ type influxClientConfigRead struct {
 }
 
 type influxClientConfigReadMap map[string]influxClientConfigRead
+
+type influxTagsRead struct {
+	DeviceName        *string           `yaml:"DeviceName"`
+	DeviceNamePattern *string           `yaml:"DeviceNamePattern"`
+	TagValues         map[string]string `yaml:"TagValues"`
+}
+
+type influxTagsReadList []influxTagsRead
 
 type converterConfigRead struct {
 	Implementation string                  `yaml:"Implementation"`
