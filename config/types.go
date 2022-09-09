@@ -42,10 +42,10 @@ type InfluxClientConfig struct {
 }
 
 type InfluxTags struct {
-	deviceName        *string
-	deviceNamePattern *string
-	deviceNameMatcher *regexp.Regexp
-	tagValues         map[string]string
+	device        *string
+	devicePattern *string
+	deviceMatcher *regexp.Regexp
+	tagValues     map[string]string
 }
 
 type ConverterConfig struct {
@@ -115,9 +115,9 @@ type influxClientConfigRead struct {
 type influxClientConfigReadMap map[string]influxClientConfigRead
 
 type influxTagsRead struct {
-	DeviceName        *string           `yaml:"DeviceName"`
-	DeviceNamePattern *string           `yaml:"DeviceNamePattern"`
-	TagValues         map[string]string `yaml:"TagValues"`
+	Device        *string           `yaml:"Device"`
+	DevicePattern *string           `yaml:"DevicePattern"`
+	TagValues     map[string]string `yaml:"TagValues"`
 }
 
 type influxTagsReadList []influxTagsRead

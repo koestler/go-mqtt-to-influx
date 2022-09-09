@@ -146,12 +146,12 @@ InfluxClients:
     LogDebug: False
 
 InfluxTags:
-  - DeviceName: foo
+  - Device: foo
     TagValues:
       a: foo
       b: bar
       c: "another String"
-  - DeviceNamePattern: ^sensor[0-9]+
+  - DevicePattern: ^sensor[0-9]+
     TagValues:
       sort: sensor
 
@@ -427,22 +427,22 @@ func TestReadConfig_Complex(t *testing.T) {
 	}
 
 	{
-		deviceName := config.InfluxTags[0].DeviceName()
-		if deviceName == nil || *deviceName != "foo" {
-			t.Error("expect DeviceName to be foo")
+		device := config.InfluxTags[0].Device()
+		if device == nil || *device != "foo" {
+			t.Error("expect Device to be foo")
 		}
 	}
 
-	if !config.InfluxTags[0].DeviceNameMatcher().MatchString("foo") {
-		t.Error("expect DeviceNameMatcher of first InfluxTags to match foo")
+	if !config.InfluxTags[0].DeviceMatcher().MatchString("foo") {
+		t.Error("expect DeviceMatcher of first InfluxTags to match foo")
 	}
 
-	if config.InfluxTags[0].DeviceNameMatcher().MatchString("bar") {
-		t.Error("expect DeviceNameMatcher of first InfluxTags not to match bar")
+	if config.InfluxTags[0].DeviceMatcher().MatchString("bar") {
+		t.Error("expect DeviceMatcher of first InfluxTags not to match bar")
 	}
 
-	if config.InfluxTags[0].DeviceNameMatcher().MatchString("fooBar") {
-		t.Error("expect DeviceNameMatcher of first InfluxTags not to match fooBar")
+	if config.InfluxTags[0].DeviceMatcher().MatchString("fooBar") {
+		t.Error("expect DeviceMatcher of first InfluxTags not to match fooBar")
 	}
 
 	if len(config.InfluxTags[0].tagValues) != 3 {
@@ -450,9 +450,9 @@ func TestReadConfig_Complex(t *testing.T) {
 	}
 
 	{
-		deviceName := config.InfluxTags[1].DeviceName()
-		if deviceName != nil {
-			t.Error("expect DeviceName to be nil")
+		device := config.InfluxTags[1].Device()
+		if device != nil {
+			t.Error("expect Device to be nil")
 		}
 	}
 
@@ -460,16 +460,16 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect len(TagValues) of second InfluxTags to be 1")
 	}
 
-	if !config.InfluxTags[1].DeviceNameMatcher().MatchString("sensor1") {
-		t.Error("expect DeviceNameMatcher of second InfluxTags to match sensor1")
+	if !config.InfluxTags[1].DeviceMatcher().MatchString("sensor1") {
+		t.Error("expect DeviceMatcher of second InfluxTags to match sensor1")
 	}
 
-	if !config.InfluxTags[1].DeviceNameMatcher().MatchString("sensor1-a") {
-		t.Error("expect DeviceNameMatcher of second InfluxTags to match sensor1-a")
+	if !config.InfluxTags[1].DeviceMatcher().MatchString("sensor1-a") {
+		t.Error("expect DeviceMatcher of second InfluxTags to match sensor1-a")
 	}
 
-	if config.InfluxTags[1].DeviceNameMatcher().MatchString("sensorA") {
-		t.Error("expect DeviceNameMatcher of second InfluxTags not to match sensorA")
+	if config.InfluxTags[1].DeviceMatcher().MatchString("sensorA") {
+		t.Error("expect DeviceMatcher of second InfluxTags not to match sensorA")
 	}
 
 	// Converters section

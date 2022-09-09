@@ -339,9 +339,9 @@ func (c influxTagsReadList) TransformAndValidate() (ret []*InfluxTags, err []err
 
 func (c influxTagsRead) TransformAndValidate() (ret InfluxTags, err []error) {
 	ret = InfluxTags{
-		deviceName:        c.DeviceName,
-		deviceNamePattern: c.DeviceNamePattern,
-		tagValues:         c.TagValues,
+		device:        c.Device,
+		devicePattern: c.DevicePattern,
+		tagValues:     c.TagValues,
 	}
 
 	if len(c.TagValues) < 1 {
@@ -349,19 +349,19 @@ func (c influxTagsRead) TransformAndValidate() (ret InfluxTags, err []error) {
 	}
 
 	var expr string
-	if c.DeviceName != nil && c.DeviceNamePattern == nil {
-		expr = "^" + regexp.QuoteMeta(*c.DeviceName) + "$"
-	} else if c.DeviceName == nil && c.DeviceNamePattern != nil {
-		expr = *c.DeviceNamePattern
+	if c.Device != nil && c.DevicePattern == nil {
+		expr = "^" + regexp.QuoteMeta(*c.Device) + "$"
+	} else if c.Device == nil && c.DevicePattern != nil {
+		expr = *c.DevicePattern
 	} else {
-		err = append(err, fmt.Errorf("InfluxTags DeviceName xor DeviceNamePattern must be set"))
+		err = append(err, fmt.Errorf("InfluxTags Device xor DevicePattern must be set"))
 		return
 	}
 
 	if m, e := regexp.Compile(expr); e != nil {
-		err = append(err, fmt.Errorf("InfluxTags: invalid DeviceNamePattern='%s': %s", expr, e))
+		err = append(err, fmt.Errorf("InfluxTags: invalid DevicePattern='%s': %s", expr, e))
 	} else {
-		ret.deviceNameMatcher = m
+		ret.deviceMatcher = m
 	}
 
 	return

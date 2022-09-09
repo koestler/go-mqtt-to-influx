@@ -73,16 +73,16 @@ func (c InfluxClientConfig) LogDebug() bool {
 	return c.logDebug
 }
 
-func (c InfluxTags) DeviceName() *string {
-	return c.deviceName
+func (c InfluxTags) Device() *string {
+	return c.device
 }
 
-func (c InfluxTags) DeviceNamePattern() *string {
-	return c.deviceNamePattern
+func (c InfluxTags) DevicePattern() *string {
+	return c.devicePattern
 }
 
-func (c InfluxTags) DeviceNameMatcher() *regexp.Regexp {
-	return c.deviceNameMatcher
+func (c InfluxTags) DeviceMatcher() *regexp.Regexp {
+	return c.deviceMatcher
 }
 
 func (c InfluxTags) TagValues() map[string]string {
