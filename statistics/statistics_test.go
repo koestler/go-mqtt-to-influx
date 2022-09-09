@@ -37,10 +37,10 @@ func TestEnabled(t *testing.T) {
 
 	{
 		counts := s.GetHierarchicalCounts()
-		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo1/SENSOR"].Total; r != 23 {
+		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo1/SENSOR"]["total"]; r != 23 {
 			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo1/SENSOR].Total == 23, got=%v", r)
 		}
-		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo2/SENSOR"].Total; r != 24 {
+		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo2/SENSOR"]["total"]; r != 24 {
 			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo2/SENSOR].Total == 24, got=%v", r)
 		}
 	}
@@ -58,10 +58,10 @@ func TestEnabled(t *testing.T) {
 
 	{
 		counts := s.GetHierarchicalCounts()
-		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo1/SENSOR"].Total; r != 23 {
+		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo1/SENSOR"]["total"]; r != 23 {
 			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo1/SENSOR].Total == 23, got=%v", r)
 		}
-		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo2/SENSOR"].Total; r != 24 {
+		if r := counts["mqtt"]["0-piegn-mosquitto"]["piegn/tele/foo2/SENSOR"]["total"]; r != 24 {
 			t.Errorf("expect counts.[mqtt][0-piegn-mosquitto][piegn/tele/foo2/SENSOR].Total == 24, got=%v", r)
 		}
 	}
