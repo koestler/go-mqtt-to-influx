@@ -348,20 +348,18 @@ func (c influxAuxiliaryTagsRead) TransformAndValidate() (ret InfluxAuxiliaryTags
 		err = append(err, fmt.Errorf("InfluxAuxiliaryTags->TagValues must not be empty"))
 	}
 
-	var expr string
 	if c.Device != nil && c.DevicePattern == nil {
-		expr = "^" + regexp.QuoteMeta(*c.Device) + "$"
+		// ok
 	} else if c.Device == nil && c.DevicePattern != nil {
-		expr = *c.DevicePattern
+		expr := *c.DevicePattern
+		if m, e := regexp.Compile(expr); e != nil {
+			err = append(err, fmt.Errorf("InfluxAuxiliaryTags: invalid DevicePattern='%s': %s", expr, e))
+		} else {
+			ret.deviceMatcher = m
+		}
 	} else {
 		err = append(err, fmt.Errorf("InfluxAuxiliaryTags Device xor DevicePattern must be set"))
 		return
-	}
-
-	if m, e := regexp.Compile(expr); e != nil {
-		err = append(err, fmt.Errorf("InfluxAuxiliaryTags: invalid DevicePattern='%s': %s", expr, e))
-	} else {
-		ret.deviceMatcher = m
 	}
 
 	return

@@ -433,15 +433,15 @@ func TestReadConfig_Complex(t *testing.T) {
 		}
 	}
 
-	if !config.InfluxAuxiliaryTags[0].DeviceMatcher().MatchString("foo") {
+	if !config.InfluxAuxiliaryTags[0].DeviceMatchString("foo") {
 		t.Error("expect DeviceMatcher of first InfluxAuxiliaryTags to match foo")
 	}
 
-	if config.InfluxAuxiliaryTags[0].DeviceMatcher().MatchString("bar") {
+	if config.InfluxAuxiliaryTags[0].DeviceMatchString("bar") {
 		t.Error("expect DeviceMatcher of first InfluxAuxiliaryTags not to match bar")
 	}
 
-	if config.InfluxAuxiliaryTags[0].DeviceMatcher().MatchString("fooBar") {
+	if config.InfluxAuxiliaryTags[0].DeviceMatchString("fooBar") {
 		t.Error("expect DeviceMatcher of first InfluxAuxiliaryTags not to match fooBar")
 	}
 
@@ -460,15 +460,15 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect len(TagValues) of second InfluxAuxiliaryTags to be 1")
 	}
 
-	if !config.InfluxAuxiliaryTags[1].DeviceMatcher().MatchString("sensor1") {
+	if !config.InfluxAuxiliaryTags[1].DeviceMatchString("sensor1") {
 		t.Error("expect DeviceMatcher of second InfluxAuxiliaryTags to match sensor1")
 	}
 
-	if !config.InfluxAuxiliaryTags[1].DeviceMatcher().MatchString("sensor1-a") {
+	if !config.InfluxAuxiliaryTags[1].DeviceMatchString("sensor1-a") {
 		t.Error("expect DeviceMatcher of second InfluxAuxiliaryTags to match sensor1-a")
 	}
 
-	if config.InfluxAuxiliaryTags[1].DeviceMatcher().MatchString("sensorA") {
+	if config.InfluxAuxiliaryTags[1].DeviceMatchString("sensorA") {
 		t.Error("expect DeviceMatcher of second InfluxAuxiliaryTags not to match sensorA")
 	}
 

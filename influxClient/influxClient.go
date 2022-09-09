@@ -16,7 +16,8 @@ type Client struct {
 	client   influxdb2.Client
 	writeApi influxdb2Api.WriteAPI
 
-	statistics Statistics
+	auxiliaryTags []AuxiliaryTag
+	statistics    Statistics
 
 	lastTransmission time.Time
 	errorRetryDelay  time.Duration
@@ -36,6 +37,11 @@ type Config interface {
 	LogDebug() bool
 }
 
+type AuxiliaryTag interface {
+	DeviceMatchString(device string) bool
+	TagValues() map[string]string
+}
+
 type Point interface {
 	Measurement() string
 	Tags() map[string]string
@@ -47,7 +53,7 @@ type Statistics interface {
 	IncrementOne(module, name, field string)
 }
 
-func RunClient(config Config, statistics Statistics) *Client {
+func RunClient(config Config, auxiliaryTags []AuxiliaryTag, statistics Statistics) *Client {
 	// Create a new HTTPClient
 	opts := influxdb2.DefaultOptions().SetUseGZip(true)
 	opts = opts.SetFlushInterval(uint(config.WriteInterval().Milliseconds()))
@@ -78,10 +84,12 @@ func RunClient(config Config, statistics Statistics) *Client {
 	}
 
 	c := Client{
-		config:     config,
-		client:     dbClient,
-		writeApi:   writeApi,
-		statistics: statistics,
+		config:   config,
+		client:   dbClient,
+		writeApi: writeApi,
+
+		auxiliaryTags: auxiliaryTags,
+		statistics:    statistics,
 
 		shutdown: make(chan struct{}),
 		closed:   make(chan struct{}),
@@ -111,6 +119,16 @@ func (ic Client) Name() string {
 
 func (ic Client) WritePoint(point Point) {
 	p := ToInfluxPoint(point)
+
+	// add auxiliary tags to influx point
+	for _, at := range ic.auxiliaryTags {
+		if at.DeviceMatchString(point.Tags()["device"]) {
+			for key, value := range at.TagValues() {
+				p.AddTag(key, value)
+			}
+		}
+	}
+
 	ic.writeApi.WritePoint(p)
 
 	// statistics

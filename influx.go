@@ -15,8 +15,13 @@ func runInfluxClient(
 ) *influxClient.ClientPool {
 	influxClientPoolInstance := influxClient.RunPool()
 
-	countStarted := 0
+	// convert []*config.InfluxAuxiliaryTags to []influxClient.AuxiliaryTag
+	auxiliaryTags := make([]influxClient.AuxiliaryTag, len(cfg.InfluxAuxiliaryTags))
+	for i, t := range cfg.InfluxAuxiliaryTags {
+		auxiliaryTags[i] = t
+	}
 
+	countStarted := 0
 	for _, influxClientConfig := range cfg.InfluxClients {
 		if cfg.LogWorkerStart {
 			log.Printf(
@@ -29,7 +34,7 @@ func runInfluxClient(
 			)
 		}
 
-		client := influxClient.RunClient(influxClientConfig, statisticsInstance)
+		client := influxClient.RunClient(influxClientConfig, auxiliaryTags, statisticsInstance)
 
 		influxClientPoolInstance.AddClient(client)
 		countStarted += 1

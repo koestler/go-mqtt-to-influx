@@ -81,8 +81,15 @@ func (c InfluxAuxiliaryTags) DevicePattern() *string {
 	return c.devicePattern
 }
 
-func (c InfluxAuxiliaryTags) DeviceMatcher() *regexp.Regexp {
-	return c.deviceMatcher
+func (c InfluxAuxiliaryTags) DeviceMatchString(device string) bool {
+	if c.device != nil {
+		return *c.device == device
+	}
+	if c.deviceMatcher != nil {
+		return c.deviceMatcher.MatchString(device)
+	}
+
+	return false
 }
 
 func (c InfluxAuxiliaryTags) TagValues() map[string]string {
