@@ -73,20 +73,24 @@ func (c InfluxClientConfig) LogDebug() bool {
 	return c.logDebug
 }
 
-func (c InfluxAuxiliaryTags) Device() *string {
-	return c.device
+func (c InfluxAuxiliaryTags) Tag() string {
+	return c.tag
 }
 
-func (c InfluxAuxiliaryTags) DevicePattern() *string {
-	return c.devicePattern
+func (c InfluxAuxiliaryTags) Equals() *string {
+	return c.equals
 }
 
-func (c InfluxAuxiliaryTags) DeviceMatchString(device string) bool {
-	if c.device != nil {
-		return *c.device == device
+func (c InfluxAuxiliaryTags) Matches() *string {
+	return c.matches
+}
+
+func (c InfluxAuxiliaryTags) MatchString(value string) bool {
+	if c.equals != nil {
+		return *c.equals == value
 	}
-	if c.deviceMatcher != nil {
-		return c.deviceMatcher.MatchString(device)
+	if c.matcher != nil {
+		return c.matcher.MatchString(value)
 	}
 
 	return false

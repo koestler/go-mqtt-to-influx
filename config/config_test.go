@@ -146,12 +146,14 @@ InfluxClients:
     LogDebug: False
 
 InfluxAuxiliaryTags:
-  - Device: foo
+  - Tag: device
+    Equals: foo
     TagValues:
       a: foo
       b: bar
       c: "another String"
-  - DevicePattern: ^sensor[0-9]+
+  - Tag: field
+    Matches: ^temperature[0-9]+
     TagValues:
       sort: sensor
 
@@ -427,21 +429,25 @@ func TestReadConfig_Complex(t *testing.T) {
 	}
 
 	{
-		device := config.InfluxAuxiliaryTags[0].Device()
+		device := config.InfluxAuxiliaryTags[0].Equals()
 		if device == nil || *device != "foo" {
 			t.Error("expect Device to be foo")
 		}
 	}
 
-	if !config.InfluxAuxiliaryTags[0].DeviceMatchString("foo") {
+	if config.InfluxAuxiliaryTags[0].Tag() != "device" {
+		t.Error("expect Tag of first InfluxAuxiliaryTags to be device")
+	}
+
+	if !config.InfluxAuxiliaryTags[0].MatchString("foo") {
 		t.Error("expect DeviceMatcher of first InfluxAuxiliaryTags to match foo")
 	}
 
-	if config.InfluxAuxiliaryTags[0].DeviceMatchString("bar") {
+	if config.InfluxAuxiliaryTags[0].MatchString("bar") {
 		t.Error("expect DeviceMatcher of first InfluxAuxiliaryTags not to match bar")
 	}
 
-	if config.InfluxAuxiliaryTags[0].DeviceMatchString("fooBar") {
+	if config.InfluxAuxiliaryTags[0].MatchString("fooBar") {
 		t.Error("expect DeviceMatcher of first InfluxAuxiliaryTags not to match fooBar")
 	}
 
@@ -449,8 +455,12 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect len(TagValues) of first InfluxAuxiliaryTags to be 3")
 	}
 
+	if config.InfluxAuxiliaryTags[1].Tag() != "field" {
+		t.Error("expect Tag of first InfluxAuxiliaryTags to be field")
+	}
+
 	{
-		device := config.InfluxAuxiliaryTags[1].Device()
+		device := config.InfluxAuxiliaryTags[1].Equals()
 		if device != nil {
 			t.Error("expect Device to be nil")
 		}
@@ -460,16 +470,16 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect len(TagValues) of second InfluxAuxiliaryTags to be 1")
 	}
 
-	if !config.InfluxAuxiliaryTags[1].DeviceMatchString("sensor1") {
-		t.Error("expect DeviceMatcher of second InfluxAuxiliaryTags to match sensor1")
+	if !config.InfluxAuxiliaryTags[1].MatchString("temperature1") {
+		t.Error("expect DeviceMatcher of second InfluxAuxiliaryTags to match temperature1")
 	}
 
-	if !config.InfluxAuxiliaryTags[1].DeviceMatchString("sensor1-a") {
-		t.Error("expect DeviceMatcher of second InfluxAuxiliaryTags to match sensor1-a")
+	if !config.InfluxAuxiliaryTags[1].MatchString("temperature1-a") {
+		t.Error("expect DeviceMatcher of second InfluxAuxiliaryTags to match temperature1-a")
 	}
 
-	if config.InfluxAuxiliaryTags[1].DeviceMatchString("sensorA") {
-		t.Error("expect DeviceMatcher of second InfluxAuxiliaryTags not to match sensorA")
+	if config.InfluxAuxiliaryTags[1].MatchString("temperatureA") {
+		t.Error("expect DeviceMatcher of second InfluxAuxiliaryTags not to match temperatureA")
 	}
 
 	// Converters section

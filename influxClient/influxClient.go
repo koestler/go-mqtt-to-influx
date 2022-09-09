@@ -38,7 +38,8 @@ type Config interface {
 }
 
 type AuxiliaryTag interface {
-	DeviceMatchString(device string) bool
+	Tag() string
+	MatchString(value string) bool
 	TagValues() map[string]string
 }
 
@@ -122,7 +123,7 @@ func (ic Client) WritePoint(point Point) {
 
 	// add auxiliary tags to influx point
 	for _, at := range ic.auxiliaryTags {
-		if at.DeviceMatchString(point.Tags()["device"]) {
+		if value, ok := point.Tags()[at.Tag()]; ok && at.MatchString(value) {
 			for key, value := range at.TagValues() {
 				p.AddTag(key, value)
 			}

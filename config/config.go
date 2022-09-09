@@ -339,26 +339,31 @@ func (c influxAuxiliaryTagsReadList) TransformAndValidate() (ret []*InfluxAuxili
 
 func (c influxAuxiliaryTagsRead) TransformAndValidate() (ret InfluxAuxiliaryTags, err []error) {
 	ret = InfluxAuxiliaryTags{
-		device:        c.Device,
-		devicePattern: c.DevicePattern,
-		tagValues:     c.TagValues,
+		tag:       c.Tag,
+		equals:    c.Equals,
+		matches:   c.Matches,
+		tagValues: c.TagValues,
+	}
+
+	if len(c.Tag) < 1 {
+		err = append(err, fmt.Errorf("InfluxAuxiliaryTags->TagValues Tag must not by empty"))
 	}
 
 	if len(c.TagValues) < 1 {
 		err = append(err, fmt.Errorf("InfluxAuxiliaryTags->TagValues must not be empty"))
 	}
 
-	if c.Device != nil && c.DevicePattern == nil {
+	if c.Equals != nil && c.Matches == nil {
 		// ok
-	} else if c.Device == nil && c.DevicePattern != nil {
-		expr := *c.DevicePattern
+	} else if c.Equals == nil && c.Matches != nil {
+		expr := *c.Matches
 		if m, e := regexp.Compile(expr); e != nil {
-			err = append(err, fmt.Errorf("InfluxAuxiliaryTags: invalid DevicePattern='%s': %s", expr, e))
+			err = append(err, fmt.Errorf("InfluxAuxiliaryTags: invalid regexp given by Matches='%s': %s", expr, e))
 		} else {
-			ret.deviceMatcher = m
+			ret.matcher = m
 		}
 	} else {
-		err = append(err, fmt.Errorf("InfluxAuxiliaryTags Device xor DevicePattern must be set"))
+		err = append(err, fmt.Errorf("InfluxAuxiliaryTags Equals xor Matches must be set"))
 		return
 	}
 

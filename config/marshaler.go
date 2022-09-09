@@ -78,9 +78,10 @@ func (c InfluxClientConfig) convertToRead() influxClientConfigRead {
 
 func (c InfluxAuxiliaryTags) convertToRead() influxAuxiliaryTagsRead {
 	return influxAuxiliaryTagsRead{
-		Device:        c.device,
-		DevicePattern: c.devicePattern,
-		TagValues:     c.tagValues,
+		Tag:       c.tag,
+		Equals:    c.equals,
+		Matches:   c.matches,
+		TagValues: c.tagValues,
 	}
 }
 
