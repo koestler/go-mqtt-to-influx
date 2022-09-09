@@ -17,12 +17,12 @@ func (c Config) MarshalYAML() (interface{}, error) {
 			}
 			return influxClients
 		}(),
-		InfluxTags: func() []influxTagsRead {
-			influxTags := make([]influxTagsRead, len(c.InfluxTags))
-			for i, c := range c.InfluxTags {
-				influxTags[i] = c.convertToRead()
+		InfluxAuxiliaryTags: func() []influxAuxiliaryTagsRead {
+			influxAuxiliaryTags := make([]influxAuxiliaryTagsRead, len(c.InfluxAuxiliaryTags))
+			for i, c := range c.InfluxAuxiliaryTags {
+				influxAuxiliaryTags[i] = c.convertToRead()
 			}
-			return influxTags
+			return influxAuxiliaryTags
 		}(),
 		Converters: func() converterConfigReadMap {
 			converters := make(converterConfigReadMap, len(c.Converters))
@@ -76,8 +76,8 @@ func (c InfluxClientConfig) convertToRead() influxClientConfigRead {
 	}
 }
 
-func (c InfluxTags) convertToRead() influxTagsRead {
-	return influxTagsRead{
+func (c InfluxAuxiliaryTags) convertToRead() influxAuxiliaryTagsRead {
+	return influxAuxiliaryTagsRead{
 		Device:        c.device,
 		DevicePattern: c.devicePattern,
 		TagValues:     c.tagValues,

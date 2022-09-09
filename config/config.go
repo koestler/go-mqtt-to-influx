@@ -58,7 +58,7 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	ret.InfluxClients, e = c.InfluxClients.TransformAndValidate()
 	err = append(err, e...)
 
-	ret.InfluxTags, e = c.InfluxTags.TransformAndValidate()
+	ret.InfluxAuxiliaryTags, e = c.InfluxAuxiliaryTags.TransformAndValidate()
 	err = append(err, e...)
 
 	ret.Converters, e = c.Converters.TransformAndValidate(ret.MqttClients, ret.InfluxClients)
@@ -327,8 +327,8 @@ func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxCli
 	return
 }
 
-func (c influxTagsReadList) TransformAndValidate() (ret []*InfluxTags, err []error) {
-	ret = make([]*InfluxTags, len(c))
+func (c influxAuxiliaryTagsReadList) TransformAndValidate() (ret []*InfluxAuxiliaryTags, err []error) {
+	ret = make([]*InfluxAuxiliaryTags, len(c))
 	for i, t := range c {
 		r, e := t.TransformAndValidate()
 		ret[i] = &r
@@ -337,15 +337,15 @@ func (c influxTagsReadList) TransformAndValidate() (ret []*InfluxTags, err []err
 	return
 }
 
-func (c influxTagsRead) TransformAndValidate() (ret InfluxTags, err []error) {
-	ret = InfluxTags{
+func (c influxAuxiliaryTagsRead) TransformAndValidate() (ret InfluxAuxiliaryTags, err []error) {
+	ret = InfluxAuxiliaryTags{
 		device:        c.Device,
 		devicePattern: c.DevicePattern,
 		tagValues:     c.TagValues,
 	}
 
 	if len(c.TagValues) < 1 {
-		err = append(err, fmt.Errorf("InfluxTags->TagValues must not be empty"))
+		err = append(err, fmt.Errorf("InfluxAuxiliaryTags->TagValues must not be empty"))
 	}
 
 	var expr string
@@ -354,12 +354,12 @@ func (c influxTagsRead) TransformAndValidate() (ret InfluxTags, err []error) {
 	} else if c.Device == nil && c.DevicePattern != nil {
 		expr = *c.DevicePattern
 	} else {
-		err = append(err, fmt.Errorf("InfluxTags Device xor DevicePattern must be set"))
+		err = append(err, fmt.Errorf("InfluxAuxiliaryTags Device xor DevicePattern must be set"))
 		return
 	}
 
 	if m, e := regexp.Compile(expr); e != nil {
-		err = append(err, fmt.Errorf("InfluxTags: invalid DevicePattern='%s': %s", expr, e))
+		err = append(err, fmt.Errorf("InfluxAuxiliaryTags: invalid DevicePattern='%s': %s", expr, e))
 	} else {
 		ret.deviceMatcher = m
 	}

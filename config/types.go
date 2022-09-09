@@ -6,16 +6,16 @@ import (
 )
 
 type Config struct {
-	Version        int                   `yaml:"Version"`       // must be 0
-	MqttClients    []*MqttClientConfig   `yaml:"MqttClient"`    // mandatory: at least 1 must be defined
-	InfluxClients  []*InfluxClientConfig `yaml:"InfluxClients"` // mandatory: at least 1 must be defined
-	InfluxTags     []*InfluxTags         `yaml:"InfluxTags"`
-	Converters     []*ConverterConfig    `yaml:"Converters"`     // mandatory: at least 1 must be defined
-	HttpServer     HttpServerConfig      `yaml:"HttpServer"`     // optional: default Disabled
-	Statistics     StatisticsConfig      `yaml:"Statistics"`     // optional: default Disabled
-	LogConfig      bool                  `yaml:"LogConfig"`      // optional: default False
-	LogWorkerStart bool                  `yaml:"LogWorkerStart"` // optional: default False
-	LogMqttDebug   bool                  `yaml:"LogMqttDebug"`   // optional: default False
+	Version             int                    `yaml:"Version"`       // must be 0
+	MqttClients         []*MqttClientConfig    `yaml:"MqttClient"`    // mandatory: at least 1 must be defined
+	InfluxClients       []*InfluxClientConfig  `yaml:"InfluxClients"` // mandatory: at least 1 must be defined
+	InfluxAuxiliaryTags []*InfluxAuxiliaryTags `yaml:"InfluxAuxiliaryTags"`
+	Converters          []*ConverterConfig     `yaml:"Converters"`     // mandatory: at least 1 must be defined
+	HttpServer          HttpServerConfig       `yaml:"HttpServer"`     // optional: default Disabled
+	Statistics          StatisticsConfig       `yaml:"Statistics"`     // optional: default Disabled
+	LogConfig           bool                   `yaml:"LogConfig"`      // optional: default False
+	LogWorkerStart      bool                   `yaml:"LogWorkerStart"` // optional: default False
+	LogMqttDebug        bool                   `yaml:"LogMqttDebug"`   // optional: default False
 }
 
 type MqttClientConfig struct {
@@ -41,7 +41,7 @@ type InfluxClientConfig struct {
 	logDebug      bool          // optional: default False
 }
 
-type InfluxTags struct {
+type InfluxAuxiliaryTags struct {
 	device        *string
 	devicePattern *string
 	deviceMatcher *regexp.Regexp
@@ -77,16 +77,16 @@ type StatisticsConfig struct {
 
 // Read structs are given to yaml for decoding and are slightly less exact in types
 type configRead struct {
-	Version        *int                      `yaml:"Version"`
-	MqttClients    mqttClientConfigReadMap   `yaml:"MqttClients"`
-	InfluxClients  influxClientConfigReadMap `yaml:"InfluxClients"`
-	InfluxTags     influxTagsReadList        `yaml:"InfluxTags"`
-	Converters     converterConfigReadMap    `yaml:"Converters"`
-	HttpServer     *httpServerConfigRead     `yaml:"HttpServer"`
-	Statistics     *statisticsConfigRead     `yaml:"Statistics"`
-	LogConfig      *bool                     `yaml:"LogConfig"`
-	LogWorkerStart *bool                     `yaml:"LogWorkerStart"`
-	LogMqttDebug   *bool                     `yaml:"LogMqttDebug"`
+	Version             *int                        `yaml:"Version"`
+	MqttClients         mqttClientConfigReadMap     `yaml:"MqttClients"`
+	InfluxClients       influxClientConfigReadMap   `yaml:"InfluxClients"`
+	InfluxAuxiliaryTags influxAuxiliaryTagsReadList `yaml:"InfluxAuxiliaryTags"`
+	Converters          converterConfigReadMap      `yaml:"Converters"`
+	HttpServer          *httpServerConfigRead       `yaml:"HttpServer"`
+	Statistics          *statisticsConfigRead       `yaml:"Statistics"`
+	LogConfig           *bool                       `yaml:"LogConfig"`
+	LogWorkerStart      *bool                       `yaml:"LogWorkerStart"`
+	LogMqttDebug        *bool                       `yaml:"LogMqttDebug"`
 }
 
 type mqttClientConfigRead struct {
@@ -114,13 +114,13 @@ type influxClientConfigRead struct {
 
 type influxClientConfigReadMap map[string]influxClientConfigRead
 
-type influxTagsRead struct {
+type influxAuxiliaryTagsRead struct {
 	Device        *string           `yaml:"Device"`
 	DevicePattern *string           `yaml:"DevicePattern"`
 	TagValues     map[string]string `yaml:"TagValues"`
 }
 
-type influxTagsReadList []influxTagsRead
+type influxAuxiliaryTagsReadList []influxAuxiliaryTagsRead
 
 type converterConfigRead struct {
 	Implementation string                  `yaml:"Implementation"`
