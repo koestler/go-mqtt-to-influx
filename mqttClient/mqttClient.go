@@ -39,7 +39,9 @@ func Run(config Config, statistics Statistics) (*Client, error) {
 	// configure client and start connection
 	opts := mqtt.NewClientOptions().
 		AddBroker(config.Broker()).
-		SetClientID(config.ClientId())
+		SetClientID(config.ClientId()).
+		SetOrderMatters(false)
+
 	if len(config.User()) > 0 {
 		opts.SetUsername(config.User())
 	}
