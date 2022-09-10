@@ -214,7 +214,7 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 		ret.clientId = "go-mqtt-to-influx-" + uuid.New().String()
 	}
 	if c.Qos == nil {
-		ret.qos = 0
+		ret.qos = 1 // default qos is 1
 	} else if *c.Qos == 0 || *c.Qos == 1 || *c.Qos == 2 {
 		ret.qos = *c.Qos
 	} else {
