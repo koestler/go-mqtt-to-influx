@@ -14,14 +14,17 @@ func runMqttClient(
 	cfg *config.Config,
 	statisticsInstance statistics.Statistics,
 	initiateShutdown chan<- error,
-) map[string]*mqttClient.MqttClient {
+) (mqttClientPoolInstance *mqttClient.ClientPool) {
+	// setup logging
 	mqtt.ERROR = log.New(os.Stdout, "MqttDebugLog: ", log.LstdFlags)
 	if cfg.LogMqttDebug {
 		mqtt.DEBUG = log.New(os.Stdout, "MqttDebugLog: ", log.LstdFlags)
 	}
 
-	mqttClientInstances := make(map[string]*mqttClient.MqttClient)
+	// run pool
+	mqttClientPoolInstance = mqttClient.RunPool()
 
+	countStarted := 0
 	for _, mqttClientConfig := range cfg.MqttClients {
 		if cfg.LogWorkerStart {
 			log.Printf(
@@ -33,14 +36,20 @@ func runMqttClient(
 		if client, err := mqttClient.Run(mqttClientConfig, statisticsInstance); err != nil {
 			log.Printf("mqttClient[%s]: start failed: %s", mqttClientConfig.Name(), err)
 		} else {
-			mqttClientInstances[mqttClientConfig.Name()] = client
-			log.Printf("mqttClient[%s]: started", mqttClientConfig.Name())
+			mqttClientPoolInstance.AddClient(client)
+
+			countStarted += 1
+			if cfg.LogWorkerStart {
+				log.Printf(
+					"mqttClient[%s]: started", mqttClientConfig.Name(),
+				)
+			}
 		}
 	}
 
-	if len(mqttClientInstances) < 1 {
+	if countStarted < 1 {
 		initiateShutdown <- errors.New("no mqttClient was started")
 	}
 
-	return mqttClientInstances
+	return
 }

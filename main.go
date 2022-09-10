@@ -96,10 +96,8 @@ func main() {
 		defer httpServerInstance.Shutdown()
 
 		// start mqtt clients
-		mqttClientInstances := runMqttClient(cfg, statisticsInstance, initiateShutdown)
-		for _, client := range mqttClientInstances {
-			defer client.Shutdown()
-		}
+		mqttClientPoolInstance := runMqttClient(cfg, statisticsInstance, initiateShutdown)
+		defer mqttClientPoolInstance.Shutdown()
 
 		// start influx clients
 		influxClientPoolInstance := runInfluxClient(cfg, statisticsInstance, initiateShutdown)
@@ -109,7 +107,7 @@ func main() {
 		connectConverters(
 			cfg,
 			statisticsInstance,
-			mqttClientInstances,
+			mqttClientPoolInstance,
 			influxClientPoolInstance,
 			initiateShutdown,
 		)

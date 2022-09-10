@@ -12,8 +12,8 @@ func runInfluxClient(
 	cfg *config.Config,
 	statisticsInstance statistics.Statistics,
 	initiateShutdown chan<- error,
-) *influxClient.ClientPool {
-	influxClientPoolInstance := influxClient.RunPool()
+) (influxClientPoolInstance *influxClient.ClientPool) {
+	influxClientPoolInstance = influxClient.RunPool()
 
 	// convert []*config.InfluxAuxiliaryTags to []influxClient.AuxiliaryTag
 	auxiliaryTags := make([]influxClient.AuxiliaryTag, len(cfg.InfluxAuxiliaryTags))
@@ -49,5 +49,5 @@ func runInfluxClient(
 		initiateShutdown <- errors.New("no influxClient was started")
 	}
 
-	return influxClientPoolInstance
+	return
 }

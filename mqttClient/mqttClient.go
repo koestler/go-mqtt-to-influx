@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type MqttClient struct {
+type Client struct {
 	config     Config
 	client     mqtt.Client
 	statistics Statistics
@@ -35,7 +35,7 @@ const (
 	OnlinePayload  string = "online"
 )
 
-func Run(config Config, statistics Statistics) (*MqttClient, error) {
+func Run(config Config, statistics Statistics) (*Client, error) {
 	// configure client and start connection
 	opts := mqtt.NewClientOptions().
 		AddBroker(config.Broker()).
@@ -72,19 +72,19 @@ func Run(config Config, statistics Statistics) (*MqttClient, error) {
 	}
 	log.Printf("mqttClient[%s]: connected to broker='%s'", config.Name(), config.Broker())
 
-	return &MqttClient{
+	return &Client{
 		config:     config,
 		client:     client,
 		statistics: statistics,
 	}, nil
 }
 
-func (mq *MqttClient) Shutdown() {
+func (mq *Client) Shutdown() {
 	sendUnavailableMsg(mq.config, mq.client)
 	mq.client.Disconnect(1000)
 }
 
-func (mq *MqttClient) ReplaceTemplate(template string) string {
+func (mq *Client) ReplaceTemplate(template string) string {
 	return replaceTemplate(template, mq.config)
 }
 
@@ -94,7 +94,7 @@ func replaceTemplate(template string, config Config) (r string) {
 	return
 }
 
-func (mq *MqttClient) wrapCallBack(callback mqtt.MessageHandler, subscribeTopic string) mqtt.MessageHandler {
+func (mq *Client) wrapCallBack(callback mqtt.MessageHandler, subscribeTopic string) mqtt.MessageHandler {
 	if !mq.config.LogMessages() {
 		return func(client mqtt.Client, message mqtt.Message) {
 			mq.statistics.IncrementOne("mqtt", mq.Name(), subscribeTopic)
@@ -112,7 +112,7 @@ func (mq *MqttClient) wrapCallBack(callback mqtt.MessageHandler, subscribeTopic 
 	}
 }
 
-func (mq *MqttClient) Subscribe(topicWithPlaceholders string, callback mqtt.MessageHandler) (subscribeTopic string, err error) {
+func (mq *Client) Subscribe(topicWithPlaceholders string, callback mqtt.MessageHandler) (subscribeTopic string, err error) {
 	subscribeTopic = replaceTemplate(topicWithPlaceholders, mq.config)
 	if token := mq.client.Subscribe(
 		subscribeTopic,
@@ -124,7 +124,7 @@ func (mq *MqttClient) Subscribe(topicWithPlaceholders string, callback mqtt.Mess
 	return
 }
 
-func (mq *MqttClient) Name() string {
+func (mq *Client) Name() string {
 	return mq.config.Name()
 }
 

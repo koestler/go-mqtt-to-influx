@@ -14,7 +14,7 @@ import (
 func connectConverters(
 	cfg *config.Config,
 	statisticsInstance statistics.Statistics,
-	mqttClientInstances map[string]*mqttClient.MqttClient,
+	mqttClientPoolInstance *mqttClient.ClientPool,
 	influxClientPoolInstance *influxClient.ClientPool,
 	initiateShutdown chan<- error,
 ) {
@@ -28,10 +28,10 @@ func connectConverters(
 			continue
 		}
 
-		for _, mqttClientInstance := range getMqttClient(mqttClientInstances, converterConfig.MqttClients()) {
+		for _, mqttClientInstance := range mqttClientPoolInstance.GetClientsByNames(converterConfig.MqttClients()) {
 			if cfg.LogWorkerStart {
 				log.Printf(
-					"converter[%s]: start: Implementation='%s', MqttClient='%s', InfluxClients=%v",
+					"converter[%s]: start: Implementation='%s', Client='%s', InfluxClients=%v",
 					converterConfig.Name(),
 					converterConfig.Implementation(),
 					mqttClientInstance.Name(),
@@ -99,26 +99,4 @@ func getMqttMessageHandler(
 			},
 		)
 	}
-}
-
-func getMqttClient(mqttClientInstances map[string]*mqttClient.MqttClient, clientNames []string) (
-	clients []*mqttClient.MqttClient,
-) {
-	if len(clientNames) < 1 {
-		clients = make([]*mqttClient.MqttClient, len(mqttClientInstances))
-		i := 0
-		for _, c := range mqttClientInstances {
-			clients[i] = c
-			i++
-		}
-		return
-	}
-
-	for _, clientName := range clientNames {
-		if receiver, ok := mqttClientInstances[clientName]; ok {
-			clients = append(clients, receiver)
-		}
-	}
-
-	return
 }
