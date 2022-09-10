@@ -42,7 +42,7 @@ type InfluxClientConfig struct {
 }
 
 type InfluxAuxiliaryTags struct {
-	tag       string
+	tag       string // optional: defaults to device
 	equals    *string
 	matches   *string
 	matcher   *regexp.Regexp
@@ -116,7 +116,7 @@ type influxClientConfigRead struct {
 type influxClientConfigReadMap map[string]influxClientConfigRead
 
 type influxAuxiliaryTagsRead struct {
-	Tag       string            `yaml:"Tag"`
+	Tag       *string           `yaml:"Tag"`
 	Equals    *string           `yaml:"Equals"`
 	Matches   *string           `yaml:"Matches""`
 	TagValues map[string]string `yaml:"TagValues"`

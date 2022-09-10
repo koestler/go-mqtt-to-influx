@@ -339,14 +339,17 @@ func (c influxAuxiliaryTagsReadList) TransformAndValidate() (ret []*InfluxAuxili
 
 func (c influxAuxiliaryTagsRead) TransformAndValidate() (ret InfluxAuxiliaryTags, err []error) {
 	ret = InfluxAuxiliaryTags{
-		tag:       c.Tag,
 		equals:    c.Equals,
 		matches:   c.Matches,
 		tagValues: c.TagValues,
 	}
 
-	if len(c.Tag) < 1 {
+	if c.Tag == nil {
+		ret.tag = "device"
+	} else if len(*c.Tag) < 1 {
 		err = append(err, fmt.Errorf("InfluxAuxiliaryTags->TagValues Tag must not by empty"))
+	} else {
+		ret.tag = *c.Tag
 	}
 
 	if len(c.TagValues) < 1 {
