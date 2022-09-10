@@ -614,8 +614,8 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default MqttClient->Password to be empty")
 	}
 
-	if config.MqttClients[0].ClientId() != "go-mqtt-to-influx" {
-		t.Error("expect default MqttClient->ClientId to be 'go-mqtt-to-influx'")
+	if !strings.Contains(config.MqttClients[0].ClientId(), "go-mqtt-to-influx-") {
+		t.Error("expect default MqttClient->ClientId to contain 'go-mqtt-to-influx'")
 	}
 
 	if config.MqttClients[0].Qos() != 0 {
