@@ -98,8 +98,9 @@ func (c *ClientV5) onConnectionUp() func(*autopaho.ConnectionManager, *paho.Conn
 func (c *ClientV5) Run() {
 	// add routes to router
 	for _, s := range c.subscriptions {
-		c.router.RegisterHandler(s.subscribeTopic, func(p *paho.Publish) {
-			s.messageHandler(Message{
+		sub := s
+		c.router.RegisterHandler(sub.subscribeTopic, func(p *paho.Publish) {
+			sub.messageHandler(Message{
 				topic:   p.Topic,
 				payload: p.Payload,
 			})

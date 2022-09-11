@@ -33,16 +33,6 @@ func createConverters(
 
 		// iterate through all connected mqtt clients
 		for _, mqttClientInstance := range mqttClientPoolInstance.GetClientsByNames(converterConfig.MqttClients()) {
-			if cfg.LogWorkerStart {
-				log.Printf(
-					"converter[%s]: start: Implementation='%s', ClientV5='%s', InfluxClients=%v",
-					converterConfig.Name(),
-					converterConfig.Implementation(),
-					mqttClientInstance.Name(),
-					influxClientPoolInstance.GetReceiverClientsNames(converterConfig.InfluxClients()),
-				)
-			}
-
 			// iterate through all topics
 			for _, mqttTopic := range converterConfig.MqttTopics() {
 				topicMatcher, err := converter.CreateTopicMatcher(
@@ -54,11 +44,24 @@ func createConverters(
 					continue
 				}
 
-				messageHandler := getMqttMessageHandler(
-					converterConfig, topicMatcher, handleFunc, statisticsInstance, influxClientPoolInstance,
+				mqttClientInstance.AddRoute(
+					topicMatcher.GetSubscribeTopic(),
+					getMqttMessageHandler(
+						converterConfig, topicMatcher, handleFunc, statisticsInstance, influxClientPoolInstance,
+					),
 				)
 
-				mqttClientInstance.AddRoute(topicMatcher.GetSubscribeTopic(), messageHandler)
+				if cfg.LogWorkerStart {
+					log.Printf(
+						"converter[%s]: Implementation='%s', MqttClient='%s', InfluxClients=%v, SubscribeTopic='%s'",
+						converterConfig.Name(),
+						converterConfig.Implementation(),
+						mqttClientInstance.Name(),
+						influxClientPoolInstance.GetReceiverClientsNames(converterConfig.InfluxClients()),
+						topicMatcher.GetSubscribeTopic(),
+					)
+				}
+
 				countCreated += 1
 			}
 		}
