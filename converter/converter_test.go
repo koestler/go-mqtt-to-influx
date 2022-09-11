@@ -111,10 +111,12 @@ func TestRegisterTwice(t *testing.T) {
 	var logBuffer bytes.Buffer
 	log.SetOutput(&logBuffer)
 
-	registerHandler("empty", func(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {})
-	registerHandler("empty", func(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {})
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected a panic when registering the same handler twice")
+		}
+	}()
 
-	if !strings.Contains(logBuffer.String(), "twice") {
-		t.Errorf("expected a log output that we registered go-iotdevice twice")
-	}
+	registerHandler("empty", func(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {})
+	registerHandler("empty", func(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {})
 }

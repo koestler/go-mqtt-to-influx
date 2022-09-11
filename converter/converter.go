@@ -2,7 +2,6 @@ package converter
 
 import (
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -32,7 +31,7 @@ var converterImplementations = make(map[string]HandleFunc)
 
 func registerHandler(implementation string, h HandleFunc) {
 	if _, ok := converterImplementations[implementation]; ok {
-		log.Printf("converter: implementation='%s' registered twice; ignore second", implementation)
+		panic(fmt.Sprintf("converter: implementation='%s' registered twice; ignore second", implementation))
 	}
 
 	converterImplementations[implementation] = h
