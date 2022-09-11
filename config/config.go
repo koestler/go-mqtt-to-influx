@@ -223,6 +223,55 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 		err = append(err, fmt.Errorf("MqttClientConfig->%s->Qos=%d but must be 0, 1 or 2", name, *c.Qos))
 	}
 
+	if len(c.KeepAlive) < 1 {
+		// use default 10s
+		ret.keepAlive = 10 * time.Second
+	} else if keepAlive, e := time.ParseDuration(c.KeepAlive); e != nil {
+		err = append(err, fmt.Errorf("MqttClientConfig->%s->KeepAlive='%s' parse error: %s",
+			name, c.KeepAlive, e,
+		))
+	} else if keepAlive < time.Second {
+		err = append(err, fmt.Errorf("MqttClientConfig->%s->KeepAlive='%s' must be >=1s",
+			name, c.KeepAlive,
+		))
+	} else if keepAlive%time.Second != 0 {
+		err = append(err, fmt.Errorf("MqttClientConfig->%s->KeepAlive='%s' must be a multiple of a second",
+			name, c.KeepAlive,
+		))
+	} else {
+		ret.keepAlive = keepAlive
+	}
+
+	if len(c.ConnectRetryDelay) < 1 {
+		// use default 1m
+		ret.connectRetryDelay = time.Minute
+	} else if connectRetryDelay, e := time.ParseDuration(c.ConnectRetryDelay); e != nil {
+		err = append(err, fmt.Errorf("MqttClientConfig->%s->ConnectRetryDelay='%s' parse error: %s",
+			name, c.ConnectRetryDelay, e,
+		))
+	} else if connectRetryDelay < 100*time.Millisecond {
+		err = append(err, fmt.Errorf("MqttClientConfig->%s->ConnectRetryDelay='%s' must be >=100ms",
+			name, c.ConnectRetryDelay,
+		))
+	} else {
+		ret.connectRetryDelay = connectRetryDelay
+	}
+
+	if len(c.ConnectTimeout) < 1 {
+		// use default 10s
+		ret.connectTimeout = 10 * time.Second
+	} else if connectTimeout, e := time.ParseDuration(c.ConnectTimeout); e != nil {
+		err = append(err, fmt.Errorf("MqttClientConfig->%s->ConnectTimeout='%s' parse error: %s",
+			name, c.ConnectTimeout, e,
+		))
+	} else if connectTimeout < 100*time.Millisecond {
+		err = append(err, fmt.Errorf("MqttClientConfig->%s->ConnectTimeout='%s' must be >=100ms",
+			name, c.ConnectTimeout,
+		))
+	} else {
+		ret.connectTimeout = connectTimeout
+	}
+
 	if c.AvailabilityTopic == nil {
 		// use default
 		ret.availabilityTopic = "%Prefix%tele/%ClientId%/status"

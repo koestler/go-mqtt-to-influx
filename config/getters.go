@@ -30,6 +30,18 @@ func (c MqttClientConfig) Qos() byte {
 	return c.qos
 }
 
+func (c MqttClientConfig) KeepAlive() time.Duration {
+	return c.keepAlive
+}
+
+func (c MqttClientConfig) ConnectRetryDelay() time.Duration {
+	return c.connectRetryDelay
+}
+
+func (c MqttClientConfig) ConnectTimeout() time.Duration {
+	return c.connectTimeout
+}
+
 func (c MqttClientConfig) AvailabilityTopic() string {
 	return c.availabilityTopic
 }

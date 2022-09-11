@@ -19,16 +19,19 @@ type Config struct {
 }
 
 type MqttClientConfig struct {
-	name              string   // defined automatically by map key
-	broker            *url.URL // mandatory
-	user              string   // optional: default empty
-	password          string   // optional: default empty
-	clientId          string   // optional: default go-mqtt-to-influx-UUID
-	qos               byte     // optional: default 1, must be 0, 1, 2
-	availabilityTopic string   // optional: default %Prefix%tele/%ClientId%/status
-	topicPrefix       string   // optional: default empty
-	logDebug          bool     // optional: default False
-	logMessages       bool     // optional: default False
+	name              string        // defined automatically by map key
+	broker            *url.URL      // mandatory
+	user              string        // optional: default empty
+	password          string        // optional: default empty
+	clientId          string        // optional: default go-mqtt-to-influx-UUID
+	qos               byte          // optional: default 1, must be 0, 1, 2
+	keepAlive         time.Duration // optional: default 10s
+	connectRetryDelay time.Duration // optional: default 1m
+	connectTimeout    time.Duration // optional: default 10s
+	availabilityTopic string        // optional: default %Prefix%tele/%ClientId%/status
+	topicPrefix       string        // optional: default empty
+	logDebug          bool          // optional: default False
+	logMessages       bool          // optional: default False
 }
 
 type InfluxClientConfig struct {
@@ -97,6 +100,9 @@ type mqttClientConfigRead struct {
 	Password          string  `yaml:"Password"`
 	ClientId          string  `yaml:"ClientId"`
 	Qos               *byte   `yaml:"Qos"`
+	KeepAlive         string  `yaml:"KeepAlive"`
+	ConnectRetryDelay string  `yaml:"ConnectRetryDelay"`
+	ConnectTimeout    string  `yaml:"ConnectTimeout"`
 	AvailabilityTopic *string `yaml:"AvailabilityTopic"`
 	TopicPrefix       string  `yaml:"TopicPrefix"`
 	LogDebug          *bool   `yaml:"LogDebug"`

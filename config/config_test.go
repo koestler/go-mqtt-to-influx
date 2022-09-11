@@ -119,6 +119,9 @@ MqttClients:
     Password: Jeir2Jie4zee
     ClientId: "config-tester"
     Qos: 2
+    KeepAlive: 7s
+    ConnectRetryDelay: 8s 
+    ConnectTimeout: 9s
     AvailabilityTopic: test/%Prefix%tele/%ClientId%/LWT
     TopicPrefix: piegn/
     LogMessages: False
@@ -356,6 +359,18 @@ func TestReadConfig_Complex(t *testing.T) {
 
 	if config.MqttClients[0].Qos() != 2 {
 		t.Error("expect Qos of first MqttClient to be 2")
+	}
+
+	if config.MqttClients[0].KeepAlive().String() != "7s" {
+		t.Error("expect KeepAlive of first MqttClient to be 7s")
+	}
+
+	if config.MqttClients[0].ConnectRetryDelay().String() != "8s" {
+		t.Error("expect ConnectRetryDelay of first MqttClient to be 8s")
+	}
+
+	if config.MqttClients[0].ConnectTimeout().String() != "9s" {
+		t.Error("expect ConnectTimeout of first MqttClient to be 9s")
 	}
 
 	expectedTopic := "test/%Prefix%tele/%ClientId%/LWT"
@@ -621,6 +636,18 @@ func TestReadConfig_Default(t *testing.T) {
 
 	if config.MqttClients[0].Qos() != 1 {
 		t.Error("expect default MqttClient->Qos to be 1")
+	}
+
+	if config.MqttClients[0].KeepAlive().String() != "10s" {
+		t.Error("expect default MqttClient->KeepAlive to be 10s")
+	}
+
+	if config.MqttClients[0].ConnectRetryDelay().String() != "1m0s" {
+		t.Error("expect default MqttClient->ConnectRetryDelay to be 1m0s")
+	}
+
+	if config.MqttClients[0].ConnectTimeout().String() != "10s" {
+		t.Error("expect default MqttClient->ConnectTimeout to be 10s")
 	}
 
 	expectedAvailabilityTopic := "%Prefix%tele/%ClientId%/status"

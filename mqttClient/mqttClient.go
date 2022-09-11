@@ -32,6 +32,9 @@ type Config interface {
 	Password() string
 	ClientId() string
 	Qos() byte
+	KeepAlive() time.Duration
+	ConnectRetryDelay() time.Duration
+	ConnectTimeout() time.Duration
 	AvailabilityTopic() string
 	TopicPrefix() string
 	LogDebug() bool
@@ -56,9 +59,11 @@ func Create(cfg Config, statistics Statistics) (client *Client) {
 	}
 
 	client.cliCfg = autopaho.ClientConfig{
-		BrokerUrls:     []*url.URL{cfg.Broker()},
-		KeepAlive:      5,
-		OnConnectionUp: client.onConnectionUp(),
+		BrokerUrls:        []*url.URL{cfg.Broker()},
+		KeepAlive:         uint16(cfg.KeepAlive().Seconds()),
+		ConnectRetryDelay: cfg.ConnectRetryDelay(),
+		ConnectTimeout:    cfg.ConnectTimeout(),
+		OnConnectionUp:    client.onConnectionUp(),
 		OnConnectError: func(err error) {
 			log.Printf("mqttClient[%s]: connection error: %s", cfg.Name(), err)
 		},
