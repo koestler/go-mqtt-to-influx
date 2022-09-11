@@ -205,10 +205,10 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 	if len(c.Broker) < 1 {
 		err = append(err, fmt.Errorf("MqttClientConfig->%s->Broker must not be empty", name))
 	} else {
-		if url, e := url.Parse(c.Broker); e != nil {
+		if broker, e := url.ParseRequestURI(c.Broker); e != nil {
 			err = append(err, fmt.Errorf("MqttClientConfig->%s->Broker invalid url: %s", name, e))
 		} else {
-			ret.broker = url
+			ret.broker = broker
 		}
 	}
 
