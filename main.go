@@ -104,13 +104,15 @@ func main() {
 		defer influxClientPoolInstance.Shutdown()
 
 		// subscribe to mqtt topics, connect converters methods
-		connectConverters(
-			cfg,
-			statisticsInstance,
-			mqttClientPoolInstance,
-			influxClientPoolInstance,
-			initiateShutdown,
-		)
+		/*
+			connectConverters(
+				cfg,
+				statisticsInstance,
+				mqttClientPoolInstance,
+				influxClientPoolInstance,
+				initiateShutdown,
+			)
+		*/
 
 		if cfg.LogWorkerStart {
 			log.Print("main: start completed; run until SIGTERM or SIGINT is received")

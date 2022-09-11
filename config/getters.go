@@ -1,6 +1,7 @@
 package config
 
 import (
+	"net/url"
 	"regexp"
 	"time"
 )
@@ -9,7 +10,7 @@ func (c MqttClientConfig) Name() string {
 	return c.name
 }
 
-func (c MqttClientConfig) Broker() string {
+func (c MqttClientConfig) Broker() *url.URL {
 	return c.broker
 }
 
@@ -39,6 +40,10 @@ func (c MqttClientConfig) TopicPrefix() string {
 
 func (c MqttClientConfig) LogMessages() bool {
 	return c.logMessages
+}
+
+func (c MqttClientConfig) LogDebug() bool {
+	return c.logDebug
 }
 
 func (c InfluxClientConfig) Name() string {

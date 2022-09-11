@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v2"
 	"log"
+	"net/url"
 	"os"
 	"regexp"
 	"sort"
@@ -85,10 +86,6 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 
 	if c.LogWorkerStart != nil && *c.LogWorkerStart {
 		ret.LogWorkerStart = true
-	}
-
-	if c.LogMqttDebug != nil && *c.LogMqttDebug {
-		ret.LogMqttDebug = true
 	}
 
 	return
@@ -195,7 +192,6 @@ func (c mqttClientConfigReadMap) TransformAndValidate() (ret []*MqttClientConfig
 func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientConfig, err []error) {
 	ret = MqttClientConfig{
 		name:        name,
-		broker:      c.Broker,
 		user:        c.User,
 		password:    c.Password,
 		clientId:    c.ClientId,
@@ -206,9 +202,16 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 		err = append(err, fmt.Errorf("MqttClientConfig->Name='%s' does not match %s", ret.name, NameRegexp))
 	}
 
-	if len(ret.broker) < 1 {
+	if len(c.Broker) < 1 {
 		err = append(err, fmt.Errorf("MqttClientConfig->%s->Broker must not be empty", name))
+	} else {
+		if url, e := url.Parse(c.Broker); e != nil {
+			err = append(err, fmt.Errorf("MqttClientConfig->%s->Broker invalid url: %s", name, e))
+		} else {
+			ret.broker = url
+		}
 	}
+
 	if len(ret.clientId) < 1 {
 		ret.clientId = "go-mqtt-to-influx-" + uuid.New().String()
 	}
@@ -225,6 +228,10 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 		ret.availabilityTopic = "%Prefix%tele/%ClientId%/status"
 	} else {
 		ret.availabilityTopic = *c.AvailabilityTopic
+	}
+
+	if c.LogDebug != nil && *c.LogDebug {
+		ret.logDebug = true
 	}
 
 	if c.LogMessages != nil && *c.LogMessages {

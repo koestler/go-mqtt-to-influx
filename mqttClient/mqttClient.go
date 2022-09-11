@@ -1,29 +1,37 @@
 package mqttClient
 
 import (
+	"context"
 	"fmt"
-	"github.com/eclipse/paho.mqtt.golang"
+	"github.com/eclipse/paho.golang/autopaho"
+	"github.com/eclipse/paho.golang/paho"
 	"log"
-	"strings"
+	"net/url"
 	"time"
 )
 
 type Client struct {
-	cfg        Config
-	mqttClient mqtt.Client
+	cfg    Config
+	cliCfg autopaho.ClientConfig
+	cm     *autopaho.ConnectionManager
+
 	statistics Statistics
-	shutdown   chan struct{}
+
+	ctx      context.Context
+	cancel   context.CancelFunc
+	shutdown chan struct{}
 }
 
 type Config interface {
 	Name() string
-	Broker() string
+	Broker() *url.URL
 	User() string
 	Password() string
 	ClientId() string
 	Qos() byte
 	AvailabilityTopic() string
 	TopicPrefix() string
+	LogDebug() bool
 	LogMessages() bool
 }
 
@@ -31,45 +39,82 @@ type Statistics interface {
 	IncrementOne(module, name, field string)
 }
 
-func Run(cfg Config, statistics Statistics) (*Client, error) {
-	// configure client and start connection
-	opts := mqtt.NewClientOptions().
-		AddBroker(cfg.Broker()).
-		SetClientID(cfg.ClientId()).
-		SetOrderMatters(false).
-		SetCleanSession(false). // use persistent session
-		SetKeepAlive(10 * time.Second).
-		SetMaxReconnectInterval(30 * time.Second)
-	if user := cfg.User(); len(user) > 0 {
-		opts.SetUsername(user)
+func Create(cfg Config, statistics Statistics) (client *Client) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	client = &Client{
+		cfg:        cfg,
+		statistics: statistics,
+		ctx:        ctx,
+		cancel:     cancel,
+		shutdown:   make(chan struct{}),
 	}
-	if password := cfg.Password(); len(password) > 0 {
-		opts.SetPassword(password)
+
+	availabilityTopic := getAvailabilityTopic(cfg)
+
+	client.cliCfg = autopaho.ClientConfig{
+		BrokerUrls: []*url.URL{cfg.Broker()},
+		KeepAlive:  5,
+		OnConnectionUp: func(cm *autopaho.ConnectionManager, conack *paho.Connack) {
+			log.Printf("mqttClient[%s]: connection is up", cfg.Name())
+			if len(availabilityTopic) > 0 {
+				go func() {
+					_, err := cm.Publish(ctx, &paho.Publish{
+						QoS:     cfg.Qos(),
+						Topic:   availabilityTopic,
+						Payload: []byte("online"),
+					})
+					if err != nil {
+						log.Printf("mqttClient[%s]: error during publish: %s", cfg.Name(), err)
+					}
+				}()
+			}
+		},
+		OnConnectError: func(err error) {
+			log.Printf("mqttClient[%s]: connection error: %s", cfg.Name(), err)
+		},
+
+		ClientConfig: paho.ClientConfig{
+			ClientID:      cfg.ClientId(),
+			OnClientError: func(err error) { fmt.Printf("server requested disconnect: %s\n", err) },
+			OnServerDisconnect: func(d *paho.Disconnect) {
+				if d.Properties != nil {
+					fmt.Printf("mqttClient[%s]: server requested disconnect: %s\n", cfg.Name(), d.Properties.ReasonString)
+				} else {
+					fmt.Printf("mqttClient[%s]: server requested disconnect; reason code: %d\n", cfg.Name(), d.ReasonCode)
+				}
+			},
+		},
+	}
+
+	if cfg.LogDebug() {
+		prefix := fmt.Sprintf("mqttClient[%s]: ", cfg.Name())
+		client.cliCfg.Debug = logger{prefix: prefix + ": autoPaho: "}
+		client.cliCfg.PahoDebug = logger{prefix: prefix + "paho: "}
+	}
+
+	if user := cfg.User(); len(user) > 0 {
+		client.cliCfg.SetUsernamePassword(user, []byte(cfg.Password()))
 	}
 
 	// setup availability topic using will
-	if availabilityTopic := getAvailabilityTopic(cfg); len(availabilityTopic) > 0 {
-		opts.SetWill(availabilityTopic, "offline", cfg.Qos(), true)
-
-		// publish availability after each connect
-		opts.SetOnConnectHandler(func(client mqtt.Client) {
-			client.Publish(availabilityTopic, cfg.Qos(), true, "online")
-		})
+	if len(availabilityTopic) > 0 {
+		client.cliCfg.SetWillMessage(availabilityTopic, []byte("offline"), cfg.Qos(), true)
 	}
 
-	// start connection
-	mqttClient := mqtt.NewClient(opts)
-	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
-		return nil, fmt.Errorf("connect failed: %s", token.Error())
-	}
-	log.Printf("mqttClient[%s]: connected to broker='%s'", cfg.Name(), cfg.Broker())
+	return
+}
 
-	return &Client{
-		cfg:        cfg,
-		mqttClient: mqttClient,
-		statistics: statistics,
-		shutdown:   make(chan struct{}),
-	}, nil
+func (c *Client) Run() {
+	var err error
+	c.cm, err = autopaho.NewConnection(c.ctx, c.cliCfg)
+	if err != nil {
+		panic(err) // never happens
+	}
+}
+
+func (c *Client) Publish() {
+
 }
 
 func (c *Client) Shutdown() {
@@ -77,57 +122,36 @@ func (c *Client) Shutdown() {
 
 	// publish availability offline
 	if availabilityTopic := getAvailabilityTopic(c.cfg); len(availabilityTopic) > 0 {
-		c.mqttClient.Publish(availabilityTopic, c.cfg.Qos(), true, "offline")
-	}
-
-	c.mqttClient.Disconnect(1000)
-	log.Printf("mqttClient[%s]: shutdown completed", c.cfg.Name())
-}
-
-func (c *Client) ReplaceTemplate(template string) string {
-	return replaceTemplate(template, c.cfg)
-}
-
-func replaceTemplate(template string, cfg Config) (r string) {
-	r = strings.Replace(template, "%Prefix%", cfg.TopicPrefix(), 1)
-	r = strings.Replace(r, "%ClientId%", cfg.ClientId(), 1)
-	return
-}
-
-func (c *Client) wrapCallBack(callback mqtt.MessageHandler, subscribeTopic string) mqtt.MessageHandler {
-	if !c.cfg.LogMessages() {
-		return func(client mqtt.Client, message mqtt.Message) {
-			c.statistics.IncrementOne("mqtt", c.Name(), subscribeTopic)
-			callback(client, message)
+		ctx, cancel := context.WithTimeout(c.ctx, time.Second)
+		defer cancel()
+		_, err := c.cm.Publish(ctx, &paho.Publish{
+			QoS:     c.cfg.Qos(),
+			Topic:   availabilityTopic,
+			Payload: []byte("offline"),
+		})
+		if err != nil {
+			log.Printf("mqttClient[%s]: error during publish: %s", c.cfg.Name(), err)
 		}
 	}
 
-	return func(client mqtt.Client, message mqtt.Message) {
-		log.Printf(
-			"mqttClient[%s]: received qos=%d: %s %s",
-			c.Name(), message.Qos(), message.Topic(), message.Payload(),
-		)
-		c.statistics.IncrementOne("mqtt", c.Name(), subscribeTopic)
-		callback(client, message)
+	ctx, cancel := context.WithTimeout(c.ctx, time.Second)
+	defer cancel()
+	if err := c.cm.Disconnect(ctx); err != nil {
+		log.Printf("mqttClient[%s]: error during disconnect: %s", c.cfg.Name(), err)
 	}
+
+	// cancel main context
+	c.cancel()
+
+	log.Printf("mqttClient[%s]: shutdown completed", c.cfg.Name())
 }
 
-func (c *Client) Subscribe(topicWithPlaceholders string, callback mqtt.MessageHandler) (subscribeTopic string, err error) {
+func (c *Client) Subscribe(topicWithPlaceholders string) (subscribeTopic string) {
 	subscribeTopic = replaceTemplate(topicWithPlaceholders, c.cfg)
-	if token := c.mqttClient.Subscribe(
-		subscribeTopic,
-		c.cfg.Qos(), c.wrapCallBack(callback, subscribeTopic),
-	); token.Wait() && token.Error() != nil {
-		err = token.Error()
-		return
-	}
+
 	return
 }
 
 func (c *Client) Name() string {
 	return c.cfg.Name()
-}
-
-func getAvailabilityTopic(config Config) string {
-	return replaceTemplate(config.AvailabilityTopic(), config)
 }

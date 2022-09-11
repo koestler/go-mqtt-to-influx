@@ -1,6 +1,7 @@
 package config
 
 import (
+	"net/url"
 	"regexp"
 	"time"
 )
@@ -15,19 +16,19 @@ type Config struct {
 	Statistics          StatisticsConfig       `yaml:"Statistics"`     // optional: default Disabled
 	LogConfig           bool                   `yaml:"LogConfig"`      // optional: default False
 	LogWorkerStart      bool                   `yaml:"LogWorkerStart"` // optional: default False
-	LogMqttDebug        bool                   `yaml:"LogMqttDebug"`   // optional: default False
 }
 
 type MqttClientConfig struct {
-	name              string // defined automatically by map key
-	broker            string // mandatory
-	user              string // optional: default empty
-	password          string // optional: default empty
-	clientId          string // optional: default go-mqtt-to-influx-UUID
-	qos               byte   // optional: default 1, must be 0, 1, 2
-	availabilityTopic string // optional: default %Prefix%tele/%ClientId%/status
-	topicPrefix       string // optional: default empty
-	logMessages       bool   // optional: default False
+	name              string   // defined automatically by map key
+	broker            *url.URL // mandatory
+	user              string   // optional: default empty
+	password          string   // optional: default empty
+	clientId          string   // optional: default go-mqtt-to-influx-UUID
+	qos               byte     // optional: default 1, must be 0, 1, 2
+	availabilityTopic string   // optional: default %Prefix%tele/%ClientId%/status
+	topicPrefix       string   // optional: default empty
+	logDebug          bool     // optional: default False
+	logMessages       bool     // optional: default False
 }
 
 type InfluxClientConfig struct {
@@ -98,6 +99,7 @@ type mqttClientConfigRead struct {
 	Qos               *byte   `yaml:"Qos"`
 	AvailabilityTopic *string `yaml:"AvailabilityTopic"`
 	TopicPrefix       string  `yaml:"TopicPrefix"`
+	LogDebug          *bool   `yaml:"LogDebug"`
 	LogMessages       *bool   `yaml:"LogMessages"`
 }
 

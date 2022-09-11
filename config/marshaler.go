@@ -47,19 +47,19 @@ func (c Config) MarshalYAML() (interface{}, error) {
 		}(),
 		LogConfig:      &c.LogConfig,
 		LogWorkerStart: &c.LogWorkerStart,
-		LogMqttDebug:   &c.LogMqttDebug,
 	}, nil
 }
 
 func (c MqttClientConfig) convertToRead() mqttClientConfigRead {
 	return mqttClientConfigRead{
-		Broker:            c.broker,
+		Broker:            c.broker.String(),
 		User:              c.user,
 		Password:          c.password,
 		ClientId:          c.clientId,
 		Qos:               &c.qos,
 		AvailabilityTopic: &c.availabilityTopic,
 		TopicPrefix:       c.topicPrefix,
+		LogDebug:          &c.logDebug,
 		LogMessages:       &c.logMessages,
 	}
 }
