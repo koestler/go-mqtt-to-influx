@@ -10,52 +10,29 @@ import (
 	"time"
 )
 
-type Client struct {
-	cfg               Config
-	cliCfg            autopaho.ClientConfig
-	cm                *autopaho.ConnectionManager
-	router            *paho.StandardRouter
-	subscribeTopics   []string
-	availabilityTopic string
+type ClientV5 struct {
+	ClientStruct
 
-	statistics Statistics
+	cliCfg autopaho.ClientConfig
+	cm     *autopaho.ConnectionManager
+	router *paho.StandardRouter
 
-	ctx      context.Context
-	cancel   context.CancelFunc
-	shutdown chan struct{}
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
-type Config interface {
-	Name() string
-	Broker() *url.URL
-	User() string
-	Password() string
-	ClientId() string
-	Qos() byte
-	KeepAlive() time.Duration
-	ConnectRetryDelay() time.Duration
-	ConnectTimeout() time.Duration
-	AvailabilityTopic() string
-	TopicPrefix() string
-	LogDebug() bool
-	LogMessages() bool
-}
-
-type Statistics interface {
-	IncrementOne(module, name, field string)
-}
-
-func Create(cfg Config, statistics Statistics) (client *Client) {
+func CreateV5(cfg Config, statistics Statistics) (client *ClientV5) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	client = &Client{
-		cfg:               cfg,
-		router:            paho.NewStandardRouter(),
-		availabilityTopic: getAvailabilityTopic(cfg),
-		statistics:        statistics,
-		ctx:               ctx,
-		cancel:            cancel,
-		shutdown:          make(chan struct{}),
+	client = &ClientV5{
+		ClientStruct: ClientStruct{
+			cfg:        cfg,
+			statistics: statistics,
+			shutdown:   make(chan struct{}),
+		},
+		router: paho.NewStandardRouter(),
+		ctx:    ctx,
+		cancel: cancel,
 	}
 
 	client.cliCfg = autopaho.ClientConfig{
@@ -84,18 +61,18 @@ func Create(cfg Config, statistics Statistics) (client *Client) {
 	}
 
 	// setup availability topic using will
-	if len(client.availabilityTopic) > 0 {
-		client.cliCfg.SetWillMessage(client.availabilityTopic, []byte("offline"), cfg.Qos(), true)
+	if client.AvailabilityEnabled() {
+		client.cliCfg.SetWillMessage(client.GetAvailabilityTopic(), []byte("offline"), cfg.Qos(), true)
 	}
 
 	return
 }
 
-func (c *Client) onConnectionUp() func(*autopaho.ConnectionManager, *paho.Connack) {
+func (c *ClientV5) onConnectionUp() func(*autopaho.ConnectionManager, *paho.Connack) {
 	return func(cm *autopaho.ConnectionManager, conack *paho.Connack) {
 		log.Printf("mqttClient[%s]: connection is up", c.cfg.Name())
 		// publish online
-		if len(c.availabilityTopic) > 0 {
+		if c.AvailabilityEnabled() {
 			go func() {
 				_, err := cm.Publish(c.ctx, c.availabilityMsg("online"))
 				if err != nil {
@@ -106,9 +83,9 @@ func (c *Client) onConnectionUp() func(*autopaho.ConnectionManager, *paho.Connac
 		// subscribe topics
 		if _, err := cm.Subscribe(c.ctx, &paho.Subscribe{
 			Subscriptions: func() (ret map[string]paho.SubscribeOptions) {
-				ret = make(map[string]paho.SubscribeOptions, len(c.subscribeTopics))
-				for _, t := range c.subscribeTopics {
-					ret[t] = paho.SubscribeOptions{QoS: c.cfg.Qos()}
+				ret = make(map[string]paho.SubscribeOptions, len(c.subscriptions))
+				for _, s := range c.subscriptions {
+					ret[s.subscribeTopic] = paho.SubscribeOptions{QoS: c.cfg.Qos()}
 				}
 				return
 			}(),
@@ -118,34 +95,18 @@ func (c *Client) onConnectionUp() func(*autopaho.ConnectionManager, *paho.Connac
 	}
 }
 
-func (c *Client) AddRoute(subscribeTopic string, messageHandler MessageHandler) {
-	log.Printf("mqttClient[%s]: add route for topic='%s'", c.cfg.Name(), subscribeTopic)
-
-	var handler func(*paho.Publish)
-	if c.cfg.LogMessages() {
-		handler = func(p *paho.Publish) {
-			if c.cfg.LogMessages() {
-				log.Printf("mqttClient[%s]: received: %v", c.cfg.Name(), p)
-			}
-			messageHandler(Message{
+func (c *ClientV5) Run() {
+	// add routes to router
+	for _, s := range c.subscriptions {
+		c.router.RegisterHandler(s.subscribeTopic, func(p *paho.Publish) {
+			s.messageHandler(Message{
 				topic:   p.Topic,
 				payload: p.Payload,
 			})
-		}
-	} else {
-		handler = func(p *paho.Publish) {
-			messageHandler(Message{
-				topic:   p.Topic,
-				payload: p.Payload,
-			})
-		}
+		})
 	}
 
-	c.router.RegisterHandler(subscribeTopic, handler)
-	c.subscribeTopics = append(c.subscribeTopics, subscribeTopic)
-}
-
-func (c *Client) Run() {
+	// start connection manager
 	var err error
 	c.cm, err = autopaho.NewConnection(c.ctx, c.cliCfg)
 	if err != nil {
@@ -153,11 +114,11 @@ func (c *Client) Run() {
 	}
 }
 
-func (c *Client) Shutdown() {
+func (c *ClientV5) Shutdown() {
 	close(c.shutdown)
 
 	// publish availability offline
-	if len(c.availabilityTopic) > 0 {
+	if c.AvailabilityEnabled() {
 		ctx, cancel := context.WithTimeout(c.ctx, time.Second)
 		defer cancel()
 		_, err := c.cm.Publish(ctx, c.availabilityMsg("offline"))
@@ -178,14 +139,10 @@ func (c *Client) Shutdown() {
 	log.Printf("mqttClient[%s]: shutdown completed", c.cfg.Name())
 }
 
-func (c *Client) Name() string {
-	return c.cfg.Name()
-}
-
-func (c *Client) availabilityMsg(payload string) *paho.Publish {
+func (c *ClientV5) availabilityMsg(payload string) *paho.Publish {
 	return &paho.Publish{
 		QoS:     c.cfg.Qos(),
-		Topic:   c.availabilityTopic,
+		Topic:   c.GetAvailabilityTopic(),
 		Payload: []byte(payload),
 		Retain:  true,
 	}

@@ -35,7 +35,7 @@ func createConverters(
 		for _, mqttClientInstance := range mqttClientPoolInstance.GetClientsByNames(converterConfig.MqttClients()) {
 			if cfg.LogWorkerStart {
 				log.Printf(
-					"converter[%s]: start: Implementation='%s', Client='%s', InfluxClients=%v",
+					"converter[%s]: start: Implementation='%s', ClientV5='%s', InfluxClients=%v",
 					converterConfig.Name(),
 					converterConfig.Implementation(),
 					mqttClientInstance.Name(),

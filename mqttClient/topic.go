@@ -4,11 +4,15 @@ import (
 	"strings"
 )
 
-func getAvailabilityTopic(config Config) string {
-	return replaceTemplate(config.AvailabilityTopic(), config)
+func (c *ClientStruct) AvailabilityEnabled() bool {
+	return len(c.cfg.AvailabilityTopic()) > 0
 }
 
-func (c *Client) ReplaceTemplate(template string) string {
+func (c *ClientStruct) GetAvailabilityTopic() string {
+	return replaceTemplate(c.cfg.AvailabilityTopic(), c.cfg)
+}
+
+func (c *ClientStruct) ReplaceTemplate(template string) string {
 	return replaceTemplate(template, c.cfg)
 }
 
