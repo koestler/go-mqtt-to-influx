@@ -53,6 +53,7 @@ func (c Config) MarshalYAML() (interface{}, error) {
 func (c MqttClientConfig) convertToRead() mqttClientConfigRead {
 	return mqttClientConfigRead{
 		Broker:            c.broker.String(),
+		ProtocolVersion:   &c.protocolVersion,
 		User:              c.user,
 		Password:          c.password,
 		ClientId:          c.clientId,

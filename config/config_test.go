@@ -115,6 +115,7 @@ Statistics:
 MqttClients:
   0-piegn-mosquitto:
     Broker: "tcp://example.com:1883"
+    ProtocolVersion: 5
     User: Bob
     Password: Jeir2Jie4zee
     ClientId: "config-tester"
@@ -343,6 +344,10 @@ func TestReadConfig_Complex(t *testing.T) {
 
 	if config.MqttClients[0].Broker().String() != "tcp://example.com:1883" {
 		t.Error("expect Broker of first MqttClient to be 'tcp://example.com:1883'")
+	}
+
+	if config.MqttClients[0].ProtocolVersion() != 5 {
+		t.Error("expect ProtocolVersion of first MqttClient to be 5")
 	}
 
 	if config.MqttClients[0].User() != "Bob" {
@@ -622,6 +627,10 @@ func TestReadConfig_Default(t *testing.T) {
 	}
 
 	// influxClients section
+	if config.MqttClients[0].ProtocolVersion() != 3 {
+		t.Error("expect default MqttClient->Protocol to be 3")
+	}
+
 	if config.MqttClients[0].User() != "" {
 		t.Error("expect default MqttClient->User to be empty")
 	}

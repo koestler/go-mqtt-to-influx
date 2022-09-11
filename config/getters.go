@@ -14,6 +14,10 @@ func (c MqttClientConfig) Broker() *url.URL {
 	return c.broker
 }
 
+func (c MqttClientConfig) ProtocolVersion() int {
+	return c.protocolVersion
+}
+
 func (c MqttClientConfig) User() string {
 	return c.user
 }

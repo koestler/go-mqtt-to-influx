@@ -21,6 +21,7 @@ type Config struct {
 type MqttClientConfig struct {
 	name              string        // defined automatically by map key
 	broker            *url.URL      // mandatory
+	protocolVersion   int           // optional: default 3
 	user              string        // optional: default empty
 	password          string        // optional: default empty
 	clientId          string        // optional: default go-mqtt-to-influx-UUID
@@ -96,6 +97,7 @@ type configRead struct {
 
 type mqttClientConfigRead struct {
 	Broker            string  `yaml:"Broker"`
+	ProtocolVersion   *int    `yaml:"ProtocolVersion"`
 	User              string  `yaml:"User"`
 	Password          string  `yaml:"Password"`
 	ClientId          string  `yaml:"ClientId"`
