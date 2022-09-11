@@ -97,11 +97,7 @@ func (c *Client) onConnectionUp() func(*autopaho.ConnectionManager, *paho.Connac
 		// publish online
 		if len(c.availabilityTopic) > 0 {
 			go func() {
-				_, err := cm.Publish(c.ctx, &paho.Publish{
-					QoS:     c.cfg.Qos(),
-					Topic:   c.availabilityTopic,
-					Payload: []byte("online"),
-				})
+				_, err := cm.Publish(c.ctx, c.availabilityMsg("online"))
 				if err != nil {
 					log.Printf("mqttClient[%s]: error during publish: %s", c.cfg.Name(), err)
 				}
@@ -164,11 +160,7 @@ func (c *Client) Shutdown() {
 	if len(c.availabilityTopic) > 0 {
 		ctx, cancel := context.WithTimeout(c.ctx, time.Second)
 		defer cancel()
-		_, err := c.cm.Publish(ctx, &paho.Publish{
-			QoS:     c.cfg.Qos(),
-			Topic:   c.availabilityTopic,
-			Payload: []byte("offline"),
-		})
+		_, err := c.cm.Publish(ctx, c.availabilityMsg("offline"))
 		if err != nil {
 			log.Printf("mqttClient[%s]: error during publish: %s", c.cfg.Name(), err)
 		}
@@ -188,4 +180,13 @@ func (c *Client) Shutdown() {
 
 func (c *Client) Name() string {
 	return c.cfg.Name()
+}
+
+func (c *Client) availabilityMsg(payload string) *paho.Publish {
+	return &paho.Publish{
+		QoS:     c.cfg.Qos(),
+		Topic:   c.availabilityTopic,
+		Payload: []byte(payload),
+		Retain:  true,
+	}
 }
