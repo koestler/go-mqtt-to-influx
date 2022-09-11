@@ -27,8 +27,6 @@ func runMqttClient(
 
 		client := mqttClient.Create(mqttClientConfig, statisticsInstance)
 		mqttClientPoolInstance.AddClient(client)
-
-		client.Run()
 		countStarted += 1
 	}
 

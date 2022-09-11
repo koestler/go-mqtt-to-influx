@@ -95,7 +95,7 @@ func main() {
 		httpServerInstance := runHttpServer(cfg, statisticsInstance)
 		defer httpServerInstance.Shutdown()
 
-		// start mqtt clients
+		// create mqtt clients
 		mqttClientPoolInstance := runMqttClient(cfg, statisticsInstance, initiateShutdown)
 		defer mqttClientPoolInstance.Shutdown()
 
@@ -103,16 +103,17 @@ func main() {
 		influxClientPoolInstance := runInfluxClient(cfg, statisticsInstance, initiateShutdown)
 		defer influxClientPoolInstance.Shutdown()
 
-		// subscribe to mqtt topics, connect converters methods
-		/*
-			connectConverters(
-				cfg,
-				statisticsInstance,
-				mqttClientPoolInstance,
-				influxClientPoolInstance,
-				initiateShutdown,
-			)
-		*/
+		// create converters, add routes to the mqtt clients
+		createConverters(
+			cfg,
+			statisticsInstance,
+			mqttClientPoolInstance,
+			influxClientPoolInstance,
+			initiateShutdown,
+		)
+
+		// start / connect mqtt clients
+		mqttClientPoolInstance.RunClients()
 
 		if cfg.LogWorkerStart {
 			log.Print("main: start completed; run until SIGTERM or SIGINT is received")

@@ -15,3 +15,4 @@ MqttDebugLog: 2022/08/29 09:21:15 [client]   Connect comms goroutine - error tri
 ```
 * bug during shutdown, writePoint is executed after channel is closed
 * iotdevice / lora: use time of message and not local time when possible
+* refactor empty influx client lists / empty mqtt client lists into config module
