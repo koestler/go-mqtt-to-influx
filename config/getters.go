@@ -153,7 +153,7 @@ func (c MqttTopicConfig) Device() string {
 	return c.device
 }
 
-var deviceDynamicMatcher = regexp.MustCompile("^\\+(/\\+)*$")
+var deviceDynamicMatcher = regexp.MustCompile("\\+")
 
 func (c MqttTopicConfig) DeviceIsDynamic() bool {
 	return deviceDynamicMatcher.MatchString(c.device)
