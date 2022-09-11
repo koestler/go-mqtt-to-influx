@@ -112,7 +112,7 @@ func (c *Client) onConnectionUp() func(*autopaho.ConnectionManager, *paho.Connac
 				return
 			}(),
 		}); err != nil {
-			log.Printf("mqttClient[%s]: failed to subscribe: %s", err)
+			log.Printf("mqttClient[%s]: failed to subscribe: %s", c.cfg.Name(), err)
 		}
 	}
 }

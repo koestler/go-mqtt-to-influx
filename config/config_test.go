@@ -103,7 +103,6 @@ Converters:
 Version: 0
 LogConfig: True
 LogWorkerStart: True
-LogMqttDebug: True
 HttpServer:
   Bind: 0.0.0.0
   Port: 80
@@ -123,11 +122,13 @@ MqttClients:
     AvailabilityTopic: test/%Prefix%tele/%ClientId%/LWT
     TopicPrefix: piegn/
     LogMessages: False
+    LogDebug: True
 
   1-local-mosquitto:
     Broker: "tcp://172.17.0.5:1883"
     TopicPrefix: wiedikon/
     LogMessages: True
+    LogDebug: False
 
 InfluxClients:
   0-piegn:
@@ -320,10 +321,6 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Errorf("expect LogWorkerStart to be True as configured")
 	}
 
-	if !config.LogMqttDebug {
-		t.Errorf("expect LogMqttDebug to be True as configured")
-	}
-
 	// mqttClients section
 	if len(config.MqttClients) != 2 {
 		t.Error("expect len(config.MqttClients) == 2")
@@ -341,7 +338,7 @@ func TestReadConfig_Complex(t *testing.T) {
 		)
 	}
 
-	if config.MqttClients[0].Broker() != "tcp://example.com:1883" {
+	if config.MqttClients[0].Broker().String() != "tcp://example.com:1883" {
 		t.Error("expect Broker of first MqttClient to be 'tcp://example.com:1883'")
 	}
 
@@ -374,8 +371,16 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect LogMessages of first MqttClient to be False")
 	}
 
+	if !config.MqttClients[0].LogDebug() {
+		t.Error("expect LogDebug of first MqttClient to be True")
+	}
+
 	if !config.MqttClients[1].LogMessages() {
 		t.Error("expect LogMessages of second MqttClient to be True")
+	}
+
+	if config.MqttClients[1].LogDebug() {
+		t.Error("expect LogDebug of second MqttClient to be False")
 	}
 
 	// influxClients section
@@ -601,10 +606,6 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect LogWorkerStart to be False by default")
 	}
 
-	if config.LogMqttDebug {
-		t.Error("expect LogMqttDebug to be False by default")
-	}
-
 	// influxClients section
 	if config.MqttClients[0].User() != "" {
 		t.Error("expect default MqttClient->User to be empty")
@@ -618,8 +619,8 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default MqttClient->ClientId to contain 'go-mqtt-to-influx'")
 	}
 
-	if config.MqttClients[0].Qos() != 0 {
-		t.Error("expect default MqttClient->Qos to be 0")
+	if config.MqttClients[0].Qos() != 1 {
+		t.Error("expect default MqttClient->Qos to be 1")
 	}
 
 	expectedAvailabilityTopic := "%Prefix%tele/%ClientId%/status"
@@ -633,6 +634,10 @@ func TestReadConfig_Default(t *testing.T) {
 
 	if config.MqttClients[0].LogMessages() {
 		t.Error("expect default MqttClient->LogMessages to be False")
+	}
+
+	if config.MqttClients[0].LogDebug() {
+		t.Error("expect default MqttClient->LogDebug to be False")
 	}
 
 	// influxClients section
