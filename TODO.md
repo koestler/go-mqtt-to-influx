@@ -16,3 +16,36 @@ MqttDebugLog: 2022/08/29 09:21:15 [client]   Connect comms goroutine - error tri
 * bug during shutdown, writePoint is executed after channel is closed
 * iotdevice / lora: use time of message and not local time when possible
 * refactor empty influx client lists / empty mqtt client lists into config module
+
+
+Documentation:
+* Set Qos=0 to connect thethings.network
+* shutdown:
+```
+  panic: send on closed channel
+
+goroutine 83 [running]:
+github.com/influxdata/influxdb-client-go/v2/api.(*WriteAPIImpl).WritePoint(0xc000132600, 0xc000568a20?)
+/home/lk/go/pkg/mod/github.com/influxdata/influxdb-client-go/v2@v2.10.0/api/write.go:261 +0x16c
+github.com/koestler/go-mqtt-to-influx/influxClient.Client.WritePoint({{0x8c9748, 0xc0001b13b0}, {0x8caad8, 0xc000190480}, {0x8c8640, 0xc000132600}, {0xc00017adc0, 0x16, 0x16}, {0x7f8c274b3880, ...}, ...}, ...)
+/home/lk/git/go-mqtt-to-influx/influxClient/influxClient.go:133 +0x83
+github.com/koestler/go-mqtt-to-influx/influxClient.(*ClientPool).WritePoint(0xc000280400?, {0x7f8c2429ef18, 0xc00007a1c0}, {0x0?, 0xc0005cf938?, 0x40c4ab?})
+/home/lk/git/go-mqtt-to-influx/influxClient/InfluxClientPool.go:78 +0xe8
+main.getMqttMessageHandler.func1.1({0x8c8398?, 0xc00007a1c0})
+/home/lk/git/go-mqtt-to-influx/converter.go:91 +0x86
+github.com/koestler/go-mqtt-to-influx/converter.tasmotaStateHandler({0x8c8130, 0xc0001c0700}, {0x8c6e90, 0xc000578078}, {0x8c6ee0, 0xc000568570}, 0xc00057a120)
+/home/lk/git/go-mqtt-to-influx/converter/tasmotaState.go:70 +0x47c
+main.getMqttMessageHandler.func1({{0xc0005720c0, 0x1e}, {0xc0003cc800, 0x96, 0x200}})
+/home/lk/git/go-mqtt-to-influx/converter.go:86 +0x273
+github.com/koestler/go-mqtt-to-influx/mqttClient.(*Client).AddRoute.func1(0xc00007a180)
+/home/lk/git/go-mqtt-to-influx/mqttClient/mqttClient.go:130 +0x116
+github.com/eclipse/paho.golang/paho.(*StandardRouter).Route(0xc00007ab00, 0xc00007a100)
+/home/lk/go/pkg/mod/github.com/eclipse/paho.golang@v0.10.0/paho/router.go:97 +0x5f2
+github.com/eclipse/paho.golang/paho.(*Client).routePublishPackets(0xc0002ba000)
+/home/lk/go/pkg/mod/github.com/eclipse/paho.golang@v0.10.0/paho/client.go:382 +0xf9
+github.com/eclipse/paho.golang/paho.(*Client).Connect.func3()
+/home/lk/go/pkg/mod/github.com/eclipse/paho.golang@v0.10.0/paho/client.go:293 +0xba
+created by github.com/eclipse/paho.golang/paho.(*Client).Connect
+/home/lk/go/pkg/mod/github.com/eclipse/paho.golang@v0.10.0/paho/client.go:290 +0xb7c
+➜  go-mqtt-to-influx git:(main) ✗ 
+```
