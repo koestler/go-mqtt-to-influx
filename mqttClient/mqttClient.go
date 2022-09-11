@@ -120,16 +120,27 @@ func (c *Client) onConnectionUp() func(*autopaho.ConnectionManager, *paho.Connac
 func (c *Client) AddRoute(subscribeTopic string, messageHandler MessageHandler) {
 	log.Printf("mqttClient[%s]: add route for topic='%s'", c.cfg.Name(), subscribeTopic)
 
-	c.router.RegisterHandler(subscribeTopic, func(p *paho.Publish) {
-		if c.cfg.LogMessages() {
-			log.Printf("mqttClient[%s]: received: %v", c.cfg.Name(), p)
+	var handler func(*paho.Publish)
+	if c.cfg.LogMessages() {
+		handler = func(p *paho.Publish) {
+			if c.cfg.LogMessages() {
+				log.Printf("mqttClient[%s]: received: %v", c.cfg.Name(), p)
+			}
+			messageHandler(Message{
+				topic:   p.Topic,
+				payload: p.Payload,
+			})
 		}
-		messageHandler(Message{
-			topic:   p.Topic,
-			payload: p.Payload,
-		})
-	})
+	} else {
+		handler = func(p *paho.Publish) {
+			messageHandler(Message{
+				topic:   p.Topic,
+				payload: p.Payload,
+			})
+		}
+	}
 
+	c.router.RegisterHandler(subscribeTopic, handler)
 	c.subscribeTopics = append(c.subscribeTopics, subscribeTopic)
 }
 
