@@ -49,3 +49,10 @@ created by github.com/eclipse/paho.golang/paho.(*Client).Connect
 /home/lk/go/pkg/mod/github.com/eclipse/paho.golang@v0.10.0/paho/client.go:290 +0xb7c
 ➜  go-mqtt-to-influx git:(main) ✗ 
 ```
+
+
+* is there a memory leak?
+```
+\USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+pi       16242  7.7 44.3 805460 215644 ?       Ssl  Sep11  58:26  \_ /go-mqtt-to-influx -c /app/config.yaml
+```
