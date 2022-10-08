@@ -62,13 +62,14 @@ type LocalDb interface {
 	InfluxBacklogSize(client string) (err error, numbBatches, numbLines int)
 	InfluxBacklogGet(client string) (err error, id int, batch string)
 	InfluxBacklogDelete(id int) error
+	InfluxAggregateBacklog(client string, batchSize int) error
 }
 
 type Statistics interface {
 	IncrementOne(module, name, field string)
 }
 
-const batchSize = 5000
+const batchSize = 1000
 const retryQueueLimit = 60
 
 func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, statistics Statistics) *Client {
@@ -190,7 +191,8 @@ func (ic Client) WritePoint(point Point) {
 func (ic Client) retryWorker() {
 	defer close(ic.retryWorkerClosed)
 
-	ticker := time.Tick(ic.config.RetryInterval())
+	aggregateTicker := time.Tick(10 * ic.config.WriteInterval())
+	retryTicker := time.Tick(ic.config.RetryInterval())
 	retryChan := make(chan struct{}, 1)
 	triggerRetryHandler := func() {
 		select {
@@ -203,7 +205,11 @@ func (ic Client) retryWorker() {
 		select {
 		case <-ic.retryWorkerShutdown:
 			return // shutdown
-		case <-ticker:
+		case <-aggregateTicker:
+			if err := ic.localDb.InfluxAggregateBacklog(ic.Name(), batchSize); err != nil {
+				log.Printf("influxClient[%s]: aggregate failed: %s", ic.Name(), err)
+			}
+		case <-retryTicker:
 			triggerRetryHandler()
 		case <-retryChan:
 			if ic.retryHandler() {

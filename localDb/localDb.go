@@ -15,6 +15,7 @@ type LocalDb interface {
 	InfluxBacklogSize(client string) (err error, numbBatches, numbLines int)
 	InfluxBacklogGet(client string) (err error, id int, batch string)
 	InfluxBacklogDelete(id int) error
+	InfluxAggregateBacklog(client string, batchSize int) error
 }
 
 type SqliteLocalDb struct {
@@ -85,6 +86,85 @@ func (d SqliteLocalDb) InfluxBacklogAdd(client, batch string) error {
 	return nil
 }
 
+func (d SqliteLocalDb) InfluxAggregateBacklog(client string, batchSize int) error {
+	log.Printf("localDb[%s]: aggregateBacklog", client)
+
+	// fetch newest up to 100 rows that sum up to no more batchSize number of lines
+	rows, err := d.db.Query(`
+SELECT id, numbLines, compressedBatch
+FROM influxBacklog
+WHERE client = ? AND id >= (
+  SELECT MIN(f.id)
+    FROM (
+     SELECT id, numbLines, SUM(numbLines) OVER (ORDER BY id DESC) AS cum
+     FROM influxBacklog
+     WHERE client = ?
+     ORDER BY id DESC
+     LIMIT 100
+    ) f
+    WHERE f.cum < ?
+    GROUP BY NULL
+    HAVING COUNT() > 1
+);`,
+		client, client, batchSize,
+	)
+
+	if err != nil {
+		return fmt.Errorf(" error during query: %s", err)
+	}
+	defer rows.Close()
+
+	// aggregate all rows by decompressing,
+	var ids []int
+	var numbLinesList []int
+	var aggregatedNumbLines int
+	var batches []string
+	for rows.Next() {
+		var id, numbLines int
+		var compressedBatch []byte
+		if err := rows.Scan(&id, &numbLines, &compressedBatch); err != nil {
+			return fmt.Errorf("error during scan: %s", err)
+		}
+
+		ids = append(ids, id)
+		numbLinesList = append(numbLinesList, numbLines)
+		aggregatedNumbLines += numbLines
+		if err, batch := uncompress(compressedBatch); err != nil {
+			return fmt.Errorf("error during uncompress: %s", err)
+		} else {
+			batches = append(batches, batch)
+		}
+	}
+
+	log.Printf("localDb[%s]: aggregateBacklog: DEBUG ids=%v", client, ids)
+	log.Printf("localDb[%s]: aggregateBacklog: DEBUG numbLinesList=%v", client, numbLinesList)
+	//log.Printf("localDb[%s]: aggregateBacklog: DEBUG batches=%v", client, batches)
+	log.Printf("localDb[%s]: aggregateBacklog: DEBUG aggregatedNumbLines=%v", client, aggregatedNumbLines)
+	if len(ids) < 1 {
+		return nil
+	}
+
+	// compute new batch
+	aggregatedBatch := strings.Join(batches, "")
+
+	//log.Printf("localDb[%s]: aggregateBacklog: DEBUG aggregatedBatch=%s", client, aggregatedBatch)
+	log.Printf("localDb[%s]: aggregateBacklog: DEBUG aggregatedBatchLines=%d", client, strings.Count(aggregatedBatch, "\n"))
+
+	// insert aggragted batch
+	if err := d.InfluxBacklogAdd(client, aggregatedBatch); err != nil {
+		return fmt.Errorf("error during add: %s", err)
+	} else {
+		// delete old ids that have been aggregated into new batch
+		for _, id := range ids {
+			if err := d.InfluxBacklogDelete(id); err != nil {
+				log.Printf("localDb[%s]: aggregateBacklog: error during delete: %s", client, err)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (d SqliteLocalDb) InfluxBacklogSize(client string) (err error, numbBatches, numbLines int) {
 	row := d.db.QueryRow(
 		"SELECT COUNT(*), IFNULL(SUM(numbLines), 0) FROM influxBacklog WHERE client = ?",
@@ -138,4 +218,7 @@ func (d DisabledLocalDb) InfluxBacklogGet(client string) (err error, id int, bat
 }
 func (d DisabledLocalDb) InfluxBacklogDelete(id int) error {
 	return fmt.Errorf("disabled")
+}
+func (d DisabledLocalDb) InfluxAggregateBacklog(client string, batchSize int) error {
+	return nil
 }
