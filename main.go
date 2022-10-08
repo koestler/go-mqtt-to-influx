@@ -88,6 +88,9 @@ func main() {
 			defer pprof.StopCPUProfile()
 		}
 
+		// start localDb module
+		localDbInstance := runLocalDb(cfg)
+
 		// start statistics module
 		statisticsInstance := runStatistics(cfg)
 
@@ -100,7 +103,7 @@ func main() {
 		defer mqttClientPoolInstance.Shutdown()
 
 		// start influx clients
-		influxClientPoolInstance := runInfluxClient(cfg, statisticsInstance, initiateShutdown)
+		influxClientPoolInstance := runInfluxClient(cfg, localDbInstance, statisticsInstance, initiateShutdown)
 		defer influxClientPoolInstance.Shutdown()
 
 		// create converters, add routes to the mqtt clients

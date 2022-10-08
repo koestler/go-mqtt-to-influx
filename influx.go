@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/koestler/go-mqtt-to-influx/config"
 	"github.com/koestler/go-mqtt-to-influx/influxClient"
+	LocalDb "github.com/koestler/go-mqtt-to-influx/localDb"
 	"github.com/koestler/go-mqtt-to-influx/statistics"
 	"github.com/pkg/errors"
 	"log"
@@ -10,6 +11,7 @@ import (
 
 func runInfluxClient(
 	cfg *config.Config,
+	localDbInstance LocalDb.LocalDb,
 	statisticsInstance statistics.Statistics,
 	initiateShutdown chan<- error,
 ) (influxClientPoolInstance *influxClient.ClientPool) {
@@ -34,7 +36,7 @@ func runInfluxClient(
 			)
 		}
 
-		client := influxClient.RunClient(influxClientConfig, auxiliaryTags, statisticsInstance)
+		client := influxClient.RunClient(influxClientConfig, auxiliaryTags, localDbInstance, statisticsInstance)
 
 		influxClientPoolInstance.AddClient(client)
 		countStarted += 1

@@ -38,6 +38,13 @@ func (c Config) MarshalYAML() (interface{}, error) {
 			r := c.httpServer.convertToRead()
 			return &r
 		}(),
+		LocalDb: func() *localDbConfigRead {
+			if !c.localDb.Enabled() {
+				return nil
+			}
+			r := c.localDb.convertToRead()
+			return &r
+		}(),
 		Statistics: func() *statisticsConfigRead {
 			if !c.statistics.Enabled() {
 				return nil
@@ -116,6 +123,13 @@ func (c HttpServerConfig) convertToRead() httpServerConfigRead {
 		Bind:        c.bind,
 		Port:        &c.port,
 		LogRequests: &c.logRequests,
+	}
+}
+
+func (c LocalDbConfig) convertToRead() localDbConfigRead {
+	return localDbConfigRead{
+		Enabled: &c.enabled,
+		Path:    &c.path,
 	}
 }
 

@@ -13,6 +13,7 @@ type Config struct {
 	influxAuxiliaryTags []*InfluxAuxiliaryTags `yaml:"InfluxAuxiliaryTags"`
 	converters          []*ConverterConfig     `yaml:"Converters"`     // mandatory: at least 1 must be defined
 	httpServer          HttpServerConfig       `yaml:"HttpServer"`     // optional: default Disabled
+	localDb             LocalDbConfig          `yaml:"LocalDb"`        // optional: default Disasbled
 	statistics          StatisticsConfig       `yaml:"Statistics"`     // optional: default Disabled
 	logConfig           bool                   `yaml:"LogConfig"`      // optional: default False
 	logWorkerStart      bool                   `yaml:"LogWorkerStart"` // optional: default False
@@ -75,6 +76,11 @@ type HttpServerConfig struct {
 	logRequests bool   // optional:  default False
 }
 
+type LocalDbConfig struct {
+	enabled bool   // defined automatically if LocalDbConfig section exists
+	path    string `yaml:"Path"` // optional: defaults ./go-mqtt-to-influx.db
+}
+
 type StatisticsConfig struct {
 	enabled           bool          // defined automatically if Statistics section exists
 	historyResolution time.Duration // optional: defaults to 1s
@@ -89,6 +95,7 @@ type configRead struct {
 	InfluxAuxiliaryTags influxAuxiliaryTagsReadList `yaml:"InfluxAuxiliaryTags"`
 	Converters          converterConfigReadMap      `yaml:"Converters"`
 	HttpServer          *httpServerConfigRead       `yaml:"HttpServer"`
+	LocalDb             *localDbConfigRead          `yaml:"LocalDb"`
 	Statistics          *statisticsConfigRead       `yaml:"Statistics"`
 	LogConfig           *bool                       `yaml:"LogConfig"`
 	LogWorkerStart      *bool                       `yaml:"LogWorkerStart"`
@@ -155,6 +162,11 @@ type httpServerConfigRead struct {
 	Bind        string `yaml:"Bind"`
 	Port        *int   `yaml:"Port"`
 	LogRequests *bool  `yaml:"LogRequests"`
+}
+
+type localDbConfigRead struct {
+	Enabled *bool   `yaml:"Enabled"`
+	Path    *string `yaml:"Path"`
 }
 
 type statisticsConfigRead struct {

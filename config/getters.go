@@ -30,6 +30,10 @@ func (c Config) HttpServer() HttpServerConfig {
 	return c.httpServer
 }
 
+func (c Config) LocalDb() LocalDbConfig {
+	return c.localDb
+}
+
 func (c Config) Statistics() StatisticsConfig {
 	return c.statistics
 }
@@ -209,6 +213,14 @@ func (c HttpServerConfig) Port() int {
 
 func (c HttpServerConfig) LogRequests() bool {
 	return c.logRequests
+}
+
+func (c LocalDbConfig) Enabled() bool {
+	return c.enabled
+}
+
+func (c LocalDbConfig) Path() string {
+	return c.path
 }
 
 func (c StatisticsConfig) Enabled() bool {

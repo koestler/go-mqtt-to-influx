@@ -19,7 +19,7 @@ func runHttpServer(cfg *config.Config, statisticsInstance statistics.Statistics)
 	}
 
 	return httpServer.Run(
-		cfg.HttpServer(),
+		httpCfg,
 		&httpServer.Environment{
 			Statistics: statisticsInstance,
 		},

@@ -17,6 +17,7 @@ type Client struct {
 	writeApi influxdb2Api.WriteAPI
 
 	auxiliaryTags []AuxiliaryTag
+	localDb       LocalDb
 	statistics    Statistics
 
 	lastTransmission time.Time
@@ -50,11 +51,14 @@ type Point interface {
 	Time() time.Time
 }
 
+type LocalDb interface {
+}
+
 type Statistics interface {
 	IncrementOne(module, name, field string)
 }
 
-func RunClient(config Config, auxiliaryTags []AuxiliaryTag, statistics Statistics) *Client {
+func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, statistics Statistics) *Client {
 	// Create a new HTTPClient
 	opts := influxdb2.DefaultOptions().SetUseGZip(true)
 	opts = opts.SetFlushInterval(uint(config.WriteInterval().Milliseconds()))
@@ -90,6 +94,7 @@ func RunClient(config Config, auxiliaryTags []AuxiliaryTag, statistics Statistic
 		writeApi: writeApi,
 
 		auxiliaryTags: auxiliaryTags,
+		localDb:       localDb,
 		statistics:    statistics,
 
 		shutdown: make(chan struct{}),

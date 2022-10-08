@@ -68,6 +68,9 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	ret.httpServer, e = c.HttpServer.TransformAndValidate()
 	err = append(err, e...)
 
+	ret.localDb, e = c.LocalDb.TransformAndValidate()
+	err = append(err, e...)
+
 	ret.statistics, e = c.Statistics.TransformAndValidate()
 	err = append(err, e...)
 
@@ -112,6 +115,23 @@ func (c *httpServerConfigRead) TransformAndValidate() (ret HttpServerConfig, err
 
 	if c.LogRequests != nil && *c.LogRequests {
 		ret.logRequests = true
+	}
+
+	return
+}
+
+func (c *localDbConfigRead) TransformAndValidate() (ret LocalDbConfig, err []error) {
+	// default values
+	ret.enabled = false
+
+	if c.Path == nil {
+		ret.path = "./go-mqtt-to-influx.db"
+	} else {
+		ret.path = *c.Path
+	}
+
+	if c.Enabled != nil && *c.Enabled {
+		ret.enabled = true
 	}
 
 	return
