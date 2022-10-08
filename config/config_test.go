@@ -107,6 +107,11 @@ HttpServer:
   Bind: 0.0.0.0
   Port: 80
   LogRequests: True
+
+LocalDb:
+  Enabled: True
+  Path: /tmp/foobar.db
+
 Statistics:
   Enabled: True
   HistoryResolution: 100ms
@@ -583,6 +588,16 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect HttpServer->LogRequests to be True")
 	}
 
+	// LocalDb
+	if !config.LocalDb().Enabled() {
+		t.Error("expect LocalDb->Enabled to be True")
+	}
+
+	if config.LocalDb().Path() != "/tmp/foobar.db" {
+		t.Errorf("expect LocalDb->Path to be '/tmp/foobar.db', got '%s'",
+			config.LocalDb().Path())
+	}
+
 	// Statistics
 	if !config.Statistics().Enabled() {
 		t.Error("expect Statistics->Enabled to be True")
@@ -717,6 +732,16 @@ func TestReadConfig_Default(t *testing.T) {
 
 	if config.HttpServer().LogRequests() {
 		t.Error("expect default HttpServer->LogRequests to be False")
+	}
+
+	// LocalDb
+	if config.LocalDb().Enabled() {
+		t.Error("expect LocalDb->Enabled to be False")
+	}
+
+	if config.LocalDb().Path() != "./go-mqtt-to-influx.db" {
+		t.Errorf("expect LocalDb->Path to be './go-mqtt-to-influx.db', got '%s'",
+			config.LocalDb().Path())
 	}
 
 	// Statistics
