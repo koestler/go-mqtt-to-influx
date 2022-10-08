@@ -223,6 +223,10 @@ func (c LocalDbConfig) Path() string {
 	return c.path
 }
 
+func (c LocalDbConfig) InfluxRetryInterval() time.Duration {
+	return c.influxRetryInterval
+}
+
 func (c StatisticsConfig) Enabled() bool {
 	return c.enabled
 }

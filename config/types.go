@@ -77,8 +77,9 @@ type HttpServerConfig struct {
 }
 
 type LocalDbConfig struct {
-	enabled bool   // defined automatically if LocalDbConfig section exists
-	path    string `yaml:"Path"` // optional: defaults ./go-mqtt-to-influx.db
+	enabled             bool   // defined automatically if LocalDbConfig section exists
+	path                string // optional: defaults ./go-mqtt-to-influx.db
+	influxRetryInterval time.Duration
 }
 
 type StatisticsConfig struct {
@@ -165,8 +166,9 @@ type httpServerConfigRead struct {
 }
 
 type localDbConfigRead struct {
-	Enabled *bool   `yaml:"Enabled"`
-	Path    *string `yaml:"Path"`
+	Enabled             *bool   `yaml:"Enabled"`
+	Path                *string `yaml:"Path"`
+	InfluxRetryInterval string  `yaml:"InfluxRetryInterval"`
 }
 
 type statisticsConfigRead struct {

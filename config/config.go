@@ -124,6 +124,7 @@ func (c *localDbConfigRead) TransformAndValidate() (ret LocalDbConfig, err []err
 	// default values
 	ret.enabled = true
 	ret.path = "./go-mqtt-to-influx.db"
+	ret.influxRetryInterval = 1 * time.Minute
 
 	if c == nil {
 		return
@@ -135,6 +136,16 @@ func (c *localDbConfigRead) TransformAndValidate() (ret LocalDbConfig, err []err
 
 	if c.Path != nil {
 		ret.path = *c.Path
+	}
+
+	if len(c.InfluxRetryInterval) < 1 {
+		// use default
+	} else if influxRetryInterval, e := time.ParseDuration(c.InfluxRetryInterval); e != nil {
+		err = append(err, fmt.Errorf("LocalDb->InfluxRetryInterval='%s' parse error: %s",
+			c.InfluxRetryInterval, e,
+		))
+	} else {
+		ret.influxRetryInterval = influxRetryInterval
 	}
 
 	return

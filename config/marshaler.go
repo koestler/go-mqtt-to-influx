@@ -128,8 +128,9 @@ func (c HttpServerConfig) convertToRead() httpServerConfigRead {
 
 func (c LocalDbConfig) convertToRead() localDbConfigRead {
 	return localDbConfigRead{
-		Enabled: &c.enabled,
-		Path:    &c.path,
+		Enabled:             &c.enabled,
+		Path:                &c.path,
+		InfluxRetryInterval: c.influxRetryInterval.String(),
 	}
 }
 

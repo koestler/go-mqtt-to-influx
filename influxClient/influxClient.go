@@ -27,8 +27,8 @@ type Client struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	shutdown chan struct{}
-	closed   chan struct{}
+	retryWorkerShutdown chan struct{}
+	retryWorkerClosed   chan struct{}
 }
 
 type Config interface {
@@ -56,9 +56,12 @@ type Point interface {
 }
 
 type LocalDb interface {
+	Enabled() bool
 	InfluxBacklogAdd(client, batch string) error
+	InfluxBacklogSize(client string) (err error, numbBatches, numbLines int)
 	InfluxBacklogGet(client string) (err error, id int, batch string)
 	InfluxBacklogDelete(id int) error
+	InfluxRetryInterval() time.Duration
 }
 
 type Statistics interface {
@@ -109,21 +112,25 @@ func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, sta
 		ctx:    ctx,
 		cancel: cancel,
 
-		shutdown: make(chan struct{}),
-		closed:   make(chan struct{}),
+		retryWorkerShutdown: make(chan struct{}),
+		retryWorkerClosed:   make(chan struct{}),
 	}
 
-	go c.worker()
+	if localDb.Enabled() {
+		go c.retryWorker()
+	}
 
 	// create client object
 	return &c
 }
 
 func (ic *Client) Shutdown() {
-	// send remaining points
-	close(ic.shutdown)
-	// wait for worker to shut down
-	<-ic.closed
+	if ic.localDb.Enabled() {
+		// send remaining points
+		close(ic.retryWorkerShutdown)
+		// wait for retryWorker to shut down
+		<-ic.retryWorkerClosed
+	}
 
 	ic.writeApi.Flush()
 	ic.client.Close()
@@ -158,18 +165,29 @@ func (ic Client) WritePoint(point Point) {
 	ic.statistics.IncrementOne("influx", ic.Name(), measurement)
 }
 
-func (ic Client) worker() {
-	defer close(ic.closed)
+func (ic Client) retryWorker() {
+	defer close(ic.retryWorkerClosed)
 
-	ticker := time.Tick(60 * time.Second)
+	ticker := time.Tick(ic.localDb.InfluxRetryInterval())
+	retryChan := make(chan struct{}, 1)
+	triggerRetryHandler := func() {
+		select {
+		case retryChan <- struct{}{}:
+		default:
+		}
+	}
+
 	for {
 		select {
-		case <-ic.shutdown:
+		case <-ic.retryWorkerShutdown:
 			return // shutdown
 		case <-ticker:
-			ic.retryHandler()
+			triggerRetryHandler()
+		case <-retryChan:
+			if ic.retryHandler() {
+				triggerRetryHandler()
+			}
 		}
-		// todo: handle retry
 	}
 }
 
@@ -187,27 +205,37 @@ func failedCallbackHandler(client string, localDb LocalDb) func(batch string, er
 	}
 }
 
-func (ic Client) retryHandler() {
+func (ic Client) retryHandler() (success bool) {
 	// while there is something on the backlog, send it synchronously and remove it on success
-	for {
-		log.Printf("influxClient[%s]: retryHandler", ic.Name())
+	if err, numbBatches, numbLines := ic.localDb.InfluxBacklogSize(ic.Name()); err != nil {
+		log.Printf("influxClient[%s]: retryHandler: cannot access backlog: err=%s", ic.Name(), err)
+		return false
+	} else if numbBatches < 1 {
+		return false
+	} else {
+		log.Printf(
+			"influxClient[%s]: retryHandler: backlog is not empty: numbBatches=%d, numbLines=%d",
+			ic.Name(), numbBatches, numbLines,
+		)
+	}
 
-		err, id, batch := ic.localDb.InfluxBacklogGet(ic.Name())
-		if err != nil {
-			break
-		}
+	err, id, batch := ic.localDb.InfluxBacklogGet(ic.Name())
+	if err != nil {
+		return false
+	}
 
-		// try to write to influxdb synchronously
-		if err = ic.blockingWriteApi.WriteRecord(ic.ctx, batch); err != nil {
-			log.Printf("influxClient[%s]: retryHandler: error while writing batch, err=%s", ic.Name(), err)
-			break
-		}
-
-		log.Printf("influxClient[%s]: retryHandler: backlog written to influxdb, id=%d", ic.Name(), id)
-
+	// try to write to influxdb synchronously
+	if err = ic.blockingWriteApi.WriteRecord(ic.ctx, batch); err != nil {
+		log.Printf("influxClient[%s]: retryHandler: error while writing batch, err=%s", ic.Name(), err)
+		return false
+	} else {
+		log.Printf("influxClient[%s]: retryHandler: batch written to influxdb, id=%d", ic.Name(), id)
 		if err = ic.localDb.InfluxBacklogDelete(id); err != nil {
 			log.Printf("influxClient[%s]: retryHandler: cannot remove entry from backlog, id=%d, err=%s", ic.Name(), id, err)
+			return false
 		}
+		// successfully send some points and wrote that to the db
+		return true
 	}
 
 }

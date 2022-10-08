@@ -111,6 +111,7 @@ HttpServer:
 LocalDb:
   Enabled: True
   Path: /tmp/foobar.db
+  InfluxRetryInterval: 30s
 
 Statistics:
   Enabled: True
@@ -598,6 +599,10 @@ func TestReadConfig_Complex(t *testing.T) {
 			config.LocalDb().Path())
 	}
 
+	if interval := config.LocalDb().InfluxRetryInterval().String(); interval != "30s" {
+		t.Errorf("expect LocalDb->InfluxRetryInterval to be '30s', got '%s'", interval)
+	}
+
 	// Statistics
 	if !config.Statistics().Enabled() {
 		t.Error("expect Statistics->Enabled to be True")
@@ -742,6 +747,10 @@ func TestReadConfig_Default(t *testing.T) {
 	if config.LocalDb().Path() != "./go-mqtt-to-influx.db" {
 		t.Errorf("expect LocalDb->Path to be './go-mqtt-to-influx.db', got '%s'",
 			config.LocalDb().Path())
+	}
+
+	if interval := config.LocalDb().InfluxRetryInterval().String(); interval != "1m0s" {
+		t.Errorf("expect LocalDb->InfluxRetryInterval to be '1m0s', got '%s'", interval)
 	}
 
 	// Statistics
