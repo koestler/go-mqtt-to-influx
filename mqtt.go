@@ -17,8 +17,8 @@ func runMqttClient(
 	mqttClientPoolInstance = mqttClient.RunPool()
 
 	countStarted := 0
-	for _, mqttClientConfig := range cfg.MqttClients {
-		if cfg.LogWorkerStart {
+	for _, mqttClientConfig := range cfg.MqttClients() {
+		if cfg.LogWorkerStart() {
 			log.Printf(
 				"mqttClient[%s]: start: Broker='%s', ClientId='%s'",
 				mqttClientConfig.Name(), mqttClientConfig.Broker(), mqttClientConfig.ClientId(),

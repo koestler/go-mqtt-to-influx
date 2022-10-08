@@ -2,51 +2,51 @@ package config
 
 func (c Config) MarshalYAML() (interface{}, error) {
 	return configRead{
-		Version: &c.Version,
+		Version: &c.version,
 		MqttClients: func() mqttClientConfigReadMap {
-			mqttClients := make(mqttClientConfigReadMap, len(c.MqttClients))
-			for _, c := range c.MqttClients {
+			mqttClients := make(mqttClientConfigReadMap, len(c.mqttClients))
+			for _, c := range c.mqttClients {
 				mqttClients[c.Name()] = c.convertToRead()
 			}
 			return mqttClients
 		}(),
 		InfluxClients: func() influxClientConfigReadMap {
-			influxClients := make(influxClientConfigReadMap, len(c.InfluxClients))
-			for _, c := range c.InfluxClients {
+			influxClients := make(influxClientConfigReadMap, len(c.influxClients))
+			for _, c := range c.influxClients {
 				influxClients[c.Name()] = c.convertToRead()
 			}
 			return influxClients
 		}(),
 		InfluxAuxiliaryTags: func() []influxAuxiliaryTagsRead {
-			influxAuxiliaryTags := make([]influxAuxiliaryTagsRead, len(c.InfluxAuxiliaryTags))
-			for i, c := range c.InfluxAuxiliaryTags {
+			influxAuxiliaryTags := make([]influxAuxiliaryTagsRead, len(c.influxAuxiliaryTags))
+			for i, c := range c.influxAuxiliaryTags {
 				influxAuxiliaryTags[i] = c.convertToRead()
 			}
 			return influxAuxiliaryTags
 		}(),
 		Converters: func() converterConfigReadMap {
-			converters := make(converterConfigReadMap, len(c.Converters))
-			for _, c := range c.Converters {
+			converters := make(converterConfigReadMap, len(c.converters))
+			for _, c := range c.converters {
 				converters[c.Name()] = c.convertToRead()
 			}
 			return converters
 		}(),
 		HttpServer: func() *httpServerConfigRead {
-			if !c.HttpServer.Enabled() {
+			if !c.httpServer.Enabled() {
 				return nil
 			}
-			r := c.HttpServer.convertToRead()
+			r := c.httpServer.convertToRead()
 			return &r
 		}(),
 		Statistics: func() *statisticsConfigRead {
-			if !c.Statistics.Enabled() {
+			if !c.statistics.Enabled() {
 				return nil
 			}
-			r := c.Statistics.convertToRead()
+			r := c.statistics.convertToRead()
 			return &r
 		}(),
-		LogConfig:      &c.LogConfig,
-		LogWorkerStart: &c.LogWorkerStart,
+		LogConfig:      &c.logConfig,
+		LogWorkerStart: &c.logWorkerStart,
 	}, nil
 }
 

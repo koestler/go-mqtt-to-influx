@@ -7,9 +7,11 @@ import (
 )
 
 func runStatistics(cfg *config.Config) statistics.Statistics {
-	if cfg.LogWorkerStart && cfg.Statistics.Enabled() {
+	statCfg := cfg.Statistics()
+
+	if cfg.LogWorkerStart() && statCfg.Enabled() {
 		log.Printf("statitics: start")
 	}
 
-	return statistics.Run(cfg.Statistics)
+	return statistics.Run(statCfg)
 }

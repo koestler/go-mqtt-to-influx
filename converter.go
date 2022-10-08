@@ -19,12 +19,12 @@ func createConverters(
 ) {
 	countCreated := 0
 
-	if cfg.LogWorkerStart {
+	if cfg.LogWorkerStart() {
 		log.Print("converter: create converters")
 	}
 
 	// iterate through all converters
-	for _, converterConfig := range cfg.Converters {
+	for _, converterConfig := range cfg.Converters() {
 		handleFunc, err := converter.GetHandler(converterConfig.Implementation())
 		if err != nil {
 			log.Printf("converter[%s]: cannot create: %s", converterConfig.Name(), err)
@@ -51,7 +51,7 @@ func createConverters(
 					),
 				)
 
-				if cfg.LogWorkerStart {
+				if cfg.LogWorkerStart() {
 					log.Printf(
 						"converter[%s]: Implementation='%s', MqttClient='%s', InfluxClients=%v, SubscribeTopic='%s'",
 						converterConfig.Name(),
@@ -69,7 +69,7 @@ func createConverters(
 
 	if countCreated < 1 {
 		initiateShutdown <- errors.New("no converter was started")
-	} else if cfg.LogWorkerStart {
+	} else if cfg.LogWorkerStart() {
 		log.Printf("converter: %d converters created", countCreated)
 	}
 }

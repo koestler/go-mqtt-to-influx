@@ -8,16 +8,18 @@ import (
 )
 
 func runHttpServer(cfg *config.Config, statisticsInstance statistics.Statistics) *httpServer.HttpServer {
-	if !cfg.HttpServer.Enabled() {
+	httpCfg := cfg.HttpServer()
+
+	if !httpCfg.Enabled() {
 		return nil
 	}
 
-	if cfg.LogWorkerStart {
-		log.Printf("httpServer: start: bind=%s, port=%d", cfg.HttpServer.Bind(), cfg.HttpServer.Port())
+	if cfg.LogWorkerStart() {
+		log.Printf("httpServer: start: bind=%s, port=%d", httpCfg.Bind(), httpCfg.Port())
 	}
 
 	return httpServer.Run(
-		&cfg.HttpServer,
+		cfg.HttpServer(),
 		&httpServer.Environment{
 			Statistics: statisticsInstance,
 		},

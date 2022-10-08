@@ -16,14 +16,14 @@ func runInfluxClient(
 	influxClientPoolInstance = influxClient.RunPool()
 
 	// convert []*config.InfluxAuxiliaryTags to []influxClient.AuxiliaryTag
-	auxiliaryTags := make([]influxClient.AuxiliaryTag, len(cfg.InfluxAuxiliaryTags))
-	for i, t := range cfg.InfluxAuxiliaryTags {
+	auxiliaryTags := make([]influxClient.AuxiliaryTag, len(cfg.InfluxAuxiliaryTags()))
+	for i, t := range cfg.InfluxAuxiliaryTags() {
 		auxiliaryTags[i] = t
 	}
 
 	countStarted := 0
-	for _, influxClientConfig := range cfg.InfluxClients {
-		if cfg.LogWorkerStart {
+	for _, influxClientConfig := range cfg.InfluxClients() {
+		if cfg.LogWorkerStart() {
 			log.Printf(
 				"influxClient[%s]: start: url='%s', len(token)=%d, org='%s', bucket='%s'",
 				influxClientConfig.Name(),
@@ -38,7 +38,7 @@ func runInfluxClient(
 
 		influxClientPoolInstance.AddClient(client)
 		countStarted += 1
-		if cfg.LogWorkerStart {
+		if cfg.LogWorkerStart() {
 			log.Printf(
 				"influxClient[%s]: started", influxClientConfig.Name(),
 			)

@@ -53,39 +53,39 @@ func (c Config) PrintConfig() (err error) {
 
 func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	var e []error
-	ret.MqttClients, e = c.MqttClients.TransformAndValidate()
+	ret.mqttClients, e = c.MqttClients.TransformAndValidate()
 	err = append(err, e...)
 
-	ret.InfluxClients, e = c.InfluxClients.TransformAndValidate()
+	ret.influxClients, e = c.InfluxClients.TransformAndValidate()
 	err = append(err, e...)
 
-	ret.InfluxAuxiliaryTags, e = c.InfluxAuxiliaryTags.TransformAndValidate()
+	ret.influxAuxiliaryTags, e = c.InfluxAuxiliaryTags.TransformAndValidate()
 	err = append(err, e...)
 
-	ret.Converters, e = c.Converters.TransformAndValidate(ret.MqttClients, ret.InfluxClients)
+	ret.converters, e = c.Converters.TransformAndValidate(ret.mqttClients, ret.influxClients)
 	err = append(err, e...)
 
-	ret.HttpServer, e = c.HttpServer.TransformAndValidate()
+	ret.httpServer, e = c.HttpServer.TransformAndValidate()
 	err = append(err, e...)
 
-	ret.Statistics, e = c.Statistics.TransformAndValidate()
+	ret.statistics, e = c.Statistics.TransformAndValidate()
 	err = append(err, e...)
 
 	if c.Version == nil {
 		err = append(err, fmt.Errorf("Version must be defined. Use Version=0."))
 	} else {
-		ret.Version = *c.Version
-		if ret.Version != 0 {
+		ret.version = *c.Version
+		if ret.version != 0 {
 			err = append(err, fmt.Errorf("Version=%d is not supported.", ret.Version))
 		}
 	}
 
 	if c.LogConfig != nil && *c.LogConfig {
-		ret.LogConfig = true
+		ret.logConfig = true
 	}
 
 	if c.LogWorkerStart != nil && *c.LogWorkerStart {
-		ret.LogWorkerStart = true
+		ret.logWorkerStart = true
 	}
 
 	return

@@ -7,15 +7,15 @@ import (
 )
 
 type Config struct {
-	Version             int                    `yaml:"Version"`       // must be 0
-	MqttClients         []*MqttClientConfig    `yaml:"MqttClient"`    // mandatory: at least 1 must be defined
-	InfluxClients       []*InfluxClientConfig  `yaml:"InfluxClients"` // mandatory: at least 1 must be defined
-	InfluxAuxiliaryTags []*InfluxAuxiliaryTags `yaml:"InfluxAuxiliaryTags"`
-	Converters          []*ConverterConfig     `yaml:"Converters"`     // mandatory: at least 1 must be defined
-	HttpServer          HttpServerConfig       `yaml:"HttpServer"`     // optional: default Disabled
-	Statistics          StatisticsConfig       `yaml:"Statistics"`     // optional: default Disabled
-	LogConfig           bool                   `yaml:"LogConfig"`      // optional: default False
-	LogWorkerStart      bool                   `yaml:"LogWorkerStart"` // optional: default False
+	version             int                    `yaml:"Version"`       // must be 0
+	mqttClients         []*MqttClientConfig    `yaml:"MqttClient"`    // mandatory: at least 1 must be defined
+	influxClients       []*InfluxClientConfig  `yaml:"InfluxClients"` // mandatory: at least 1 must be defined
+	influxAuxiliaryTags []*InfluxAuxiliaryTags `yaml:"InfluxAuxiliaryTags"`
+	converters          []*ConverterConfig     `yaml:"Converters"`     // mandatory: at least 1 must be defined
+	httpServer          HttpServerConfig       `yaml:"HttpServer"`     // optional: default Disabled
+	statistics          StatisticsConfig       `yaml:"Statistics"`     // optional: default Disabled
+	logConfig           bool                   `yaml:"LogConfig"`      // optional: default False
+	logWorkerStart      bool                   `yaml:"LogWorkerStart"` // optional: default False
 }
 
 type MqttClientConfig struct {

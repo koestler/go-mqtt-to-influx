@@ -6,6 +6,42 @@ import (
 	"time"
 )
 
+func (c Config) Version() int {
+	return c.version
+}
+
+func (c Config) MqttClients() []*MqttClientConfig {
+	return c.mqttClients
+}
+
+func (c Config) InfluxClients() []*InfluxClientConfig {
+	return c.influxClients
+}
+
+func (c Config) InfluxAuxiliaryTags() []*InfluxAuxiliaryTags {
+	return c.influxAuxiliaryTags
+}
+
+func (c Config) Converters() []*ConverterConfig {
+	return c.converters
+}
+
+func (c Config) HttpServer() HttpServerConfig {
+	return c.httpServer
+}
+
+func (c Config) Statistics() StatisticsConfig {
+	return c.statistics
+}
+
+func (c Config) LogConfig() bool {
+	return c.logConfig
+}
+
+func (c Config) LogWorkerStart() bool {
+	return c.logWorkerStart
+}
+
 func (c MqttClientConfig) Name() string {
 	return c.name
 }
