@@ -27,8 +27,10 @@ type Client struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	retryWorkerShutdown chan struct{}
-	retryWorkerClosed   chan struct{}
+	backlogChan chan string
+
+	shutdown chan struct{}
+	closed   chan struct{}
 }
 
 type Config interface {
@@ -69,8 +71,8 @@ type Statistics interface {
 	IncrementOne(module, name, field string)
 }
 
-const batchSize = 1000
-const retryQueueLimit = 60
+const batchSize = 5000
+const retryQueueLimit = 20
 
 func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, statistics Statistics) *Client {
 	// Create a new HTTPClient
@@ -90,10 +92,12 @@ func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, sta
 		opts,
 	)
 
+	backlogChan := make(chan string, 8)
+
 	// create asynchronous, auto-retry write api instance
 	writeApi := dbClient.WriteAPI(config.Org(), config.Bucket())
 	if localDb.Enabled() && config.RetryInterval() > 0 {
-		writeApi.SetWriteFailedCallback(failedCallbackHandler(config.Name(), localDb))
+		writeApi.SetWriteFailedCallback(failedCallbackHandler(config.Name(), backlogChan))
 	} else {
 		writeApi.SetWriteFailedCallback(func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
 			// log and retry until buffer is full
@@ -128,13 +132,12 @@ func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, sta
 		ctx:    ctx,
 		cancel: cancel,
 
-		retryWorkerShutdown: make(chan struct{}),
-		retryWorkerClosed:   make(chan struct{}),
+		backlogChan: backlogChan,
+		shutdown:    make(chan struct{}),
+		closed:      make(chan struct{}),
 	}
 
-	if localDb.Enabled() {
-		go c.retryWorker()
-	}
+	go c.worker()
 
 	// create client object
 	return &c
@@ -147,12 +150,12 @@ func minD(a, b time.Duration) time.Duration {
 	return b
 }
 
-func (ic *Client) Shutdown() {
+func (ic Client) Shutdown() {
 	if ic.localDb.Enabled() {
 		// send remaining points
-		close(ic.retryWorkerShutdown)
+		close(ic.shutdown)
 		// wait for retryWorker to shut down
-		<-ic.retryWorkerClosed
+		<-ic.closed
 	}
 
 	ic.writeApi.Flush()
@@ -188,11 +191,16 @@ func (ic Client) WritePoint(point Point) {
 	ic.statistics.IncrementOne("influx", ic.Name(), measurement)
 }
 
-func (ic Client) retryWorker() {
-	defer close(ic.retryWorkerClosed)
+func (ic Client) worker() {
+	defer close(ic.closed)
 
-	aggregateTicker := time.Tick(10 * ic.config.WriteInterval())
-	retryTicker := time.Tick(ic.config.RetryInterval())
+	aggregateTicker := time.NewTicker(10 * ic.config.WriteInterval())
+	retryTicker := time.NewTicker(ic.config.RetryInterval())
+	if !ic.localDb.Enabled() || ic.config.RetryInterval() <= 0 {
+		aggregateTicker.Stop()
+		retryTicker.Stop()
+	}
+
 	retryChan := make(chan struct{}, 1)
 	triggerRetryHandler := func() {
 		select {
@@ -203,13 +211,17 @@ func (ic Client) retryWorker() {
 
 	for {
 		select {
-		case <-ic.retryWorkerShutdown:
+		case <-ic.shutdown:
 			return // shutdown
-		case <-aggregateTicker:
+		case batch := <-ic.backlogChan:
+			if err := ic.localDb.InfluxBacklogAdd(ic.Name(), batch); err != nil {
+				log.Printf("influxClient[%s]: add failed: %s", ic.Name(), err)
+			}
+		case <-aggregateTicker.C:
 			if err := ic.localDb.InfluxAggregateBacklog(ic.Name(), batchSize); err != nil {
 				log.Printf("influxClient[%s]: aggregate failed: %s", ic.Name(), err)
 			}
-		case <-retryTicker:
+		case <-retryTicker.C:
 			triggerRetryHandler()
 		case <-retryChan:
 			if ic.retryHandler() {
@@ -219,16 +231,16 @@ func (ic Client) retryWorker() {
 	}
 }
 
-func failedCallbackHandler(client string, localDb LocalDb) func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
+func failedCallbackHandler(client string, retryBatchChan chan string) func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
 	return func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
 		// write to backlog
-		if err := localDb.InfluxBacklogAdd(client, batch); err != nil {
-			// cannot write to backlog, enable retry
-			log.Printf("influxClient[%s]: write failed, cannot write backlog, keep retrying, err=%s", client, err)
-			return true
-		} else {
+		select {
+		case retryBatchChan <- batch:
 			log.Printf("influxClient[%s]: write failed, added to backlog", client)
 			return false
+		default:
+			log.Printf("influxClient[%s]: write failed, backlog chan full, keep retrying", client)
+			return true
 		}
 	}
 }
