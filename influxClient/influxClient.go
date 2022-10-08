@@ -165,7 +165,7 @@ func failedCallbackHandler(client string, localDb LocalDb) func(batch string, er
 		if err := localDb.InfluxBacklogAdd(client, batch); err != nil {
 			// cannot write to backlog, retry up to 3 times
 			retry := retryAttempts < 3
-			log.Printf("influxClient[%s]: cannot write backlog, retry=%b, err=%s", client, retry, err)
+			log.Printf("influxClient[%s]: cannot write backlog, retry=%t, err=%s", client, retry, err)
 			return retry
 		} else {
 			log.Printf("influxClient[%s]: write failed, added to backlog", client)
