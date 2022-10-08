@@ -124,14 +124,18 @@ func (c *localDbConfigRead) TransformAndValidate() (ret LocalDbConfig, err []err
 	// default values
 	ret.enabled = false
 
-	if c.Path == nil {
-		ret.path = "./go-mqtt-to-influx.db"
-	} else {
-		ret.path = *c.Path
+	if c == nil {
+		return
 	}
 
 	if c.Enabled != nil && *c.Enabled {
 		ret.enabled = true
+	}
+
+	if c.Path == nil {
+		ret.path = "./go-mqtt-to-influx.db"
+	} else {
+		ret.path = *c.Path
 	}
 
 	return

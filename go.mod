@@ -10,6 +10,7 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.10.0
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/lestrrat-go/apache-logformat v2.0.4+incompatible
+	github.com/mattn/go-sqlite3 v1.14.15
 	github.com/pkg/errors v0.9.1
 	gopkg.in/yaml.v2 v2.4.0
 )

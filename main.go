@@ -90,6 +90,7 @@ func main() {
 
 		// start localDb module
 		localDbInstance := runLocalDb(cfg)
+		defer localDbInstance.Shutdown()
 
 		// start statistics module
 		statisticsInstance := runStatistics(cfg)

@@ -52,6 +52,9 @@ type Point interface {
 }
 
 type LocalDb interface {
+	InfluxBacklogAdd(client, batch string) error
+	InfluxBacklogGet(client string) (err error, id int, batch string)
+	InfluxBacklogDelete(id int) error
 }
 
 type Statistics interface {
@@ -74,12 +77,7 @@ func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, sta
 
 	// create asynchronous, auto-retry write api instance
 	writeApi := dbClient.WriteAPI(config.Org(), config.Bucket())
-
-	writeApi.SetWriteFailedCallback(func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
-		// log and retry forever
-		log.Printf("influxClient[%s]: write failed, retry", config.Name())
-		return true
-	})
+	writeApi.SetWriteFailedCallback(failedCallbackHandler(config.Name(), localDb))
 
 	// ping the api
 	if ok, err := dbClient.Ping(context.Background()); ok {
@@ -152,5 +150,27 @@ func (ic *Client) worker() {
 			return // shutdown
 		}
 		// todo: handle retry
+	}
+}
+
+func failedCallbackHandler(client string, localDb LocalDb) func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
+	return func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
+		// retry once, and then write to backlog
+		if retryAttempts < 1 {
+			log.Printf("influxClient[%s]: write failed, retry", client)
+			return true
+		}
+
+		// write to backlog
+		if err := localDb.InfluxBacklogAdd(client, batch); err != nil {
+			// cannot write to backlog, retry up to 3 times
+			retry := retryAttempts < 3
+			log.Printf("influxClient[%s]: cannot write backlog, retry=%b, err=%s", client, retry, err)
+			return retry
+		} else {
+			log.Printf("influxClient[%s]: write failed, added to backlog", client)
+		}
+
+		return false
 	}
 }
