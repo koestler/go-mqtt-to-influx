@@ -1,8 +1,6 @@
 * Write statistics to influxdb
 * Implement shelly converter
-* make bucket dynamic instead
 * check what happens mqtt server disconnects / reconnects
-* handle unreachable influxdb, store data in local database
 * handle mqtt reconnect:
 ```
 MqttDebugLog: 2022/08/29 09:21:15 [client]   Connect comms goroutine - error triggered EOF
@@ -49,3 +47,5 @@ created by github.com/eclipse/paho.golang/paho.(*Client).Connect
 /home/lk/go/pkg/mod/github.com/eclipse/paho.golang@v0.10.0/paho/client.go:290 +0xb7c
 ➜  go-mqtt-to-influx git:(main) ✗ 
 ```
+
+* add unit tests for localDb including multiple devices and aggregation
