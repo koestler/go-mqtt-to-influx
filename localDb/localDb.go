@@ -76,18 +76,15 @@ func (d SqliteLocalDb) InfluxBacklogAdd(client, batch string) error {
 }
 
 func (d SqliteLocalDb) InfluxBacklogGet(client string) (err error, id int, batch string) {
-	if row, e := d.db.Exec(
+	row := d.db.QueryRow(
 		"SELECT id, batch FROM influxBacklog WHERE client = ? ORDER BY id ASC LIMIT 1",
 		client,
-	); e != nil {
+	)
+	if e := row.Scan(&id, &batch); e != nil {
 		err = fmt.Errorf("cannot select frominfluxBacklogV0: %s", e)
-		return
-	} else {
-		log.Printf("row: %v", row)
-		id = 0
-		batch = "foobar"
-		return
 	}
+
+	return
 }
 
 func (d SqliteLocalDb) InfluxBacklogDelete(id int) error {

@@ -12,9 +12,10 @@ import (
 )
 
 type Client struct {
-	config   Config
-	client   influxdb2.Client
-	writeApi influxdb2Api.WriteAPI
+	config           Config
+	client           influxdb2.Client
+	writeApi         influxdb2Api.WriteAPI
+	blockingWriteApi influxdb2Api.WriteAPIBlocking
 
 	auxiliaryTags []AuxiliaryTag
 	localDb       LocalDb
@@ -22,6 +23,9 @@ type Client struct {
 
 	lastTransmission time.Time
 	errorRetryDelay  time.Duration
+
+	ctx    context.Context
+	cancel context.CancelFunc
 
 	shutdown chan struct{}
 	closed   chan struct{}
@@ -79,21 +83,31 @@ func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, sta
 	writeApi := dbClient.WriteAPI(config.Org(), config.Bucket())
 	writeApi.SetWriteFailedCallback(failedCallbackHandler(config.Name(), localDb))
 
+	// create synchronous api to write the backlog
+	blockingWriteApi := dbClient.WriteAPIBlocking(config.Org(), config.Bucket())
+
+	// create main context
+	ctx, cancel := context.WithCancel(context.Background())
+
 	// ping the api
-	if ok, err := dbClient.Ping(context.Background()); ok {
+	if ok, err := dbClient.Ping(ctx); ok {
 		log.Printf("influxClient[%s]: ping successful", config.Name())
 	} else {
 		log.Printf("influxClient[%s]: ping failed: %s", config.Name(), err)
 	}
 
 	c := Client{
-		config:   config,
-		client:   dbClient,
-		writeApi: writeApi,
+		config:           config,
+		client:           dbClient,
+		writeApi:         writeApi,
+		blockingWriteApi: blockingWriteApi,
 
 		auxiliaryTags: auxiliaryTags,
 		localDb:       localDb,
 		statistics:    statistics,
+
+		ctx:    ctx,
+		cancel: cancel,
 
 		shutdown: make(chan struct{}),
 		closed:   make(chan struct{}),
@@ -113,6 +127,9 @@ func (ic *Client) Shutdown() {
 
 	ic.writeApi.Flush()
 	ic.client.Close()
+
+	// cancel main context
+	ic.cancel()
 
 	log.Printf("influxClient[%s]: closed", ic.Name())
 }
@@ -141,13 +158,16 @@ func (ic Client) WritePoint(point Point) {
 	ic.statistics.IncrementOne("influx", ic.Name(), measurement)
 }
 
-func (ic *Client) worker() {
+func (ic Client) worker() {
 	defer close(ic.closed)
 
+	ticker := time.Tick(60 * time.Second)
 	for {
 		select {
 		case <-ic.shutdown:
 			return // shutdown
+		case <-ticker:
+			ic.retryHandler()
 		}
 		// todo: handle retry
 	}
@@ -155,22 +175,39 @@ func (ic *Client) worker() {
 
 func failedCallbackHandler(client string, localDb LocalDb) func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
 	return func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
-		// retry once, and then write to backlog
-		if retryAttempts < 1 {
-			log.Printf("influxClient[%s]: write failed, retry", client)
-			return true
-		}
-
 		// write to backlog
 		if err := localDb.InfluxBacklogAdd(client, batch); err != nil {
 			// cannot write to backlog, retry up to 3 times
-			retry := retryAttempts < 3
-			log.Printf("influxClient[%s]: cannot write backlog, retry=%t, err=%s", client, retry, err)
-			return retry
+			log.Printf("influxClient[%s]: write failed, cannot write backlog, keep retrying, err=%s", client, err)
+			return true
 		} else {
 			log.Printf("influxClient[%s]: write failed, added to backlog", client)
+			return false
+		}
+	}
+}
+
+func (ic Client) retryHandler() {
+	// while there is something on the backlog, send it synchronously and remove it on success
+	for {
+		log.Printf("influxClient[%s]: retryHandler", ic.Name())
+
+		err, id, batch := ic.localDb.InfluxBacklogGet(ic.Name())
+		if err != nil {
+			break
 		}
 
-		return false
+		// try to write to influxdb synchronously
+		if err = ic.blockingWriteApi.WriteRecord(ic.ctx, batch); err != nil {
+			log.Printf("influxClient[%s]: retryHandler: error while writing batch, err=%s", ic.Name(), err)
+			break
+		}
+
+		log.Printf("influxClient[%s]: retryHandler: backlog written to influxdb, id=%d", ic.Name(), id)
+
+		if err = ic.localDb.InfluxBacklogDelete(id); err != nil {
+			log.Printf("influxClient[%s]: retryHandler: cannot remove entry from backlog, id=%d, err=%s", ic.Name(), id, err)
+		}
 	}
+
 }

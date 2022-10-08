@@ -735,8 +735,8 @@ func TestReadConfig_Default(t *testing.T) {
 	}
 
 	// LocalDb
-	if config.LocalDb().Enabled() {
-		t.Error("expect LocalDb->Enabled to be False")
+	if !config.LocalDb().Enabled() {
+		t.Error("expect LocalDb->Enabled to be True")
 	}
 
 	if config.LocalDb().Path() != "./go-mqtt-to-influx.db" {

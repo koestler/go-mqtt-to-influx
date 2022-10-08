@@ -122,7 +122,7 @@ func (c *httpServerConfigRead) TransformAndValidate() (ret HttpServerConfig, err
 
 func (c *localDbConfigRead) TransformAndValidate() (ret LocalDbConfig, err []error) {
 	// default values
-	ret.enabled = false
+	ret.enabled = true
 	ret.path = "./go-mqtt-to-influx.db"
 
 	if c == nil {

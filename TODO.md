@@ -49,3 +49,5 @@ created by github.com/eclipse/paho.golang/paho.(*Client).Connect
 /home/lk/go/pkg/mod/github.com/eclipse/paho.golang@v0.10.0/paho/client.go:290 +0xb7c
 ➜  go-mqtt-to-influx git:(main) ✗ 
 ```
+
+* db: use gzip.CompressWithGzip ?
