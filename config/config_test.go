@@ -758,8 +758,8 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default Statistics->Enabled to be False")
 	}
 
-	if config.Statistics().HistoryResolution().String() != "1s" {
-		t.Errorf("expect default Statistics->HistoryResolution to be '1s', got '%s'",
+	if config.Statistics().HistoryResolution().String() != "10s" {
+		t.Errorf("expect default Statistics->HistoryResolution to be '10s', got '%s'",
 			config.Statistics().HistoryResolution())
 	}
 

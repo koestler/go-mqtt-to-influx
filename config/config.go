@@ -143,7 +143,7 @@ func (c *localDbConfigRead) TransformAndValidate() (ret LocalDbConfig, err []err
 func (c *statisticsConfigRead) TransformAndValidate() (ret StatisticsConfig, err []error) {
 	// default values
 	ret.enabled = false
-	ret.historyResolution = time.Second
+	ret.historyResolution = 10 * time.Second
 	ret.historyMaxAge = 10 * time.Minute
 
 	if c == nil {

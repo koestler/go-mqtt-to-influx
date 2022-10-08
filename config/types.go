@@ -84,7 +84,7 @@ type LocalDbConfig struct {
 
 type StatisticsConfig struct {
 	enabled           bool          // defined automatically if Statistics section exists
-	historyResolution time.Duration // optional: defaults to 1s
+	historyResolution time.Duration // optional: defaults to 10s
 	historyMaxAge     time.Duration // optional: default to 10min
 }
 
