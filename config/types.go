@@ -43,6 +43,7 @@ type InfluxClientConfig struct {
 	org           string        // mandatory
 	bucket        string        // mandatory
 	writeInterval time.Duration // optional: default 5s
+	retryInterval time.Duration // optional: default 1min
 	timePrecision time.Duration // optional: default 1s
 	logDebug      bool          // optional: default False
 }
@@ -77,9 +78,8 @@ type HttpServerConfig struct {
 }
 
 type LocalDbConfig struct {
-	enabled             bool   // defined automatically if LocalDbConfig section exists
-	path                string // optional: defaults ./go-mqtt-to-influx.db
-	influxRetryInterval time.Duration
+	enabled bool   // defined automatically if LocalDbConfig section exists
+	path    string // optional: defaults ./go-mqtt-to-influx.db
 }
 
 type StatisticsConfig struct {
@@ -127,6 +127,7 @@ type influxClientConfigRead struct {
 	Org           string `yaml:"Org"`
 	Bucket        string `yaml:"Bucket"`
 	WriteInterval string `yaml:"WriteInterval"`
+	RetryInterval string `yaml:"RetryInterval"`
 	TimePrecision string `yaml:"TimePrecision"`
 	LogDebug      *bool  `yaml:"LogDebug"`
 }
@@ -166,9 +167,8 @@ type httpServerConfigRead struct {
 }
 
 type localDbConfigRead struct {
-	Enabled             *bool   `yaml:"Enabled"`
-	Path                *string `yaml:"Path"`
-	InfluxRetryInterval string  `yaml:"InfluxRetryInterval"`
+	Enabled *bool   `yaml:"Enabled"`
+	Path    *string `yaml:"Path"`
 }
 
 type statisticsConfigRead struct {

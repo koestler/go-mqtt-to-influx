@@ -38,6 +38,7 @@ type Config interface {
 	Org() string
 	Bucket() string
 	WriteInterval() time.Duration
+	RetryInterval() time.Duration
 	TimePrecision() time.Duration
 	LogDebug() bool
 }
@@ -61,17 +62,23 @@ type LocalDb interface {
 	InfluxBacklogSize(client string) (err error, numbBatches, numbLines int)
 	InfluxBacklogGet(client string) (err error, id int, batch string)
 	InfluxBacklogDelete(id int) error
-	InfluxRetryInterval() time.Duration
 }
 
 type Statistics interface {
 	IncrementOne(module, name, field string)
 }
 
+const batchSize = 5000
+const retryQueueLimit = 60
+
 func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, statistics Statistics) *Client {
 	// Create a new HTTPClient
 	opts := influxdb2.DefaultOptions().SetUseGZip(true)
 	opts = opts.SetFlushInterval(uint(config.WriteInterval().Milliseconds()))
+	opts = opts.SetRetryInterval(uint(
+		minD(config.RetryInterval(), (retryQueueLimit-1)*config.WriteInterval()).Milliseconds()),
+	)
+	opts = opts.SetBatchSize(batchSize).SetRetryBufferLimit(retryQueueLimit * batchSize)
 	opts = opts.SetPrecision(config.TimePrecision())
 	if config.LogDebug() {
 		opts = opts.SetLogLevel(3)
@@ -84,7 +91,15 @@ func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, sta
 
 	// create asynchronous, auto-retry write api instance
 	writeApi := dbClient.WriteAPI(config.Org(), config.Bucket())
-	writeApi.SetWriteFailedCallback(failedCallbackHandler(config.Name(), localDb))
+	if localDb.Enabled() && config.RetryInterval() > 0 {
+		writeApi.SetWriteFailedCallback(failedCallbackHandler(config.Name(), localDb))
+	} else {
+		writeApi.SetWriteFailedCallback(func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
+			// log and retry until buffer is full
+			log.Printf("influxClient[%s]: write failed, retryAttempts=%d", config.Name(), retryAttempts)
+			return true
+		})
+	}
 
 	// create synchronous api to write the backlog
 	blockingWriteApi := dbClient.WriteAPIBlocking(config.Org(), config.Bucket())
@@ -122,6 +137,13 @@ func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, sta
 
 	// create client object
 	return &c
+}
+
+func minD(a, b time.Duration) time.Duration {
+	if a <= b {
+		return a
+	}
+	return b
 }
 
 func (ic *Client) Shutdown() {
@@ -168,7 +190,7 @@ func (ic Client) WritePoint(point Point) {
 func (ic Client) retryWorker() {
 	defer close(ic.retryWorkerClosed)
 
-	ticker := time.Tick(ic.localDb.InfluxRetryInterval())
+	ticker := time.Tick(ic.config.RetryInterval())
 	retryChan := make(chan struct{}, 1)
 	triggerRetryHandler := func() {
 		select {
@@ -195,7 +217,7 @@ func failedCallbackHandler(client string, localDb LocalDb) func(batch string, er
 	return func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
 		// write to backlog
 		if err := localDb.InfluxBacklogAdd(client, batch); err != nil {
-			// cannot write to backlog, retry up to 3 times
+			// cannot write to backlog, enable retry
 			log.Printf("influxClient[%s]: write failed, cannot write backlog, keep retrying, err=%s", client, err)
 			return true
 		} else {

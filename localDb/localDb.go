@@ -6,7 +6,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"strings"
-	"time"
 )
 
 type LocalDb interface {
@@ -16,7 +15,6 @@ type LocalDb interface {
 	InfluxBacklogSize(client string) (err error, numbBatches, numbLines int)
 	InfluxBacklogGet(client string) (err error, id int, batch string)
 	InfluxBacklogDelete(id int) error
-	InfluxRetryInterval() time.Duration
 }
 
 type SqliteLocalDb struct {
@@ -29,7 +27,6 @@ type DisabledLocalDb struct{}
 type Config interface {
 	Enabled() bool
 	Path() string
-	InfluxRetryInterval() time.Duration
 }
 
 func Run(config Config) LocalDb {
@@ -125,9 +122,6 @@ func (d SqliteLocalDb) InfluxBacklogDelete(id int) error {
 
 	return nil
 }
-func (d SqliteLocalDb) InfluxRetryInterval() time.Duration {
-	return d.config.InfluxRetryInterval()
-}
 
 func (d DisabledLocalDb) Enabled() bool {
 	return false
@@ -144,7 +138,4 @@ func (d DisabledLocalDb) InfluxBacklogGet(client string) (err error, id int, bat
 }
 func (d DisabledLocalDb) InfluxBacklogDelete(id int) error {
 	return fmt.Errorf("disabled")
-}
-func (d DisabledLocalDb) InfluxRetryInterval() time.Duration {
-	return 0
 }

@@ -82,6 +82,7 @@ func (c InfluxClientConfig) convertToRead() influxClientConfigRead {
 		Org:           c.org,
 		Bucket:        c.bucket,
 		WriteInterval: c.writeInterval.String(),
+		RetryInterval: c.retryInterval.String(),
 		TimePrecision: c.timePrecision.String(),
 		LogDebug:      &c.logDebug,
 	}
@@ -128,9 +129,8 @@ func (c HttpServerConfig) convertToRead() httpServerConfigRead {
 
 func (c LocalDbConfig) convertToRead() localDbConfigRead {
 	return localDbConfigRead{
-		Enabled:             &c.enabled,
-		Path:                &c.path,
-		InfluxRetryInterval: c.influxRetryInterval.String(),
+		Enabled: &c.enabled,
+		Path:    &c.path,
 	}
 }
 

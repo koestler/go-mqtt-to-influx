@@ -126,6 +126,10 @@ func (c InfluxClientConfig) WriteInterval() time.Duration {
 	return c.writeInterval
 }
 
+func (c InfluxClientConfig) RetryInterval() time.Duration {
+	return c.retryInterval
+}
+
 func (c InfluxClientConfig) TimePrecision() time.Duration {
 	return c.timePrecision
 }
@@ -221,10 +225,6 @@ func (c LocalDbConfig) Enabled() bool {
 
 func (c LocalDbConfig) Path() string {
 	return c.path
-}
-
-func (c LocalDbConfig) InfluxRetryInterval() time.Duration {
-	return c.influxRetryInterval
 }
 
 func (c StatisticsConfig) Enabled() bool {

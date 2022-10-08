@@ -124,28 +124,17 @@ func (c *localDbConfigRead) TransformAndValidate() (ret LocalDbConfig, err []err
 	// default values
 	ret.enabled = true
 	ret.path = "./go-mqtt-to-influx.db"
-	ret.influxRetryInterval = 1 * time.Minute
 
 	if c == nil {
 		return
 	}
 
-	if c.Enabled != nil && *c.Enabled {
-		ret.enabled = true
+	if c.Enabled != nil {
+		ret.enabled = *c.Enabled
 	}
 
 	if c.Path != nil {
 		ret.path = *c.Path
-	}
-
-	if len(c.InfluxRetryInterval) < 1 {
-		// use default
-	} else if influxRetryInterval, e := time.ParseDuration(c.InfluxRetryInterval); e != nil {
-		err = append(err, fmt.Errorf("LocalDb->InfluxRetryInterval='%s' parse error: %s",
-			c.InfluxRetryInterval, e,
-		))
-	} else {
-		ret.influxRetryInterval = influxRetryInterval
 	}
 
 	return
@@ -401,6 +390,21 @@ func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxCli
 		))
 	} else {
 		ret.writeInterval = writeInterval
+	}
+
+	if len(c.RetryInterval) < 1 {
+		// use default
+		ret.retryInterval = time.Minute
+	} else if retryInterval, e := time.ParseDuration(c.RetryInterval); e != nil {
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->RetryInterval='%s' parse error: %s",
+			name, c.RetryInterval, e,
+		))
+	} else if retryInterval < 0 {
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->RetryInterval='%s' must be positive",
+			name, c.RetryInterval,
+		))
+	} else {
+		ret.retryInterval = retryInterval
 	}
 
 	if len(c.TimePrecision) < 1 {

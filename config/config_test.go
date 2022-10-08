@@ -111,7 +111,6 @@ HttpServer:
 LocalDb:
   Enabled: True
   Path: /tmp/foobar.db
-  InfluxRetryInterval: 30s
 
 Statistics:
   Enabled: True
@@ -147,6 +146,7 @@ InfluxClients:
     Org: myorg
     Bucket: mybucket
     WriteInterval: 400ms
+    RetryInterval: 30s
     TimePrecision: 1ms
     LogDebug: True
   1-local:
@@ -446,6 +446,10 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect WriteInterval of first InfluxClient to be '400ms'")
 	}
 
+	if config.InfluxClients()[0].RetryInterval().String() != "30s" {
+		t.Error("expect RetryInterval of first InfluxClient to be '30s'")
+	}
+
 	if config.InfluxClients()[0].TimePrecision().String() != "1ms" {
 		t.Error("expect TimePrecision of first InfluxClient to be '1ms'")
 	}
@@ -599,10 +603,6 @@ func TestReadConfig_Complex(t *testing.T) {
 			config.LocalDb().Path())
 	}
 
-	if interval := config.LocalDb().InfluxRetryInterval().String(); interval != "30s" {
-		t.Errorf("expect LocalDb->InfluxRetryInterval to be '30s', got '%s'", interval)
-	}
-
 	// Statistics
 	if !config.Statistics().Enabled() {
 		t.Error("expect Statistics->Enabled to be True")
@@ -701,6 +701,10 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default InfluxClient->WriteInterval to be 5s")
 	}
 
+	if config.InfluxClients()[0].RetryInterval().String() != "1m0s" {
+		t.Error("expect default InfluxClient->RetryInterval to be 1m0s")
+	}
+
 	if config.InfluxClients()[0].TimePrecision().String() != "1s" {
 		t.Error("expect default InfluxClient->TimePrecision to be 1s")
 	}
@@ -747,10 +751,6 @@ func TestReadConfig_Default(t *testing.T) {
 	if config.LocalDb().Path() != "./go-mqtt-to-influx.db" {
 		t.Errorf("expect LocalDb->Path to be './go-mqtt-to-influx.db', got '%s'",
 			config.LocalDb().Path())
-	}
-
-	if interval := config.LocalDb().InfluxRetryInterval().String(); interval != "1m0s" {
-		t.Errorf("expect LocalDb->InfluxRetryInterval to be '1m0s', got '%s'", interval)
 	}
 
 	// Statistics
