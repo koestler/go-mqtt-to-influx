@@ -79,7 +79,7 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	} else {
 		ret.version = *c.Version
 		if ret.version != 0 {
-			err = append(err, fmt.Errorf("Version=%d is not supported.", ret.Version))
+			err = append(err, fmt.Errorf("Version=%d is not supported.", ret.Version()))
 		}
 	}
 
