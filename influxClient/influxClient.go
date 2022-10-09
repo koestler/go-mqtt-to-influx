@@ -6,7 +6,9 @@ import (
 	influxdb2Api "github.com/influxdata/influxdb-client-go/v2/api"
 	influxdbHttp2 "github.com/influxdata/influxdb-client-go/v2/api/http"
 	influxdb2Write "github.com/influxdata/influxdb-client-go/v2/api/write"
+	"github.com/pkg/errors"
 	"log"
+	"net"
 	"strings"
 	"time"
 )
@@ -265,17 +267,31 @@ func (ic Client) retryHandler() (success bool) {
 	}
 
 	// try to write to influxdb synchronously
-	if err = ic.blockingWriteApi.WriteRecord(ic.ctx, batch); err != nil {
-		log.Printf("influxClient[%s]: retryHandler: error while writing batch, err=%s", ic.Name(), err)
-		return false
-	} else {
+	var removeFromDb bool
+	if err = ic.blockingWriteApi.WriteRecord(ic.ctx, batch); err == nil {
 		log.Printf("influxClient[%s]: retryHandler: batch written to influxdb, id=%d", ic.Name(), id)
-		if err = ic.localDb.InfluxBacklogDelete(id); err != nil {
-			log.Printf("influxClient[%s]: retryHandler: cannot remove entry from backlog, id=%d, err=%s", ic.Name(), id, err)
-			return false
-		}
-		// successfully send some points and wrote that to the db
-		return true
+		removeFromDb = true
+	} else {
+		removeFromDb = isPermanentError(err)
+		log.Printf("influxClient[%s]: retryHandler: error while writing batch, isPermanentError=%t, err=%s", ic.Name(), removeFromDb, err)
 	}
 
+	if removeFromDb {
+		if err = ic.localDb.InfluxBacklogDelete(id); err == nil {
+			// successfully send some points and wrote that to the db
+			return true
+		} else {
+			log.Printf("influxClient[%s]: retryHandler: cannot remove entry from backlog, id=%d, err=%s", ic.Name(), id, err)
+		}
+	}
+	return false
+}
+
+func isPermanentError(err error) bool {
+	var nerr net.Error
+	if errors.As(err, &nerr) {
+		// is network error -> non permanent
+		return false
+	}
+	return true
 }
