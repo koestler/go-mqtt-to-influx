@@ -23,8 +23,8 @@ func CreateV3(cfg Config, statistics Statistics) (client *ClientV3) {
 	client.cliOpts = mqtt.NewClientOptions().
 		AddBroker(cfg.Broker().String()).
 		SetKeepAlive(cfg.KeepAlive()).
-		SetConnectRetryInterval(cfg.ConnectRetryDelay()).
-		SetMaxReconnectInterval(30 * cfg.ConnectRetryDelay()).
+		SetConnectRetryInterval(time.Second).
+		SetMaxReconnectInterval(cfg.ConnectRetryDelay()).
 		SetConnectTimeout(cfg.ConnectTimeout()).
 		SetOnConnectHandler(client.onConnectionUp()).
 		SetClientID(cfg.ClientId()).

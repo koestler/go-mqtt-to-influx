@@ -1,11 +1,7 @@
 * Write statistics to influxdb
 * Implement shelly converter
 * check what happens mqtt server disconnects / reconnects
-* handle mqtt reconnect:
-```
-MqttDebugLog: 2022/08/29 09:21:15 [client]   Connect comms goroutine - error triggered EOF
-2022/08/29 09:21:17 mqttClient[0-ttn]: set availability to topic='v3/piegn@ttn/tele/koestler-srv5-mqtt-to-influx/status', payload='online'
-```
+* check what happens when mqtt server connection fails on startup
 
 * ttn-dragino; handle case:
 ```
