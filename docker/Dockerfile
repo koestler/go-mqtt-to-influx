@@ -1,13 +1,14 @@
 # build backend
-FROM golang:1.19 as go-builder
+FROM golang:1.19-alpine as go-builder
 
-RUN apt-get update && apt-get install -y git upx
+RUN apk add build-base git upx
 
 WORKDIR /app
 COPY . /app
 
 RUN go generate
 
+# cgo is required by sqlite3
 ENV CGO_ENABLED=1
 ENV GOOS=linux
 
@@ -18,8 +19,7 @@ RUN  VERSION=`git describe --always --tags`; \
 RUN upx /go-mqtt-to-influx
 
 # used to generate /etc/passwd /etc/group
-RUN groupadd -g 1000 app && \
-    useradd -r -u 1000 -g app app
+RUN addgroup -S app && adduser -S app -G app
 RUN chown app:app /go-mqtt-to-influx
 
 # build final image (use alpine since we need ca-certificate for influx ssl to work as well as glibc)
