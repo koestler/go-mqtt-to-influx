@@ -5,7 +5,6 @@ import (
 	"github.com/koestler/go-mqtt-to-influx/influxClient"
 	LocalDb "github.com/koestler/go-mqtt-to-influx/localDb"
 	"github.com/koestler/go-mqtt-to-influx/statistics"
-	"github.com/pkg/errors"
 	"log"
 )
 
@@ -23,7 +22,6 @@ func runInfluxClient(
 		auxiliaryTags[i] = t
 	}
 
-	countStarted := 0
 	for _, influxClientConfig := range cfg.InfluxClients() {
 		if cfg.LogWorkerStart() {
 			log.Printf(
@@ -39,16 +37,9 @@ func runInfluxClient(
 		client := influxClient.RunClient(influxClientConfig, auxiliaryTags, localDbInstance, statisticsInstance)
 
 		influxClientPoolInstance.AddClient(client)
-		countStarted += 1
 		if cfg.LogWorkerStart() {
-			log.Printf(
-				"influxClient[%s]: started", influxClientConfig.Name(),
-			)
+			log.Printf("influxClient[%s]: started", influxClientConfig.Name())
 		}
-	}
-
-	if countStarted < 1 {
-		initiateShutdown <- errors.New("no influxClient was started")
 	}
 
 	return

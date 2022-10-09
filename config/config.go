@@ -209,6 +209,7 @@ func (c mqttClientConfigReadMap) TransformAndValidate() (ret []*MqttClientConfig
 		err = append(err, e...)
 		j++
 	}
+
 	return
 }
 

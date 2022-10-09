@@ -4,7 +4,6 @@ import (
 	"github.com/koestler/go-mqtt-to-influx/config"
 	"github.com/koestler/go-mqtt-to-influx/mqttClient"
 	"github.com/koestler/go-mqtt-to-influx/statistics"
-	"github.com/pkg/errors"
 	"log"
 )
 
@@ -16,7 +15,6 @@ func runMqttClient(
 	// run pool
 	mqttClientPoolInstance = mqttClient.RunPool()
 
-	countStarted := 0
 	for _, mqttClientConfig := range cfg.MqttClients() {
 		if cfg.LogWorkerStart() {
 			log.Printf(
@@ -27,11 +25,6 @@ func runMqttClient(
 
 		client := mqttClient.CreateV5(mqttClientConfig, statisticsInstance)
 		mqttClientPoolInstance.AddClient(client)
-		countStarted += 1
-	}
-
-	if countStarted < 1 {
-		initiateShutdown <- errors.New("no mqttClient was started")
 	}
 
 	return
