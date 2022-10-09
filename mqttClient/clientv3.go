@@ -29,7 +29,7 @@ func CreateV3(cfg Config, statistics Statistics) (client *ClientV3) {
 		SetOnConnectHandler(client.onConnectionUp()).
 		SetClientID(cfg.ClientId()).
 		SetOrderMatters(false).
-		SetCleanSession(false) // use persistent session
+		SetCleanSession(true)
 
 	// set logging
 	// this is done globally for all mqtt v3 connection since it cannot be done per client
