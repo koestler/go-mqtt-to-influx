@@ -19,9 +19,14 @@ func RunPool() (pool *ClientPool) {
 }
 
 func (p *ClientPool) Shutdown() {
-	p.clientsMutex.RLock()
-	defer p.clientsMutex.RUnlock()
-	for _, c := range p.clients {
+	// remove all clients from list
+	p.clientsMutex.Lock()
+	clients := p.clients
+	p.clients = make(map[string]*Client)
+	p.clientsMutex.Unlock()
+
+	// shutdown clients
+	for _, c := range clients {
 		c.Shutdown()
 	}
 }
