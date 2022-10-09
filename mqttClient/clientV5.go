@@ -66,6 +66,28 @@ func CreateV5(cfg Config, statistics Statistics) (client *ClientV5) {
 	return
 }
 
+func (c *ClientV5) Run() {
+	// add routes to router
+	c.subscriptionsMutex.RLock()
+	defer c.subscriptionsMutex.RUnlock()
+	for _, s := range c.subscriptions {
+		sub := s
+		c.router.RegisterHandler(sub.subscribeTopic, func(p *paho.Publish) {
+			sub.messageHandler(Message{
+				topic:   p.Topic,
+				payload: p.Payload,
+			})
+		})
+	}
+
+	// start connection manager
+	var err error
+	c.cm, err = autopaho.NewConnection(c.ctx, c.cliCfg)
+	if err != nil {
+		panic(err) // never happens
+	}
+}
+
 func (c *ClientV5) onConnectionUp() func(*autopaho.ConnectionManager, *paho.Connack) {
 	return func(cm *autopaho.ConnectionManager, conack *paho.Connack) {
 		log.Printf("mqttClientV5[%s]: connection is up", c.cfg.Name())
@@ -94,28 +116,6 @@ func (c *ClientV5) onConnectionUp() func(*autopaho.ConnectionManager, *paho.Conn
 		}); err != nil {
 			log.Printf("mqttClientV5[%s]: failed to subscribe: %s", c.cfg.Name(), err)
 		}
-	}
-}
-
-func (c *ClientV5) Run() {
-	// add routes to router
-	c.subscriptionsMutex.RLock()
-	defer c.subscriptionsMutex.RUnlock()
-	for _, s := range c.subscriptions {
-		sub := s
-		c.router.RegisterHandler(sub.subscribeTopic, func(p *paho.Publish) {
-			sub.messageHandler(Message{
-				topic:   p.Topic,
-				payload: p.Payload,
-			})
-		})
-	}
-
-	// start connection manager
-	var err error
-	c.cm, err = autopaho.NewConnection(c.ctx, c.cliCfg)
-	if err != nil {
-		panic(err) // never happens
 	}
 }
 

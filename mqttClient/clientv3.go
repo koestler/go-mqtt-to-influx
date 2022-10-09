@@ -52,6 +52,11 @@ func CreateV3(cfg Config, statistics Statistics) (client *ClientV3) {
 	return
 }
 
+func (c *ClientV3) Run() {
+	c.mc = mqtt.NewClient(c.cliOpts)
+	c.mc.Connect()
+}
+
 func (c *ClientV3) onConnectionUp() func(client mqtt.Client) {
 	return func(client mqtt.Client) {
 		log.Printf("mqttClientV3[%s]: connection is up", c.cfg.Name())
@@ -81,11 +86,6 @@ func (c *ClientV3) onConnectionUp() func(client mqtt.Client) {
 			}
 		}
 	}
-}
-
-func (c *ClientV3) Run() {
-	c.mc = mqtt.NewClient(c.cliOpts)
-	c.mc.Connect()
 }
 
 func (c *ClientV3) Shutdown() {
