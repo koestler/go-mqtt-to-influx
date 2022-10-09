@@ -44,6 +44,8 @@ type Config interface {
 	WriteInterval() time.Duration
 	RetryInterval() time.Duration
 	TimePrecision() time.Duration
+	BatchSize() uint
+	RetryQueueLimit() uint
 	LogDebug() bool
 }
 
@@ -63,27 +65,23 @@ type Point interface {
 type LocalDb interface {
 	Enabled() bool
 	InfluxBacklogAdd(client, batch string) error
-	InfluxBacklogSize(client string) (err error, numbBatches, numbLines int)
+	InfluxBacklogSize(client string) (err error, numbBatches, numbLines uint)
 	InfluxBacklogGet(client string) (err error, id int, batch string)
 	InfluxBacklogDelete(id int) error
-	InfluxAggregateBacklog(client string, batchSize int) error
+	InfluxAggregateBacklog(client string, batchSize uint) error
 }
 
 type Statistics interface {
 	IncrementOne(module, name, field string)
 }
 
-const batchSize = 5000
-const retryQueueLimit = 20
-
 func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, statistics Statistics) *Client {
 	// Create a new HTTPClient
 	opts := influxdb2.DefaultOptions().SetUseGZip(true)
 	opts = opts.SetFlushInterval(uint(config.WriteInterval().Milliseconds()))
-	opts = opts.SetRetryInterval(uint(
-		minD(config.RetryInterval(), (retryQueueLimit-1)*config.WriteInterval()).Milliseconds()),
-	)
-	opts = opts.SetBatchSize(batchSize).SetRetryBufferLimit(retryQueueLimit * batchSize)
+	opts = opts.SetRetryInterval(uint(config.RetryInterval().Milliseconds()))
+	opts = opts.SetBatchSize(config.BatchSize())
+	opts = opts.SetRetryBufferLimit(config.RetryQueueLimit() * config.BatchSize())
 	opts = opts.SetPrecision(config.TimePrecision())
 	if config.LogDebug() {
 		opts = opts.SetLogLevel(3)
@@ -143,13 +141,6 @@ func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, sta
 
 	// create client object
 	return &c
-}
-
-func minD(a, b time.Duration) time.Duration {
-	if a <= b {
-		return a
-	}
-	return b
 }
 
 func (ic Client) Shutdown() {
@@ -220,7 +211,7 @@ func (ic Client) worker() {
 				log.Printf("influxClient[%s]: add failed: %s", ic.Name(), err)
 			}
 		case <-aggregateTicker.C:
-			if err := ic.localDb.InfluxAggregateBacklog(ic.Name(), batchSize); err != nil {
+			if err := ic.localDb.InfluxAggregateBacklog(ic.Name(), ic.config.BatchSize()); err != nil {
 				log.Printf("influxClient[%s]: aggregate failed: %s", ic.Name(), err)
 			}
 		case <-retryTicker.C:

@@ -422,6 +422,22 @@ func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxCli
 		ret.timePrecision = timePrecision
 	}
 
+	if c.BatchSize == nil {
+		// use default 5000
+		ret.batchSize = 5000
+	} else if b := *c.BatchSize; b > 0 {
+		ret.batchSize = b
+	} else {
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->BatchSize='%d' must be positive", name, b))
+	}
+
+	if c.RetryQueueLimit == nil {
+		// use default 20
+		ret.retryQueueLimit = 20
+	} else {
+		ret.retryQueueLimit = *c.RetryQueueLimit
+	}
+
 	if c.LogDebug != nil && *c.LogDebug {
 		ret.logDebug = true
 	}

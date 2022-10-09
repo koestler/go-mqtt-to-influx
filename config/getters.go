@@ -134,6 +134,14 @@ func (c InfluxClientConfig) TimePrecision() time.Duration {
 	return c.timePrecision
 }
 
+func (c InfluxClientConfig) BatchSize() uint {
+	return c.batchSize
+}
+
+func (c InfluxClientConfig) RetryQueueLimit() uint {
+	return c.retryQueueLimit
+}
+
 func (c InfluxClientConfig) LogDebug() bool {
 	return c.logDebug
 }

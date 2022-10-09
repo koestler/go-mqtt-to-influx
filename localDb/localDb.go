@@ -12,10 +12,10 @@ type LocalDb interface {
 	Enabled() bool
 	Shutdown()
 	InfluxBacklogAdd(client, batch string) error
-	InfluxBacklogSize(client string) (err error, numbBatches, numbLines int)
+	InfluxBacklogSize(client string) (err error, numbBatches, numbLines uint)
 	InfluxBacklogGet(client string) (err error, id int, batch string)
 	InfluxBacklogDelete(id int) error
-	InfluxAggregateBacklog(client string, batchSize int) error
+	InfluxAggregateBacklog(client string, batchSize uint) error
 }
 
 type SqliteLocalDb struct {
@@ -86,7 +86,7 @@ func (d SqliteLocalDb) InfluxBacklogAdd(client, batch string) error {
 	return nil
 }
 
-func (d SqliteLocalDb) InfluxAggregateBacklog(client string, batchSize int) error {
+func (d SqliteLocalDb) InfluxAggregateBacklog(client string, batchSize uint) error {
 	// fetch newest up to 100 rows that sum up to no more batchSize number of lines
 	rows, err := d.db.Query(`
 SELECT id, numbLines, compressedBatch
@@ -154,7 +154,7 @@ WHERE client = ? AND id >= (
 	return nil
 }
 
-func (d SqliteLocalDb) InfluxBacklogSize(client string) (err error, numbBatches, numbLines int) {
+func (d SqliteLocalDb) InfluxBacklogSize(client string) (err error, numbBatches, numbLines uint) {
 	row := d.db.QueryRow(
 		"SELECT COUNT(*), IFNULL(SUM(numbLines), 0) FROM influxBacklog WHERE client = ?",
 		client,
@@ -204,7 +204,7 @@ func (d DisabledLocalDb) Shutdown() {}
 func (d DisabledLocalDb) InfluxBacklogAdd(client, batch string) error {
 	return fmt.Errorf("disabled")
 }
-func (d DisabledLocalDb) InfluxBacklogSize(client string) (err error, numbBatches, numbLines int) {
+func (d DisabledLocalDb) InfluxBacklogSize(client string) (err error, numbBatches, numbLines uint) {
 	return fmt.Errorf("disabled"), 0, 0
 }
 func (d DisabledLocalDb) InfluxBacklogGet(client string) (err error, id int, batch string) {
@@ -213,6 +213,6 @@ func (d DisabledLocalDb) InfluxBacklogGet(client string) (err error, id int, bat
 func (d DisabledLocalDb) InfluxBacklogDelete(id int) error {
 	return fmt.Errorf("disabled")
 }
-func (d DisabledLocalDb) InfluxAggregateBacklog(client string, batchSize int) error {
+func (d DisabledLocalDb) InfluxAggregateBacklog(client string, batchSize uint) error {
 	return nil
 }

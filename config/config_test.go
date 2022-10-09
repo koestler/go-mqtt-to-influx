@@ -148,6 +148,8 @@ InfluxClients:
     WriteInterval: 400ms
     RetryInterval: 30s
     TimePrecision: 1ms
+    BatchSize: 10000
+    RetryQueueLimit: 50
     LogDebug: True
   1-local:
     Url: http://172.17.0.4:8086
@@ -454,6 +456,14 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect TimePrecision of first InfluxClient to be '1ms'")
 	}
 
+	if config.InfluxClients()[0].BatchSize() != 10000 {
+		t.Error("expect BatchSize of first InfluxClient to be 10000")
+	}
+
+	if config.InfluxClients()[0].RetryQueueLimit() != 50 {
+		t.Error("expect RetryQueueLimit of first InfluxClient to be 50")
+	}
+
 	if !config.InfluxClients()[0].LogDebug() {
 		t.Error("expect LogDebug of first InfluxClient to be True")
 	}
@@ -707,6 +717,14 @@ func TestReadConfig_Default(t *testing.T) {
 
 	if config.InfluxClients()[0].TimePrecision().String() != "1s" {
 		t.Error("expect default InfluxClient->TimePrecision to be 1s")
+	}
+
+	if config.InfluxClients()[0].BatchSize() != 5000 {
+		t.Error("expect BatchSize of first InfluxClient to be 5000")
+	}
+
+	if config.InfluxClients()[0].RetryQueueLimit() != 20 {
+		t.Error("expect RetryQueueLimit of first InfluxClient to be 20")
 	}
 
 	if config.InfluxClients()[0].LogDebug() {
