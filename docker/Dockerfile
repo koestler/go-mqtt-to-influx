@@ -1,7 +1,7 @@
 # build backend
 FROM golang:1.19-alpine as go-builder
 
-RUN apk add build-base git upx
+RUN apk add build-base git
 
 WORKDIR /app
 COPY . /app
@@ -15,8 +15,6 @@ ENV GOOS=linux
 RUN  VERSION=`git describe --always --tags`; \
      BUILD_TIME=`date -Is`; \
      go build -ldflags="-s -w -X main.buildVersion=$VERSION -X main.buildTime=$BUILD_TIME" -o /go-mqtt-to-influx
-
-RUN upx /go-mqtt-to-influx
 
 # used to generate /etc/passwd /etc/group
 RUN addgroup -S app && adduser -S app -G app
