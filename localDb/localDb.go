@@ -19,8 +19,9 @@ type LocalDb interface {
 }
 
 type SqliteLocalDb struct {
-	config Config
-	db     *sql.DB
+	config       Config
+	db           *sql.DB
+	vacuumNeeded bool
 }
 
 type DisabledLocalDb struct{}
@@ -50,8 +51,9 @@ func Run(config Config) LocalDb {
 			}
 
 			return SqliteLocalDb{
-				config: config,
-				db:     db,
+				config:       config,
+				db:           db,
+				vacuumNeeded: true,
 			}
 		}
 	}
@@ -131,7 +133,14 @@ WHERE client = ? AND id >= (
 	}
 
 	if len(ids) < 1 {
-		// nothing todo
+		// nothing to aggregte, free up unused disk space instead
+		if d.vacuumNeeded {
+			if _, err := d.db.Exec("VACUUM"); err != nil {
+				log.Printf("localDb: error during VACUUM: %s", err)
+			}
+			d.vacuumNeeded = false
+		}
+
 		return nil
 	}
 
@@ -193,6 +202,8 @@ func (d SqliteLocalDb) InfluxBacklogDelete(id int) error {
 	if _, err := d.db.Exec("DELETE FROM influxBacklog  WHERE id = ?", id); err != nil {
 		return fmt.Errorf("cannot delete from influxBacklog: %s", err)
 	}
+
+	d.vacuumNeeded = true
 
 	return nil
 }
