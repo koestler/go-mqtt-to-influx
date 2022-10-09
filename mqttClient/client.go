@@ -34,7 +34,14 @@ func (c *ClientStruct) AddRoute(subscribeTopic string, messageHandler MessageHan
 
 	if c.cfg.LogMessages() {
 		s.messageHandler = func(message Message) {
-			log.Printf("mqttClient[%s]: received: %s %s", c.cfg.Name(), message.Topic(), message.Payload())
+			// only log first 80 chars of payload
+			pl := make([]byte, 0, 80)
+			pl = append(pl, message.Payload()[:80]...)
+			if len(message.Payload()) > 80 {
+				pl = append(pl, []byte("...")...)
+			}
+
+			log.Printf("mqttClient[%s]: received: %s %s", c.cfg.Name(), message.Topic(), pl)
 			c.statistics.IncrementOne("mqtt", c.Name(), subscribeTopic)
 			messageHandler(message)
 		}
