@@ -231,13 +231,15 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 	} else {
 		if broker, e := url.ParseRequestURI(c.Broker); e != nil {
 			err = append(err, fmt.Errorf("MqttClientConfig->%s->Broker invalid url: %s", name, e))
+		} else if broker == nil {
+			err = append(err, fmt.Errorf("MqttClientConfig->%s->Broker cannot parse broker", name))
 		} else {
 			ret.broker = broker
 		}
 	}
 
 	if c.ProtocolVersion == nil {
-		ret.protocolVersion = 3
+		ret.protocolVersion = 5
 	} else if *c.ProtocolVersion == 3 || *c.ProtocolVersion == 5 {
 		ret.protocolVersion = *c.ProtocolVersion
 	} else {

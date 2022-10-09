@@ -4,6 +4,10 @@ import (
 	"strings"
 )
 
+const availabilityRetain = true
+const availabilityOnline = "online"
+const availabilityOffline = "offline"
+
 func (c *ClientStruct) AvailabilityEnabled() bool {
 	return len(c.cfg.AvailabilityTopic()) > 0
 }

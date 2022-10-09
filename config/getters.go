@@ -50,6 +50,7 @@ func (c MqttClientConfig) Name() string {
 	return c.name
 }
 
+// Broker always returns a non-nil pointer.
 func (c MqttClientConfig) Broker() *url.URL {
 	return c.broker
 }

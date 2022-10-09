@@ -23,7 +23,13 @@ func runMqttClient(
 			)
 		}
 
-		client := mqttClient.CreateV5(mqttClientConfig, statisticsInstance)
+		var client mqttClient.Client
+		if mqttClientConfig.ProtocolVersion() == 3 {
+			client = mqttClient.CreateV3(mqttClientConfig, statisticsInstance)
+		} else {
+			client = mqttClient.CreateV5(mqttClientConfig, statisticsInstance)
+		}
+
 		mqttClientPoolInstance.AddClient(client)
 	}
 

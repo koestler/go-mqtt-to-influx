@@ -135,6 +135,7 @@ MqttClients:
 
   1-local-mosquitto:
     Broker: "tcp://172.17.0.5:1883"
+    ProtocolVersion: 3
     TopicPrefix: wiedikon/
     LogMessages: True
     LogDebug: False
@@ -399,6 +400,10 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect LogMessages of first MqttClient to be False")
 	}
 
+	if config.MqttClients()[1].ProtocolVersion() != 3 {
+		t.Error("expect ProtocolVersion of second MqttClient to be 3")
+	}
+
 	if !config.MqttClients()[0].LogDebug() {
 		t.Error("expect LogDebug of first MqttClient to be True")
 	}
@@ -657,8 +662,8 @@ func TestReadConfig_Default(t *testing.T) {
 	}
 
 	// influxClients section
-	if config.MqttClients()[0].ProtocolVersion() != 3 {
-		t.Error("expect default MqttClient->Protocol to be 3")
+	if config.MqttClients()[0].ProtocolVersion() != 5 {
+		t.Error("expect default MqttClient->Protocol to be 5")
 	}
 
 	if config.MqttClients()[0].User() != "" {
