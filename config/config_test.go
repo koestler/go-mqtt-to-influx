@@ -686,12 +686,12 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default MqttClient->KeepAlive to be 10s")
 	}
 
-	if config.MqttClients()[0].ConnectRetryDelay().String() != "1m0s" {
-		t.Error("expect default MqttClient->ConnectRetryDelay to be 1m0s")
+	if config.MqttClients()[0].ConnectRetryDelay().String() != "10s" {
+		t.Error("expect default MqttClient->ConnectRetryDelay to be 10s")
 	}
 
-	if config.MqttClients()[0].ConnectTimeout().String() != "10s" {
-		t.Error("expect default MqttClient->ConnectTimeout to be 10s")
+	if config.MqttClients()[0].ConnectTimeout().String() != "1s" {
+		t.Error("expect default MqttClient->ConnectTimeout to be 1s")
 	}
 
 	expectedAvailabilityTopic := "%Prefix%tele/%ClientId%/status"
@@ -712,12 +712,12 @@ func TestReadConfig_Default(t *testing.T) {
 	}
 
 	// influxClients section
-	if config.InfluxClients()[0].WriteInterval().String() != "5s" {
-		t.Error("expect default InfluxClient->WriteInterval to be 5s")
+	if config.InfluxClients()[0].WriteInterval().String() != "10s" {
+		t.Error("expect default InfluxClient->WriteInterval to be 10s")
 	}
 
-	if config.InfluxClients()[0].RetryInterval().String() != "1m0s" {
-		t.Error("expect default InfluxClient->RetryInterval to be 1m0s")
+	if config.InfluxClients()[0].RetryInterval().String() != "10s" {
+		t.Error("expect default InfluxClient->RetryInterval to be 10s")
 	}
 
 	if config.InfluxClients()[0].TimePrecision().String() != "1s" {
@@ -758,8 +758,8 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default HttpServer->Bind to be '[::1]'")
 	}
 
-	if config.HttpServer().Port() != 8042 {
-		t.Error("expect default HttpServer->Port to be 8042")
+	if config.HttpServer().Port() != 8000 {
+		t.Error("expect default HttpServer->Port to be 8000")
 	}
 
 	if config.HttpServer().LogRequests() {

@@ -28,8 +28,8 @@ type MqttClientConfig struct {
 	clientId          string        // optional: default go-mqtt-to-influx-UUID
 	qos               byte          // optional: default 1, must be 0, 1, 2
 	keepAlive         time.Duration // optional: default 10s
-	connectRetryDelay time.Duration // optional: default 1m
-	connectTimeout    time.Duration // optional: default 10s
+	connectRetryDelay time.Duration // optional: default 10s
+	connectTimeout    time.Duration // optional: default 1s
 	availabilityTopic string        // optional: default %Prefix%tele/%ClientId%/status
 	topicPrefix       string        // optional: default empty
 	logDebug          bool          // optional: default False
@@ -42,8 +42,8 @@ type InfluxClientConfig struct {
 	token           string        // mandatory
 	org             string        // mandatory
 	bucket          string        // mandatory
-	writeInterval   time.Duration // optional: default 5s
-	retryInterval   time.Duration // optional: default 1min
+	writeInterval   time.Duration // optional: default 10s
+	retryInterval   time.Duration // optional: default 10s
 	timePrecision   time.Duration // optional: default 1s
 	batchSize       uint          // optional: default 5000
 	retryQueueLimit uint          // optional: default 20
@@ -75,7 +75,7 @@ type MqttTopicConfig struct {
 type HttpServerConfig struct {
 	enabled     bool   // defined automatically if HttpServer section exists
 	bind        string // optional: defaults to ::1 (ipv6 loopback)
-	port        int    // optional: defaults to 8042
+	port        int    // optional: defaults to 8000
 	logRequests bool   // optional:  default False
 }
 

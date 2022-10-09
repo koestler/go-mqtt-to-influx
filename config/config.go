@@ -97,7 +97,7 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 func (c *httpServerConfigRead) TransformAndValidate() (ret HttpServerConfig, err []error) {
 	ret.enabled = false
 	ret.bind = "[::1]"
-	ret.port = 8042
+	ret.port = 8000
 
 	if c == nil {
 		return
@@ -277,8 +277,8 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 	}
 
 	if len(c.ConnectRetryDelay) < 1 {
-		// use default 1m
-		ret.connectRetryDelay = time.Minute
+		// use default 10s
+		ret.connectRetryDelay = 10 * time.Second
 	} else if connectRetryDelay, e := time.ParseDuration(c.ConnectRetryDelay); e != nil {
 		err = append(err, fmt.Errorf("MqttClientConfig->%s->ConnectRetryDelay='%s' parse error: %s",
 			name, c.ConnectRetryDelay, e,
@@ -292,8 +292,8 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 	}
 
 	if len(c.ConnectTimeout) < 1 {
-		// use default 10s
-		ret.connectTimeout = 10 * time.Second
+		// use default 1s
+		ret.connectTimeout = time.Second
 	} else if connectTimeout, e := time.ParseDuration(c.ConnectTimeout); e != nil {
 		err = append(err, fmt.Errorf("MqttClientConfig->%s->ConnectTimeout='%s' parse error: %s",
 			name, c.ConnectTimeout, e,
@@ -381,8 +381,8 @@ func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxCli
 	}
 
 	if len(c.WriteInterval) < 1 {
-		// use default
-		ret.writeInterval = 5 * time.Second
+		// use default 10s
+		ret.writeInterval = 10 * time.Second
 	} else if writeInterval, e := time.ParseDuration(c.WriteInterval); e != nil {
 		err = append(err, fmt.Errorf("InfluxClientConfig->%s->WriteInterval='%s' parse error: %s",
 			name, c.WriteInterval, e,
@@ -396,8 +396,8 @@ func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxCli
 	}
 
 	if len(c.RetryInterval) < 1 {
-		// use default
-		ret.retryInterval = time.Minute
+		// use default 10s
+		ret.retryInterval = 10 * time.Second
 	} else if retryInterval, e := time.ParseDuration(c.RetryInterval); e != nil {
 		err = append(err, fmt.Errorf("InfluxClientConfig->%s->RetryInterval='%s' parse error: %s",
 			name, c.RetryInterval, e,
