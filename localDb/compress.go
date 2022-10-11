@@ -20,7 +20,7 @@ func compress(inp string) (error, []byte) {
 
 func uncompress(inp []byte) (error, string) {
 	r := bytes.NewReader(inp)
-	gz, err := gzip.NewReader(r);
+	gz, err := gzip.NewReader(r)
 	if err != nil {
 		return err, ""
 	}

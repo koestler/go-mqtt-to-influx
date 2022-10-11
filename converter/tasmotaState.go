@@ -8,15 +8,17 @@ import (
 )
 
 // examples:
-// {
-//   "Time":"2018-12-16T23:05:14","Uptime":"1T11:32:21","Vcc":3.177,"POWER":"OFF",
-//   "wifi":{"AP":1,"SSId":"piegn-iot","BSSId":"04:F0:21:33:40:99","Channel":1,"RSSI":66}
-// }
-// {
-//   "Time":"2018-12-16T23:06:09","Uptime":"8T03:08:26","Vcc":3.112,
-//   "POWER1":"ON","POWER2":"OFF","POWER3":"OFF","POWER4":"OFF",
-//   "wifi":{"AP":1,"SSId":"piegn-iot","BSSId":"04:F0:21:2F:B7:CC","Channel":1,"RSSI":100}
-// }
+//
+//	{
+//	  "Time":"2018-12-16T23:05:14","Uptime":"1T11:32:21","Vcc":3.177,"POWER":"OFF",
+//	  "wifi":{"AP":1,"SSId":"piegn-iot","BSSId":"04:F0:21:33:40:99","Channel":1,"RSSI":66}
+//	}
+//
+//	{
+//	  "Time":"2018-12-16T23:06:09","Uptime":"8T03:08:26","Vcc":3.112,
+//	  "POWER1":"ON","POWER2":"OFF","POWER3":"OFF","POWER4":"OFF",
+//	  "wifi":{"AP":1,"SSId":"piegn-iot","BSSId":"04:F0:21:2F:B7:CC","Channel":1,"RSSI":100}
+//	}
 type tasmotaStateMessage struct {
 	Time   string  // save to timeValue
 	Uptime string  // save to timeValue
