@@ -110,7 +110,7 @@ type mqttClientConfigRead struct {
 	ProtocolVersion   *int    `yaml:"ProtocolVersion"`
 	User              string  `yaml:"User"`
 	Password          string  `yaml:"Password"`
-	ClientId          string  `yaml:"ClientId"`
+	ClientId          *string `yaml:"ClientId"`
 	Qos               *byte   `yaml:"Qos"`
 	KeepAlive         string  `yaml:"KeepAlive"`
 	ConnectRetryDelay string  `yaml:"ConnectRetryDelay"`

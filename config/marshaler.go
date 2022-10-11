@@ -63,7 +63,7 @@ func (c MqttClientConfig) convertToRead() mqttClientConfigRead {
 		ProtocolVersion:   &c.protocolVersion,
 		User:              c.user,
 		Password:          c.password,
-		ClientId:          c.clientId,
+		ClientId:          &c.clientId,
 		Qos:               &c.qos,
 		KeepAlive:         c.keepAlive.String(),
 		ConnectRetryDelay: c.connectRetryDelay.String(),

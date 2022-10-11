@@ -218,7 +218,6 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 		name:        name,
 		user:        c.User,
 		password:    c.Password,
-		clientId:    c.ClientId,
 		topicPrefix: c.TopicPrefix,
 	}
 
@@ -246,9 +245,12 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 		err = append(err, fmt.Errorf("MqttClientConfig->%s->Protocol=%d but must be 3 or 5", name, *c.ProtocolVersion))
 	}
 
-	if len(ret.clientId) < 1 {
+	if c.ClientId == nil {
 		ret.clientId = "go-mqtt-to-influx-" + uuid.New().String()
+	} else {
+		ret.clientId = *c.ClientId
 	}
+
 	if c.Qos == nil {
 		ret.qos = 1 // default qos is 1
 	} else if *c.Qos == 0 || *c.Qos == 1 || *c.Qos == 2 {
