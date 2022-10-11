@@ -264,7 +264,10 @@ func (ic Client) retryHandler() (success bool) {
 		removeFromDb = true
 	} else {
 		removeFromDb = isPermanentError(err)
-		log.Printf("influxClient[%s]: retryHandler: error while writing batch, isPermanentError=%t, err=%s", ic.Name(), removeFromDb, err)
+		log.Printf("influxClient[%s]: retryHandler: error while writing batch, isPermanentError=%t, err=%s",
+			ic.Name(), removeFromDb,
+			strings.ReplaceAll(err.Error(), "\n", ""),
+		)
 	}
 
 	if removeFromDb {
