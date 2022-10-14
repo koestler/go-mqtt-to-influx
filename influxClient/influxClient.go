@@ -6,9 +6,7 @@ import (
 	influxdb2Api "github.com/influxdata/influxdb-client-go/v2/api"
 	influxdbHttp2 "github.com/influxdata/influxdb-client-go/v2/api/http"
 	influxdb2Write "github.com/influxdata/influxdb-client-go/v2/api/write"
-	"github.com/pkg/errors"
 	"log"
-	"net"
 	"strings"
 	"time"
 )
@@ -83,6 +81,7 @@ func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, sta
 	opts = opts.SetBatchSize(config.BatchSize())
 	opts = opts.SetRetryBufferLimit(config.RetryQueueLimit() * config.BatchSize())
 	opts = opts.SetPrecision(config.TimePrecision())
+	opts = opts.SetHTTPRequestTimeout(2) // set request timeout to 2s instead of default 20s
 	if config.LogDebug() {
 		opts = opts.SetLogLevel(3)
 	}
@@ -224,12 +223,14 @@ func (ic Client) worker() {
 	}
 }
 
-func failedCallbackHandler(client string, retryBatchChan chan string) func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
+func failedCallbackHandler(client string, retryBatchChan chan string) func(batch string, error influxdbHttp2.Error, retryAttempts uint) (retry bool) {
 	return func(batch string, error influxdbHttp2.Error, retryAttempts uint) bool {
 		// write to backlog
 		select {
 		case retryBatchChan <- batch:
-			log.Printf("influxClient[%s]: write failed, added to backlog", client)
+			log.Printf("influxClient[%s]: write failed, added %d lines to backlog",
+				client, strings.Count(batch, "\n"),
+			)
 			return false
 		default:
 			log.Printf("influxClient[%s]: write failed, backlog chan full, keep retrying", client)
@@ -238,7 +239,7 @@ func failedCallbackHandler(client string, retryBatchChan chan string) func(batch
 	}
 }
 
-func (ic Client) retryHandler() (success bool) {
+func (ic Client) retryHandler() (triggerAgain bool) {
 	// while there is something on the backlog, send it synchronously and remove it on success
 	if err, numbBatches, numbLines := ic.localDb.InfluxBacklogSize(ic.Name()); err != nil {
 		log.Printf("influxClient[%s]: retryHandler: cannot access backlog: err=%s", ic.Name(), err)
@@ -258,34 +259,20 @@ func (ic Client) retryHandler() (success bool) {
 	}
 
 	// try to write to influxdb synchronously
-	var removeFromDb bool
-	if err = ic.blockingWriteApi.WriteRecord(ic.ctx, batch); err == nil {
-		log.Printf("influxClient[%s]: retryHandler: batch written to influxdb, id=%d", ic.Name(), id)
-		removeFromDb = true
-	} else {
-		removeFromDb = isPermanentError(err)
-		log.Printf("influxClient[%s]: retryHandler: error while writing batch, isPermanentError=%t, err=%s",
-			ic.Name(), removeFromDb,
-			strings.ReplaceAll(err.Error(), "\n", ""),
+	if err = ic.blockingWriteApi.WriteRecord(ic.ctx, batch); err != nil {
+		log.Printf("influxClient[%s]: retryHandler: error while writing batch, err=%s",
+			ic.Name(), strings.ReplaceAll(err.Error(), "\n", ""),
 		)
-	}
-
-	if removeFromDb {
-		if err = ic.localDb.InfluxBacklogDelete(id); err == nil {
-			// successfully send some points and wrote that to the db
-			return true
-		} else {
-			log.Printf("influxClient[%s]: retryHandler: cannot remove entry from backlog, id=%d, err=%s", ic.Name(), id, err)
-		}
-	}
-	return false
-}
-
-func isPermanentError(err error) bool {
-	var nerr net.Error
-	if errors.As(err, &nerr) {
-		// is network error -> non permanent
 		return false
 	}
+
+	// batch written to db, delete it
+	log.Printf("influxClient[%s]: retryHandler: batch written to influxdb, id=%d", ic.Name(), id)
+	if err = ic.localDb.InfluxBacklogDelete(id); err != nil {
+		log.Printf("influxClient[%s]: retryHandler: cannot remove entry from backlog, id=%d, err=%s", ic.Name(), id, err)
+		return false
+	}
+
+	// successfully send some points and wrote that to the db, immediately send next batch
 	return true
 }

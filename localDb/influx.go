@@ -37,7 +37,7 @@ WHERE client = ? AND id >= (
      FROM influxBacklog
      WHERE client = ?
      ORDER BY id DESC
-     LIMIT 16
+     LIMIT 255
     ) f
     WHERE f.cum < ?
     GROUP BY NULL
