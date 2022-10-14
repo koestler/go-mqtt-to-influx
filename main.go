@@ -97,7 +97,9 @@ func main() {
 
 		// start http server
 		httpServerInstance := runHttpServer(cfg, statisticsInstance)
-		defer httpServerInstance.Shutdown()
+		if httpServerInstance != nil {
+			defer httpServerInstance.Shutdown()
+		}
 
 		// create mqtt clients
 		mqttClientPoolInstance := runMqttClient(cfg, statisticsInstance, initiateShutdown)
