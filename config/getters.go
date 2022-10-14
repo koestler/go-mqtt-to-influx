@@ -131,6 +131,10 @@ func (c InfluxClientConfig) RetryInterval() time.Duration {
 	return c.retryInterval
 }
 
+func (c InfluxClientConfig) AggregateInterval() time.Duration {
+	return c.aggregateInterval
+}
+
 func (c InfluxClientConfig) TimePrecision() time.Duration {
 	return c.timePrecision
 }

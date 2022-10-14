@@ -148,6 +148,7 @@ InfluxClients:
     Bucket: mybucket
     WriteInterval: 400ms
     RetryInterval: 30s
+    AggregateInterval: 90s
     TimePrecision: 1ms
     BatchSize: 10000
     RetryQueueLimit: 50
@@ -457,6 +458,10 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect RetryInterval of first InfluxClient to be '30s'")
 	}
 
+	if config.InfluxClients()[0].AggregateInterval().String() != "1m30s" {
+		t.Error("expect AggregateInterval of first InfluxClient to be '1m30s'")
+	}
+
 	if config.InfluxClients()[0].TimePrecision().String() != "1ms" {
 		t.Error("expect TimePrecision of first InfluxClient to be '1ms'")
 	}
@@ -718,6 +723,10 @@ func TestReadConfig_Default(t *testing.T) {
 
 	if config.InfluxClients()[0].RetryInterval().String() != "10s" {
 		t.Error("expect default InfluxClient->RetryInterval to be 10s")
+	}
+
+	if config.InfluxClients()[0].AggregateInterval().String() != "1m0s" {
+		t.Error("expect default InfluxClient->AggregateInterval to be 1m0s")
 	}
 
 	if config.InfluxClients()[0].TimePrecision().String() != "1s" {

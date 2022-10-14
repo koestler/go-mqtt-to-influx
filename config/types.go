@@ -37,17 +37,18 @@ type MqttClientConfig struct {
 }
 
 type InfluxClientConfig struct {
-	name            string        // defined automatically by map key
-	url             string        // mandatory
-	token           string        // mandatory
-	org             string        // mandatory
-	bucket          string        // mandatory
-	writeInterval   time.Duration // optional: default 10s
-	retryInterval   time.Duration // optional: default 10s
-	timePrecision   time.Duration // optional: default 1s
-	batchSize       uint          // optional: default 5000
-	retryQueueLimit uint          // optional: default 20
-	logDebug        bool          // optional: default False
+	name              string        // defined automatically by map key
+	url               string        // mandatory
+	token             string        // mandatory
+	org               string        // mandatory
+	bucket            string        // mandatory
+	writeInterval     time.Duration // optional: default 10s
+	retryInterval     time.Duration // optional: default 10s
+	aggregateInterval time.Duration // optional: default 60s
+	timePrecision     time.Duration // optional: default 1s
+	batchSize         uint          // optional: default 5000
+	retryQueueLimit   uint          // optional: default 20
+	logDebug          bool          // optional: default False
 }
 
 type InfluxAuxiliaryTags struct {
@@ -124,16 +125,17 @@ type mqttClientConfigRead struct {
 type mqttClientConfigReadMap map[string]mqttClientConfigRead
 
 type influxClientConfigRead struct {
-	Url             string `yaml:"Url"`
-	Token           string `yaml:"Token"`
-	Org             string `yaml:"Org"`
-	Bucket          string `yaml:"Bucket"`
-	WriteInterval   string `yaml:"WriteInterval"`
-	RetryInterval   string `yaml:"RetryInterval"`
-	TimePrecision   string `yaml:"TimePrecision"`
-	BatchSize       *uint  `yaml:"BatchSize"`
-	RetryQueueLimit *uint  `yaml:"RetryQueueLimit"`
-	LogDebug        *bool  `yaml:"LogDebug"`
+	Url               string `yaml:"Url"`
+	Token             string `yaml:"Token"`
+	Org               string `yaml:"Org"`
+	Bucket            string `yaml:"Bucket"`
+	WriteInterval     string `yaml:"WriteInterval"`
+	RetryInterval     string `yaml:"RetryInterval"`
+	AggregateInterval string `yaml:"AggregateInterval"`
+	TimePrecision     string `yaml:"TimePrecision"`
+	BatchSize         *uint  `yaml:"BatchSize"`
+	RetryQueueLimit   *uint  `yaml:"RetryQueueLimit"`
+	LogDebug          *bool  `yaml:"LogDebug"`
 }
 
 type influxClientConfigReadMap map[string]influxClientConfigRead

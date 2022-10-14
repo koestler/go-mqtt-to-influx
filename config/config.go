@@ -412,6 +412,21 @@ func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxCli
 		ret.retryInterval = retryInterval
 	}
 
+	if len(c.AggregateInterval) < 1 {
+		// use default 60s
+		ret.aggregateInterval = time.Minute
+	} else if aggregateInterval, e := time.ParseDuration(c.AggregateInterval); e != nil {
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->AggregateInterval='%s' parse error: %s",
+			name, c.AggregateInterval, e,
+		))
+	} else if aggregateInterval < 0 {
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->AggregateInterval='%s' must be positive",
+			name, c.AggregateInterval,
+		))
+	} else {
+		ret.aggregateInterval = aggregateInterval
+	}
+
 	if len(c.TimePrecision) < 1 {
 		// use default 1s
 		ret.timePrecision = time.Second

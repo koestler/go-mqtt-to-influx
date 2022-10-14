@@ -41,6 +41,7 @@ type Config interface {
 	Bucket() string
 	WriteInterval() time.Duration
 	RetryInterval() time.Duration
+	AggregateInterval() time.Duration
 	TimePrecision() time.Duration
 	BatchSize() uint
 	RetryQueueLimit() uint
@@ -84,6 +85,8 @@ func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, sta
 	opts = opts.SetHTTPRequestTimeout(2) // set request timeout to 2s instead of default 20s
 	if config.LogDebug() {
 		opts = opts.SetLogLevel(3)
+	} else {
+		opts = opts.SetLogLevel(0)
 	}
 	dbClient := influxdb2.NewClientWithOptions(
 		config.Url(),
@@ -186,7 +189,7 @@ func (ic Client) WritePoint(point Point) {
 func (ic Client) worker() {
 	defer close(ic.closed)
 
-	aggregateTicker := time.NewTicker(10 * ic.config.WriteInterval())
+	aggregateTicker := time.NewTicker(ic.config.AggregateInterval())
 	retryTicker := time.NewTicker(ic.config.RetryInterval())
 	if !ic.localDb.Enabled() || ic.config.RetryInterval() <= 0 {
 		aggregateTicker.Stop()
