@@ -264,7 +264,7 @@ func (ic Client) retryHandler() (triggerAgain bool) {
 	// try to write to influxdb synchronously
 	if err = ic.blockingWriteApi.WriteRecord(ic.ctx, batch); err != nil {
 		log.Printf("influxClient[%s]: retryHandler: error while writing batch, err=%s",
-			ic.Name(), strings.ReplaceAll(err.Error(), "\n", ""),
+			ic.Name(), strings.ReplaceAll(strings.ReplaceAll(err.Error(), "\r", ""), "\n", ""),
 		)
 		return false
 	}
