@@ -260,8 +260,8 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 	}
 
 	if len(c.KeepAlive) < 1 {
-		// use default 10s
-		ret.keepAlive = 10 * time.Second
+		// use default 60s
+		ret.keepAlive = time.Minute
 	} else if keepAlive, e := time.ParseDuration(c.KeepAlive); e != nil {
 		err = append(err, fmt.Errorf("MqttClientConfig->%s->KeepAlive='%s' parse error: %s",
 			name, c.KeepAlive, e,

@@ -27,7 +27,7 @@ type MqttClientConfig struct {
 	password          string        // optional: default empty
 	clientId          string        // optional: default go-mqtt-to-influx-UUID
 	qos               byte          // optional: default 1, must be 0, 1, 2
-	keepAlive         time.Duration // optional: default 10s
+	keepAlive         time.Duration // optional: default 60s
 	connectRetryDelay time.Duration // optional: default 10s
 	connectTimeout    time.Duration // optional: default 5s
 	availabilityTopic string        // optional: default %Prefix%tele/%ClientId%/status
