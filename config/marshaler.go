@@ -85,6 +85,7 @@ func (c InfluxClientConfig) convertToRead() influxClientConfigRead {
 		RetryInterval:     c.retryInterval.String(),
 		AggregateInterval: c.aggregateInterval.String(),
 		TimePrecision:     c.timePrecision.String(),
+		ConnectTimeout:    c.connectTimeout.String(),
 		BatchSize:         &c.batchSize,
 		RetryQueueLimit:   &c.retryQueueLimit,
 		LogDebug:          &c.logDebug,

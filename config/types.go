@@ -29,7 +29,7 @@ type MqttClientConfig struct {
 	qos               byte          // optional: default 1, must be 0, 1, 2
 	keepAlive         time.Duration // optional: default 10s
 	connectRetryDelay time.Duration // optional: default 10s
-	connectTimeout    time.Duration // optional: default 1s
+	connectTimeout    time.Duration // optional: default 5s
 	availabilityTopic string        // optional: default %Prefix%tele/%ClientId%/status
 	topicPrefix       string        // optional: default empty
 	logDebug          bool          // optional: default False
@@ -46,6 +46,7 @@ type InfluxClientConfig struct {
 	retryInterval     time.Duration // optional: default 10s
 	aggregateInterval time.Duration // optional: default 60s
 	timePrecision     time.Duration // optional: default 1s
+	connectTimeout    time.Duration // optional: default 5s
 	batchSize         uint          // optional: default 5000
 	retryQueueLimit   uint          // optional: default 20
 	logDebug          bool          // optional: default False
@@ -133,6 +134,7 @@ type influxClientConfigRead struct {
 	RetryInterval     string `yaml:"RetryInterval"`
 	AggregateInterval string `yaml:"AggregateInterval"`
 	TimePrecision     string `yaml:"TimePrecision"`
+	ConnectTimeout    string `yaml:"ConnectTimeout"`
 	BatchSize         *uint  `yaml:"BatchSize"`
 	RetryQueueLimit   *uint  `yaml:"RetryQueueLimit"`
 	LogDebug          *bool  `yaml:"LogDebug"`

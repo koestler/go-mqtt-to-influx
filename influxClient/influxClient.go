@@ -43,6 +43,7 @@ type Config interface {
 	RetryInterval() time.Duration
 	AggregateInterval() time.Duration
 	TimePrecision() time.Duration
+	ConnectTimeout() time.Duration
 	BatchSize() uint
 	RetryQueueLimit() uint
 	LogDebug() bool
@@ -82,7 +83,7 @@ func RunClient(config Config, auxiliaryTags []AuxiliaryTag, localDb LocalDb, sta
 	opts = opts.SetBatchSize(config.BatchSize())
 	opts = opts.SetRetryBufferLimit(config.RetryQueueLimit() * config.BatchSize())
 	opts = opts.SetPrecision(config.TimePrecision())
-	opts = opts.SetHTTPRequestTimeout(2) // set request timeout to 2s instead of default 20s
+	opts = opts.SetHTTPRequestTimeout(uint(config.ConnectTimeout().Seconds()))
 	if config.LogDebug() {
 		opts = opts.SetLogLevel(3)
 	} else {

@@ -294,8 +294,8 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 	}
 
 	if len(c.ConnectTimeout) < 1 {
-		// use default 1s
-		ret.connectTimeout = time.Second
+		// use default 5s
+		ret.connectTimeout = 5 * time.Second
 	} else if connectTimeout, e := time.ParseDuration(c.ConnectTimeout); e != nil {
 		err = append(err, fmt.Errorf("MqttClientConfig->%s->ConnectTimeout='%s' parse error: %s",
 			name, c.ConnectTimeout, e,
@@ -440,6 +440,21 @@ func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxCli
 		))
 	} else {
 		ret.timePrecision = timePrecision
+	}
+
+	if len(c.ConnectTimeout) < 1 {
+		// use default 5s
+		ret.connectTimeout = 5 * time.Second
+	} else if connectTimeout, e := time.ParseDuration(c.ConnectTimeout); e != nil {
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->ConnectTimeout='%s' parse error: %s",
+			name, c.ConnectTimeout, e,
+		))
+	} else if connectTimeout < time.Second {
+		err = append(err, fmt.Errorf("InfluxClientConfig->%s->ConnectTimeout='%s' must be >=1s",
+			name, c.ConnectTimeout,
+		))
+	} else {
+		ret.connectTimeout = connectTimeout
 	}
 
 	if c.BatchSize == nil {

@@ -139,6 +139,10 @@ func (c InfluxClientConfig) TimePrecision() time.Duration {
 	return c.timePrecision
 }
 
+func (c InfluxClientConfig) ConnectTimeout() time.Duration {
+	return c.connectTimeout
+}
+
 func (c InfluxClientConfig) BatchSize() uint {
 	return c.batchSize
 }
