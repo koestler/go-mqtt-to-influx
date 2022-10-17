@@ -16,6 +16,7 @@ type ttnDraginoMessage struct {
 		DecodedPayload struct {
 			AdcCh0         *float64 `json:"ADC_CH0V"`
 			BatV           *float64 `json:"BatV"`
+			BatMV          *float64 `json:"Bat_mV"`
 			DigitalIStatus *string  `json:"Digital_IStatus"`
 			DoorStatus     *string  `json:"Door_status"`
 			EXTITrigger    *string  `json:"EXTI_Trigger"`
@@ -151,6 +152,14 @@ func ttnDraginoHandler(c Config, tm TopicMatcher, input Input, outputFunc Output
 			"BatV",
 			"V",
 			message.UplinkMessage.DecodedPayload.BatV,
+		)
+	}
+	if message.UplinkMessage.DecodedPayload.BatMV != nil {
+		value := *message.UplinkMessage.DecodedPayload.BatMV / 1000
+		outputFloat(
+			"BatV",
+			"V",
+			&value,
 		)
 	}
 	if message.UplinkMessage.DecodedPayload.DigitalIStatus != nil {
