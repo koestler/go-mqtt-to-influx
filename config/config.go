@@ -52,18 +52,16 @@ func (c Config) PrintConfig() (err error) {
 }
 
 func (c configRead) TransformAndValidate() (ret Config, err []error) {
+	if c.Version == nil {
+		err = append(err, fmt.Errorf("Version must be defined. Use Version=0."))
+	} else {
+		ret.version = *c.Version
+		if ret.version != 0 {
+			err = append(err, fmt.Errorf("Version=%d is not supported.", ret.Version()))
+		}
+	}
+
 	var e []error
-	ret.mqttClients, e = c.MqttClients.TransformAndValidate()
-	err = append(err, e...)
-
-	ret.influxClients, e = c.InfluxClients.TransformAndValidate()
-	err = append(err, e...)
-
-	ret.influxAuxiliaryTags, e = c.InfluxAuxiliaryTags.TransformAndValidate()
-	err = append(err, e...)
-
-	ret.converters, e = c.Converters.TransformAndValidate(ret.mqttClients, ret.influxClients)
-	err = append(err, e...)
 
 	ret.httpServer, e = c.HttpServer.TransformAndValidate()
 	err = append(err, e...)
@@ -74,15 +72,6 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	ret.statistics, e = c.Statistics.TransformAndValidate()
 	err = append(err, e...)
 
-	if c.Version == nil {
-		err = append(err, fmt.Errorf("Version must be defined. Use Version=0."))
-	} else {
-		ret.version = *c.Version
-		if ret.version != 0 {
-			err = append(err, fmt.Errorf("Version=%d is not supported.", ret.Version()))
-		}
-	}
-
 	if c.LogConfig != nil && *c.LogConfig {
 		ret.logConfig = true
 	}
@@ -90,6 +79,18 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	if c.LogWorkerStart != nil && *c.LogWorkerStart {
 		ret.logWorkerStart = true
 	}
+
+	ret.mqttClients, e = c.MqttClients.TransformAndValidate()
+	err = append(err, e...)
+
+	ret.influxClients, e = c.InfluxClients.TransformAndValidate()
+	err = append(err, e...)
+
+	ret.converters, e = c.Converters.TransformAndValidate(ret.mqttClients, ret.influxClients)
+	err = append(err, e...)
+
+	ret.influxAuxiliaryTags, e = c.InfluxAuxiliaryTags.TransformAndValidate()
+	err = append(err, e...)
 
 	return
 }
@@ -122,7 +123,7 @@ func (c *httpServerConfigRead) TransformAndValidate() (ret HttpServerConfig, err
 
 func (c *localDbConfigRead) TransformAndValidate() (ret LocalDbConfig, err []error) {
 	// default values
-	ret.enabled = true
+	ret.enabled = false
 	ret.path = "./go-mqtt-to-influx.db"
 
 	if c == nil {
@@ -480,52 +481,6 @@ func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxCli
 	return
 }
 
-func (c influxAuxiliaryTagsReadList) TransformAndValidate() (ret []*InfluxAuxiliaryTags, err []error) {
-	ret = make([]*InfluxAuxiliaryTags, len(c))
-	for i, t := range c {
-		r, e := t.TransformAndValidate()
-		ret[i] = &r
-		err = append(err, e...)
-	}
-	return
-}
-
-func (c influxAuxiliaryTagsRead) TransformAndValidate() (ret InfluxAuxiliaryTags, err []error) {
-	ret = InfluxAuxiliaryTags{
-		equals:    c.Equals,
-		matches:   c.Matches,
-		tagValues: c.TagValues,
-	}
-
-	if c.Tag == nil {
-		ret.tag = "device"
-	} else if len(*c.Tag) < 1 {
-		err = append(err, fmt.Errorf("InfluxAuxiliaryTags->TagValues Tag must not by empty"))
-	} else {
-		ret.tag = *c.Tag
-	}
-
-	if len(c.TagValues) < 1 {
-		err = append(err, fmt.Errorf("InfluxAuxiliaryTags->TagValues must not be empty"))
-	}
-
-	if c.Equals != nil && c.Matches == nil {
-		// ok
-	} else if c.Equals == nil && c.Matches != nil {
-		expr := *c.Matches
-		if m, e := regexp.Compile(expr); e != nil {
-			err = append(err, fmt.Errorf("InfluxAuxiliaryTags: invalid regexp given by Matches='%s': %s", expr, e))
-		} else {
-			ret.matcher = m
-		}
-	} else {
-		err = append(err, fmt.Errorf("InfluxAuxiliaryTags Equals xor Matches must be set"))
-		return
-	}
-
-	return
-}
-
 func (c converterConfigReadMap) getOrderedKeys() (ret []string) {
 	ret = make([]string, len(c))
 	i := 0
@@ -669,4 +624,49 @@ func (c MqttTopicConfig) ApplyTopicReplace(f ApplyTopicReplaceFunc) MqttTopicCon
 		topic:  f(c.topic),
 		device: c.device,
 	}
+}
+func (c influxAuxiliaryTagsReadList) TransformAndValidate() (ret []*InfluxAuxiliaryTags, err []error) {
+	ret = make([]*InfluxAuxiliaryTags, len(c))
+	for i, t := range c {
+		r, e := t.TransformAndValidate()
+		ret[i] = &r
+		err = append(err, e...)
+	}
+	return
+}
+
+func (c influxAuxiliaryTagsRead) TransformAndValidate() (ret InfluxAuxiliaryTags, err []error) {
+	ret = InfluxAuxiliaryTags{
+		equals:    c.Equals,
+		matches:   c.Matches,
+		tagValues: c.TagValues,
+	}
+
+	if c.Tag == nil {
+		ret.tag = "device"
+	} else if len(*c.Tag) < 1 {
+		err = append(err, fmt.Errorf("InfluxAuxiliaryTags->TagValues Tag must not by empty"))
+	} else {
+		ret.tag = *c.Tag
+	}
+
+	if len(c.TagValues) < 1 {
+		err = append(err, fmt.Errorf("InfluxAuxiliaryTags->TagValues must not be empty"))
+	}
+
+	if c.Equals != nil && c.Matches == nil {
+		// ok
+	} else if c.Equals == nil && c.Matches != nil {
+		expr := *c.Matches
+		if m, e := regexp.Compile(expr); e != nil {
+			err = append(err, fmt.Errorf("InfluxAuxiliaryTags: invalid regexp given by Matches='%s': %s", expr, e))
+		} else {
+			ret.matcher = m
+		}
+	} else {
+		err = append(err, fmt.Errorf("InfluxAuxiliaryTags Equals xor Matches must be set"))
+		return
+	}
+
+	return
 }

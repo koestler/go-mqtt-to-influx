@@ -63,7 +63,7 @@ have a default value.
 
 ### Minimalistic Example
 ```yaml
-# documentation/minimal-config.yaml
+# documentation/config.yaml
 
 Version: 0                                                 # mandatory, version is always 0 (reserved for later use)
 
@@ -104,7 +104,7 @@ Converters:                                                # mandatory, a list o
 ### Complete, explained example
 
 ```yaml
-# documentation/config.yaml
+# documentation/full-config.yaml
 
 Version: 0                                                 # mandatory, version is always 0 (reserved for later use)
 LogConfig: True                                            # optional, default False, outputs the configuration including defaults on startup
@@ -294,7 +294,7 @@ services:
     image: koestler/go-mqtt-to-influx:v2
     volumes:
       - /srv/volumes/mqtt-to-influx/db:/app/db
-      - ${PWD}/config.yaml:/app/config.yaml:ro
+      - ${PWD}/full-config.yaml:/app/full-config.yaml:ro
 ```
 
 Note the mount of /app/db. It makes the database persist recreation of the docker container.
@@ -309,7 +309,7 @@ Quick setup:
 mkdir -p /srv/dc/mqtt-to-influx
 cd /srv/dc/mqtt-to-influx
 curl https://raw.githubusercontent.com/koestler/go-mqtt-to-influx/main/documentation/docker-compose.yml -o docker-compose.yml
-curl https://github.com/koestler/go-mqtt-to-influx/blob/main/documentation/minimal-config.yaml -o config.yaml
+curl https://github.com/koestler/go-mqtt-to-influx/blob/main/documentation/config.yaml -o config.yaml
 # adapt config.yaml and configure mqtt / influx connection and converters.
 docker compose up -d
 docker compose logs -f

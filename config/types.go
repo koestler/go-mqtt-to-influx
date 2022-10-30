@@ -8,15 +8,33 @@ import (
 
 type Config struct {
 	version             int                    `yaml:"Version"`             // must be 0
-	mqttClients         []*MqttClientConfig    `yaml:"MqttClient"`          // mandatory: at least 1 must be defined
-	influxClients       []*InfluxClientConfig  `yaml:"InfluxClients"`       // mandatory: at least 1 must be defined
-	influxAuxiliaryTags []*InfluxAuxiliaryTags `yaml:"InfluxAuxiliaryTags"` // optional: default empty
-	converters          []*ConverterConfig     `yaml:"Converters"`          // mandatory: at least 1 must be defined
 	httpServer          HttpServerConfig       `yaml:"HttpServer"`          // optional: default Disabled
-	localDb             LocalDbConfig          `yaml:"LocalDb"`             // optional: default Disasbled
+	localDb             LocalDbConfig          `yaml:"LocalDb"`             // optional: default Disabled
 	statistics          StatisticsConfig       `yaml:"Statistics"`          // optional: default Disabled
 	logConfig           bool                   `yaml:"LogConfig"`           // optional: default False
 	logWorkerStart      bool                   `yaml:"LogWorkerStart"`      // optional: default False
+	mqttClients         []*MqttClientConfig    `yaml:"MqttClient"`          // mandatory: at least 1 must be defined
+	influxClients       []*InfluxClientConfig  `yaml:"InfluxClients"`       // mandatory: at least 1 must be defined
+	converters          []*ConverterConfig     `yaml:"Converters"`          // mandatory: at least 1 must be defined
+	influxAuxiliaryTags []*InfluxAuxiliaryTags `yaml:"InfluxAuxiliaryTags"` // optional: default empty
+}
+
+type HttpServerConfig struct {
+	enabled     bool   // defined automatically if HttpServer section exists
+	bind        string // optional: defaults to [::1] (ipv6 loopback)
+	port        int    // optional: defaults to 8000
+	logRequests bool   // optional:  default False
+}
+
+type LocalDbConfig struct {
+	enabled bool   // defined automatically if LocalDbConfig section exists
+	path    string // optional: defaults ./go-mqtt-to-influx.db
+}
+
+type StatisticsConfig struct {
+	enabled           bool          // defined automatically if Statistics section exists
+	historyResolution time.Duration // optional: defaults to 10s
+	historyMaxAge     time.Duration // optional: default to 10min
 }
 
 type MqttClientConfig struct {
@@ -52,14 +70,6 @@ type InfluxClientConfig struct {
 	logDebug          bool          // optional: default False
 }
 
-type InfluxAuxiliaryTags struct {
-	tag       string            // optional: defaults to "device"
-	equals    *string           // optional: if not set, matches must be set
-	matches   *string           // optional: if not set, equals must be set
-	matcher   *regexp.Regexp    // used internally
-	tagValues map[string]string // mandatory: must not be empty
-}
-
 type ConverterConfig struct {
 	name           string             // defined automatically by map key
 	implementation string             // mandatory
@@ -74,113 +84,10 @@ type MqttTopicConfig struct {
 	device string // optional: default "+"
 }
 
-type HttpServerConfig struct {
-	enabled     bool   // defined automatically if HttpServer section exists
-	bind        string // optional: defaults to [::1] (ipv6 loopback)
-	port        int    // optional: defaults to 8000
-	logRequests bool   // optional:  default False
-}
-
-type LocalDbConfig struct {
-	enabled bool   // defined automatically if LocalDbConfig section exists
-	path    string // optional: defaults ./go-mqtt-to-influx.db
-}
-
-type StatisticsConfig struct {
-	enabled           bool          // defined automatically if Statistics section exists
-	historyResolution time.Duration // optional: defaults to 10s
-	historyMaxAge     time.Duration // optional: default to 10min
-}
-
-// Read structs are given to yaml for decoding and are slightly less exact in types
-type configRead struct {
-	Version             *int                        `yaml:"Version"`
-	MqttClients         mqttClientConfigReadMap     `yaml:"MqttClients"`
-	InfluxClients       influxClientConfigReadMap   `yaml:"InfluxClients"`
-	InfluxAuxiliaryTags influxAuxiliaryTagsReadList `yaml:"InfluxAuxiliaryTags"`
-	Converters          converterConfigReadMap      `yaml:"Converters"`
-	HttpServer          *httpServerConfigRead       `yaml:"HttpServer"`
-	LocalDb             *localDbConfigRead          `yaml:"LocalDb"`
-	Statistics          *statisticsConfigRead       `yaml:"Statistics"`
-	LogConfig           *bool                       `yaml:"LogConfig"`
-	LogWorkerStart      *bool                       `yaml:"LogWorkerStart"`
-	LogMqttDebug        *bool                       `yaml:"LogMqttDebug"`
-}
-
-type mqttClientConfigRead struct {
-	Broker            string  `yaml:"Broker"`
-	ProtocolVersion   *int    `yaml:"ProtocolVersion"`
-	User              string  `yaml:"User"`
-	Password          string  `yaml:"Password"`
-	ClientId          *string `yaml:"ClientId"`
-	Qos               *byte   `yaml:"Qos"`
-	KeepAlive         string  `yaml:"KeepAlive"`
-	ConnectRetryDelay string  `yaml:"ConnectRetryDelay"`
-	ConnectTimeout    string  `yaml:"ConnectTimeout"`
-	AvailabilityTopic *string `yaml:"AvailabilityTopic"`
-	TopicPrefix       string  `yaml:"TopicPrefix"`
-	LogDebug          *bool   `yaml:"LogDebug"`
-	LogMessages       *bool   `yaml:"LogMessages"`
-}
-
-type mqttClientConfigReadMap map[string]mqttClientConfigRead
-
-type influxClientConfigRead struct {
-	Url               string `yaml:"Url"`
-	Token             string `yaml:"Token"`
-	Org               string `yaml:"Org"`
-	Bucket            string `yaml:"Bucket"`
-	WriteInterval     string `yaml:"WriteInterval"`
-	RetryInterval     string `yaml:"RetryInterval"`
-	AggregateInterval string `yaml:"AggregateInterval"`
-	TimePrecision     string `yaml:"TimePrecision"`
-	ConnectTimeout    string `yaml:"ConnectTimeout"`
-	BatchSize         *uint  `yaml:"BatchSize"`
-	RetryQueueLimit   *uint  `yaml:"RetryQueueLimit"`
-	LogDebug          *bool  `yaml:"LogDebug"`
-}
-
-type influxClientConfigReadMap map[string]influxClientConfigRead
-
-type influxAuxiliaryTagsRead struct {
-	Tag       *string           `yaml:"Tag"`
-	Equals    *string           `yaml:"Equals"`
-	Matches   *string           `yaml:"Matches"`
-	TagValues map[string]string `yaml:"TagValues"`
-}
-
-type influxAuxiliaryTagsReadList []influxAuxiliaryTagsRead
-
-type converterConfigRead struct {
-	Implementation string                  `yaml:"Implementation"`
-	MqttTopics     mqttTopicConfigReadList `yaml:"MqttTopics"`
-	MqttClients    []string                `yaml:"MqttClients"`
-	InfluxClients  []string                `yaml:"InfluxClients"`
-	LogHandleOnce  *bool                   `yaml:"LogHandleOnce"`
-}
-
-type converterConfigReadMap map[string]converterConfigRead
-
-type mqttTopicConfigRead struct {
-	Topic  string  `yaml:"Topic"`
-	Device *string `yaml:"Device"`
-}
-
-type mqttTopicConfigReadList []mqttTopicConfigRead
-
-type httpServerConfigRead struct {
-	Bind        string `yaml:"Bind"`
-	Port        *int   `yaml:"Port"`
-	LogRequests *bool  `yaml:"LogRequests"`
-}
-
-type localDbConfigRead struct {
-	Enabled *bool   `yaml:"Enabled"`
-	Path    *string `yaml:"Path"`
-}
-
-type statisticsConfigRead struct {
-	Enabled           *bool  `yaml:"Enabled"`
-	HistoryResolution string `yaml:"HistoryResolution"`
-	HistoryMaxAge     string `yaml:"HistoryMaxAge"`
+type InfluxAuxiliaryTags struct {
+	tag       string            // optional: defaults to "device"
+	equals    *string           // optional: if not set, matches must be set
+	matches   *string           // optional: if not set, equals must be set
+	matcher   *regexp.Regexp    // used internally
+	tagValues map[string]string // mandatory: must not be empty
 }

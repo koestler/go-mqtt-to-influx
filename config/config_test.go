@@ -48,6 +48,12 @@ Converters:
 `
 	InvalidValuesConfig = `
 Version: 0
+
+Statistics:
+  Enabled: True
+  HistoryResolution: 0s
+  HistoryMaxAge: -1s
+
 MqttClients:
   piegn mosquitto:
     Broker: "tcp://example.com:1883"
@@ -62,11 +68,6 @@ InfluxClients:
     Address: http://172.17.0.2:8086
     WriteInterval: -1s
     TimePrecision: -5ms
-
-Statistics:
-  Enabled: True
-  HistoryResolution: 0s
-  HistoryMaxAge: -1s
 
 Converters:
   äöü:
@@ -101,8 +102,6 @@ Converters:
 
 	ValidComplexConfig = `
 Version: 0
-LogConfig: True
-LogWorkerStart: True
 HttpServer:
   Bind: 0.0.0.0
   Port: 80
@@ -117,6 +116,9 @@ Statistics:
   HistoryResolution: 100ms
   HistoryMaxAge: 1h
   
+LogConfig: True
+LogWorkerStart: True
+
 MqttClients:
   0-piegn-mosquitto:
     Broker: "tcp://example.com:1883"
@@ -161,18 +163,6 @@ InfluxClients:
     Bucket: mybucket
     LogDebug: False
 
-InfluxAuxiliaryTags:
-  - Tag: device
-    Equals: foo
-    TagValues:
-      a: foo
-      b: bar
-      c: "another String"
-  - Tag: field
-    Matches: ^temperature[0-9]+
-    TagValues:
-      sort: sensor
-
 Converters:
   0-piegn-ve-sensor:
     Implementation: go-iotdevice
@@ -212,6 +202,18 @@ Converters:
     MqttTopics:
       - Topic: piegn/tele/foobar/SENSOR
         Device: fixed-device
+
+InfluxAuxiliaryTags:
+  - Tag: device
+    Equals: foo
+    TagValues:
+      a: foo
+      b: bar
+      c: "another String"
+  - Tag: field
+    Matches: ^temperature[0-9]+
+    TagValues:
+      sort: sensor
 `
 )
 
@@ -343,6 +345,48 @@ func TestReadConfig_Complex(t *testing.T) {
 
 	if !config.LogWorkerStart() {
 		t.Errorf("expect LogWorkerStart to be True as configured")
+	}
+
+	// HttpServer
+	if !config.HttpServer().Enabled() {
+		t.Error("expect HttpServer->Enabled to be True")
+	}
+
+	if config.HttpServer().Bind() != "0.0.0.0" {
+		t.Error("expect HttpServer->Bind to be '0.0.0.0'")
+	}
+
+	if config.HttpServer().Port() != 80 {
+		t.Error("expect HttpServer->Port to be 80")
+	}
+
+	if !config.HttpServer().LogRequests() {
+		t.Error("expect HttpServer->LogRequests to be True")
+	}
+
+	// LocalDb
+	if !config.LocalDb().Enabled() {
+		t.Error("expect LocalDb->Enabled to be True")
+	}
+
+	if config.LocalDb().Path() != "/tmp/foobar.db" {
+		t.Errorf("expect LocalDb->Path to be '/tmp/foobar.db', got '%s'",
+			config.LocalDb().Path())
+	}
+
+	// Statistics
+	if !config.Statistics().Enabled() {
+		t.Error("expect Statistics->Enabled to be True")
+	}
+
+	if config.Statistics().HistoryResolution().String() != "100ms" {
+		t.Errorf("expect Statistics->HistoryResolution to be '100ms', got '%s'",
+			config.Statistics().HistoryResolution())
+	}
+
+	if config.Statistics().HistoryMaxAge().String() != "1h0m0s" {
+		t.Errorf("expect Statistics->HistoryMaxAge to be '1h0m0s', got '%s'",
+			config.Statistics().HistoryMaxAge())
 	}
 
 	// mqttClients section
@@ -492,6 +536,65 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect LogDebug of first InfluxClient to be True")
 	}
 
+	// converters section
+	if len(config.Converters()) != 4 {
+		t.Errorf("expect len(config.Converters) == 4")
+	}
+
+	if config.Converters()[0].Name() != "0-piegn-ve-sensor" {
+		t.Errorf("expect Name of first Converter to be '0-piegn-ve-sensor' but got '%s'",
+			config.Converters()[0].Name(),
+		)
+	}
+
+	if config.Converters()[0].Implementation() != "go-iotdevice" {
+		t.Error("expect Implementation of first Converter to be 'go-iotdevice'")
+	}
+
+	if len(config.Converters()[0].MqttTopics()) != 1 || config.Converters()[0].MqttTopics()[0].Topic() != "piegn/tele/ve/#" {
+		t.Errorf("expect Topic of first MqttTopics of first Converter to be 'piegn/tele/ve/#' got '%s'",
+			config.Converters()[0].MqttTopics()[0].Topic(),
+		)
+	}
+
+	if len(config.Converters()[0].MqttTopics()) != 1 || config.Converters()[0].MqttTopics()[0].Device() != "fixed-ve" {
+		t.Errorf("expect Device of first MqttTopics of first Converter to be 'fixed-ve' got '%s'",
+			config.Converters()[0].MqttTopics()[0].Device(),
+		)
+	}
+
+	if config.Converters()[1].MqttTopics()[0].Topic() != "piegn/tele/%Device%/LWT" {
+		t.Errorf("expect Topic of first MqttTopics of second Converter to be 'piegn/tele/%%Device%%/LWT' got '%s'",
+			config.Converters()[1].MqttTopics()[0].Topic(),
+		)
+	}
+
+	if config.Converters()[1].MqttTopics()[0].Device() != "+" {
+		t.Errorf("expect Device of first MqttTopics of second Converter to be '+' got '%s'",
+			config.Converters()[1].MqttTopics()[0].Device(),
+		)
+	}
+
+	if len(config.Converters()[0].MqttClients()) != 2 ||
+		config.Converters()[0].MqttClients()[0] != "0-piegn-mosquitto" ||
+		config.Converters()[0].MqttClients()[1] != "1-local-mosquitto" {
+		t.Errorf("expect MqttClients of first Converter to be ['0-piegn-mosquitto', '1-local-mosquitto'] got %v",
+			config.Converters()[0].MqttClients(),
+		)
+	}
+
+	if len(config.Converters()[0].InfluxClients()) != 2 ||
+		config.Converters()[0].InfluxClients()[0] != "0-piegn" ||
+		config.Converters()[0].InfluxClients()[1] != "1-local" {
+		t.Errorf("expect InfluxClients of first Converter to be ['0-piegn', '1-local'] got %v",
+			config.Converters()[0].InfluxClients(),
+		)
+	}
+
+	if !config.Converters()[0].LogHandleOnce() {
+		t.Error("expect LogHandleOnce of first Converter to be True")
+	}
+
 	// influxAuxiliaryTags section
 	if len(config.InfluxAuxiliaryTags()) != 2 {
 		t.Error("expect len(config.InfluxAuxiliaryTags) == 2")
@@ -551,107 +654,6 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect DeviceMatcher of second InfluxAuxiliaryTags not to match temperatureA")
 	}
 
-	// Converters section
-	if len(config.Converters()) != 4 {
-		t.Errorf("expect len(config.Converters) == 4")
-	}
-
-	if config.Converters()[0].Name() != "0-piegn-ve-sensor" {
-		t.Errorf("expect Name of first Converter to be '0-piegn-ve-sensor' but got '%s'",
-			config.Converters()[0].Name(),
-		)
-	}
-
-	if config.Converters()[0].Implementation() != "go-iotdevice" {
-		t.Error("expect Implementation of first Converter to be 'go-iotdevice'")
-	}
-
-	if len(config.Converters()[0].MqttTopics()) != 1 || config.Converters()[0].MqttTopics()[0].Topic() != "piegn/tele/ve/#" {
-		t.Errorf("expect Topic of first MqttTopics of first Converter to be 'piegn/tele/ve/#' got '%s'",
-			config.Converters()[0].MqttTopics()[0].Topic(),
-		)
-	}
-
-	if len(config.Converters()[0].MqttTopics()) != 1 || config.Converters()[0].MqttTopics()[0].Device() != "fixed-ve" {
-		t.Errorf("expect Device of first MqttTopics of first Converter to be 'fixed-ve' got '%s'",
-			config.Converters()[0].MqttTopics()[0].Device(),
-		)
-	}
-
-	if config.Converters()[1].MqttTopics()[0].Topic() != "piegn/tele/%Device%/LWT" {
-		t.Errorf("expect Topic of first MqttTopics of second Converter to be 'piegn/tele/%%Device%%/LWT' got '%s'",
-			config.Converters()[1].MqttTopics()[0].Topic(),
-		)
-	}
-
-	if config.Converters()[1].MqttTopics()[0].Device() != "+" {
-		t.Errorf("expect Device of first MqttTopics of second Converter to be '+' got '%s'",
-			config.Converters()[1].MqttTopics()[0].Device(),
-		)
-	}
-
-	if len(config.Converters()[0].MqttClients()) != 2 ||
-		config.Converters()[0].MqttClients()[0] != "0-piegn-mosquitto" ||
-		config.Converters()[0].MqttClients()[1] != "1-local-mosquitto" {
-		t.Errorf("expect MqttClients of first Converter to be ['0-piegn-mosquitto', '1-local-mosquitto'] got %v",
-			config.Converters()[0].MqttClients(),
-		)
-	}
-
-	if len(config.Converters()[0].InfluxClients()) != 2 ||
-		config.Converters()[0].InfluxClients()[0] != "0-piegn" ||
-		config.Converters()[0].InfluxClients()[1] != "1-local" {
-		t.Errorf("expect InfluxClients of first Converter to be ['0-piegn', '1-local'] got %v",
-			config.Converters()[0].InfluxClients(),
-		)
-	}
-
-	if !config.Converters()[0].LogHandleOnce() {
-		t.Error("expect LogHandleOnce of first Converter to be True")
-	}
-
-	// HttpServer
-	if !config.HttpServer().Enabled() {
-		t.Error("expect HttpServer->Enabled to be True")
-	}
-
-	if config.HttpServer().Bind() != "0.0.0.0" {
-		t.Error("expect HttpServer->Bind to be '0.0.0.0'")
-	}
-
-	if config.HttpServer().Port() != 80 {
-		t.Error("expect HttpServer->Port to be 80")
-	}
-
-	if !config.HttpServer().LogRequests() {
-		t.Error("expect HttpServer->LogRequests to be True")
-	}
-
-	// LocalDb
-	if !config.LocalDb().Enabled() {
-		t.Error("expect LocalDb->Enabled to be True")
-	}
-
-	if config.LocalDb().Path() != "/tmp/foobar.db" {
-		t.Errorf("expect LocalDb->Path to be '/tmp/foobar.db', got '%s'",
-			config.LocalDb().Path())
-	}
-
-	// Statistics
-	if !config.Statistics().Enabled() {
-		t.Error("expect Statistics->Enabled to be True")
-	}
-
-	if config.Statistics().HistoryResolution().String() != "100ms" {
-		t.Errorf("expect Statistics->HistoryResolution to be '100ms', got '%s'",
-			config.Statistics().HistoryResolution())
-	}
-
-	if config.Statistics().HistoryMaxAge().String() != "1h0m0s" {
-		t.Errorf("expect Statistics->HistoryMaxAge to be '1h0m0s', got '%s'",
-			config.Statistics().HistoryMaxAge())
-	}
-
 	// test config output does not crash
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
@@ -678,6 +680,48 @@ func TestReadConfig_Default(t *testing.T) {
 
 	if config.LogWorkerStart() {
 		t.Error("expect LogWorkerStart to be False by default")
+	}
+
+	// HttpServer
+	if config.HttpServer().Enabled() {
+		t.Error("expect default HttpServer->Enabled to be False")
+	}
+
+	if config.HttpServer().Bind() != "[::1]" {
+		t.Error("expect default HttpServer->Bind to be '[::1]'")
+	}
+
+	if config.HttpServer().Port() != 8000 {
+		t.Error("expect default HttpServer->Port to be 8000")
+	}
+
+	if config.HttpServer().LogRequests() {
+		t.Error("expect default HttpServer->LogRequests to be False")
+	}
+
+	// LocalDb
+	if config.LocalDb().Enabled() {
+		t.Error("expect LocalDb->Enabled to be False")
+	}
+
+	if config.LocalDb().Path() != "./go-mqtt-to-influx.db" {
+		t.Errorf("expect LocalDb->Path to be './go-mqtt-to-influx.db', got '%s'",
+			config.LocalDb().Path())
+	}
+
+	// Statistics
+	if config.Statistics().Enabled() {
+		t.Error("expect default Statistics->Enabled to be False")
+	}
+
+	if config.Statistics().HistoryResolution().String() != "10s" {
+		t.Errorf("expect default Statistics->HistoryResolution to be '10s', got '%s'",
+			config.Statistics().HistoryResolution())
+	}
+
+	if config.Statistics().HistoryMaxAge().String() != "10m0s" {
+		t.Errorf("expect default Statistics->HistoryMaxAge to be '10m0s', got '%s'",
+			config.Statistics().HistoryMaxAge())
 	}
 
 	// influxClients section
@@ -763,7 +807,7 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default InfluxClient->LogDebug to be False")
 	}
 
-	// Converters section
+	// converters section
 	if len(config.Converters()[0].MqttClients()) != 0 {
 		t.Error("expect default Converter->MqttClients to be empty")
 	}
@@ -779,47 +823,5 @@ func TestReadConfig_Default(t *testing.T) {
 	// MqttTopicConfig section
 	if config.Converters()[0].MqttTopics()[0].Device() != "+" {
 		t.Error("expect default Converter->MqttTopics->Device to be '+'")
-	}
-
-	// HttpServer
-	if config.HttpServer().Enabled() {
-		t.Error("expect default HttpServer->Enabled to be False")
-	}
-
-	if config.HttpServer().Bind() != "[::1]" {
-		t.Error("expect default HttpServer->Bind to be '[::1]'")
-	}
-
-	if config.HttpServer().Port() != 8000 {
-		t.Error("expect default HttpServer->Port to be 8000")
-	}
-
-	if config.HttpServer().LogRequests() {
-		t.Error("expect default HttpServer->LogRequests to be False")
-	}
-
-	// LocalDb
-	if !config.LocalDb().Enabled() {
-		t.Error("expect LocalDb->Enabled to be True")
-	}
-
-	if config.LocalDb().Path() != "./go-mqtt-to-influx.db" {
-		t.Errorf("expect LocalDb->Path to be './go-mqtt-to-influx.db', got '%s'",
-			config.LocalDb().Path())
-	}
-
-	// Statistics
-	if config.Statistics().Enabled() {
-		t.Error("expect default Statistics->Enabled to be False")
-	}
-
-	if config.Statistics().HistoryResolution().String() != "10s" {
-		t.Errorf("expect default Statistics->HistoryResolution to be '10s', got '%s'",
-			config.Statistics().HistoryResolution())
-	}
-
-	if config.Statistics().HistoryMaxAge().String() != "10m0s" {
-		t.Errorf("expect default Statistics->HistoryMaxAge to be '10m0s', got '%s'",
-			config.Statistics().HistoryMaxAge())
 	}
 }

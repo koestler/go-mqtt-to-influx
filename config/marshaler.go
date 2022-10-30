@@ -3,34 +3,6 @@ package config
 func (c Config) MarshalYAML() (interface{}, error) {
 	return configRead{
 		Version: &c.version,
-		MqttClients: func() mqttClientConfigReadMap {
-			mqttClients := make(mqttClientConfigReadMap, len(c.mqttClients))
-			for _, c := range c.mqttClients {
-				mqttClients[c.Name()] = c.convertToRead()
-			}
-			return mqttClients
-		}(),
-		InfluxClients: func() influxClientConfigReadMap {
-			influxClients := make(influxClientConfigReadMap, len(c.influxClients))
-			for _, c := range c.influxClients {
-				influxClients[c.Name()] = c.convertToRead()
-			}
-			return influxClients
-		}(),
-		InfluxAuxiliaryTags: func() []influxAuxiliaryTagsRead {
-			influxAuxiliaryTags := make([]influxAuxiliaryTagsRead, len(c.influxAuxiliaryTags))
-			for i, c := range c.influxAuxiliaryTags {
-				influxAuxiliaryTags[i] = c.convertToRead()
-			}
-			return influxAuxiliaryTags
-		}(),
-		Converters: func() converterConfigReadMap {
-			converters := make(converterConfigReadMap, len(c.converters))
-			for _, c := range c.converters {
-				converters[c.Name()] = c.convertToRead()
-			}
-			return converters
-		}(),
 		HttpServer: func() *httpServerConfigRead {
 			if !c.httpServer.Enabled() {
 				return nil
@@ -54,7 +26,58 @@ func (c Config) MarshalYAML() (interface{}, error) {
 		}(),
 		LogConfig:      &c.logConfig,
 		LogWorkerStart: &c.logWorkerStart,
+		MqttClients: func() mqttClientConfigReadMap {
+			mqttClients := make(mqttClientConfigReadMap, len(c.mqttClients))
+			for _, c := range c.mqttClients {
+				mqttClients[c.Name()] = c.convertToRead()
+			}
+			return mqttClients
+		}(),
+		InfluxClients: func() influxClientConfigReadMap {
+			influxClients := make(influxClientConfigReadMap, len(c.influxClients))
+			for _, c := range c.influxClients {
+				influxClients[c.Name()] = c.convertToRead()
+			}
+			return influxClients
+		}(),
+		Converters: func() converterConfigReadMap {
+			converters := make(converterConfigReadMap, len(c.converters))
+			for _, c := range c.converters {
+				converters[c.Name()] = c.convertToRead()
+			}
+			return converters
+		}(),
+		InfluxAuxiliaryTags: func() []influxAuxiliaryTagsRead {
+			influxAuxiliaryTags := make([]influxAuxiliaryTagsRead, len(c.influxAuxiliaryTags))
+			for i, c := range c.influxAuxiliaryTags {
+				influxAuxiliaryTags[i] = c.convertToRead()
+			}
+			return influxAuxiliaryTags
+		}(),
 	}, nil
+}
+
+func (c HttpServerConfig) convertToRead() httpServerConfigRead {
+	return httpServerConfigRead{
+		Bind:        c.bind,
+		Port:        &c.port,
+		LogRequests: &c.logRequests,
+	}
+}
+
+func (c LocalDbConfig) convertToRead() localDbConfigRead {
+	return localDbConfigRead{
+		Enabled: &c.enabled,
+		Path:    &c.path,
+	}
+}
+
+func (c StatisticsConfig) convertToRead() statisticsConfigRead {
+	return statisticsConfigRead{
+		Enabled:           &c.enabled,
+		HistoryResolution: c.HistoryResolution().String(),
+		HistoryMaxAge:     c.HistoryMaxAge().String(),
+	}
 }
 
 func (c MqttClientConfig) convertToRead() mqttClientConfigRead {
@@ -92,15 +115,6 @@ func (c InfluxClientConfig) convertToRead() influxClientConfigRead {
 	}
 }
 
-func (c InfluxAuxiliaryTags) convertToRead() influxAuxiliaryTagsRead {
-	return influxAuxiliaryTagsRead{
-		Tag:       &c.tag,
-		Equals:    c.equals,
-		Matches:   c.matches,
-		TagValues: c.tagValues,
-	}
-}
-
 func (c ConverterConfig) convertToRead() converterConfigRead {
 	return converterConfigRead{
 		Implementation: c.implementation,
@@ -123,25 +137,11 @@ func (c MqttTopicConfig) convertToRead() mqttTopicConfigRead {
 	}
 }
 
-func (c HttpServerConfig) convertToRead() httpServerConfigRead {
-	return httpServerConfigRead{
-		Bind:        c.bind,
-		Port:        &c.port,
-		LogRequests: &c.logRequests,
-	}
-}
-
-func (c LocalDbConfig) convertToRead() localDbConfigRead {
-	return localDbConfigRead{
-		Enabled: &c.enabled,
-		Path:    &c.path,
-	}
-}
-
-func (c StatisticsConfig) convertToRead() statisticsConfigRead {
-	return statisticsConfigRead{
-		Enabled:           &c.enabled,
-		HistoryResolution: c.HistoryResolution().String(),
-		HistoryMaxAge:     c.HistoryMaxAge().String(),
+func (c InfluxAuxiliaryTags) convertToRead() influxAuxiliaryTagsRead {
+	return influxAuxiliaryTagsRead{
+		Tag:       &c.tag,
+		Equals:    c.equals,
+		Matches:   c.matches,
+		TagValues: c.tagValues,
 	}
 }

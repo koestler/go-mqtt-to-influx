@@ -6,24 +6,10 @@ import (
 	"time"
 )
 
+// getters for Config struct
+
 func (c Config) Version() int {
 	return c.version
-}
-
-func (c Config) MqttClients() []*MqttClientConfig {
-	return c.mqttClients
-}
-
-func (c Config) InfluxClients() []*InfluxClientConfig {
-	return c.influxClients
-}
-
-func (c Config) InfluxAuxiliaryTags() []*InfluxAuxiliaryTags {
-	return c.influxAuxiliaryTags
-}
-
-func (c Config) Converters() []*ConverterConfig {
-	return c.converters
 }
 
 func (c Config) HttpServer() HttpServerConfig {
@@ -45,6 +31,66 @@ func (c Config) LogConfig() bool {
 func (c Config) LogWorkerStart() bool {
 	return c.logWorkerStart
 }
+
+func (c Config) MqttClients() []*MqttClientConfig {
+	return c.mqttClients
+}
+
+func (c Config) InfluxClients() []*InfluxClientConfig {
+	return c.influxClients
+}
+
+func (c Config) Converters() []*ConverterConfig {
+	return c.converters
+}
+
+func (c Config) InfluxAuxiliaryTags() []*InfluxAuxiliaryTags {
+	return c.influxAuxiliaryTags
+}
+
+// getters for HttpServerConfig struct
+
+func (c HttpServerConfig) Enabled() bool {
+	return c.enabled
+}
+
+func (c HttpServerConfig) Bind() string {
+	return c.bind
+}
+
+func (c HttpServerConfig) Port() int {
+	return c.port
+}
+
+func (c HttpServerConfig) LogRequests() bool {
+	return c.logRequests
+}
+
+// getters for LocalDbConfig struct
+
+func (c LocalDbConfig) Enabled() bool {
+	return c.enabled
+}
+
+func (c LocalDbConfig) Path() string {
+	return c.path
+}
+
+// getters for StatisticsConfig struct
+
+func (c StatisticsConfig) Enabled() bool {
+	return c.enabled
+}
+
+func (c StatisticsConfig) HistoryResolution() time.Duration {
+	return c.historyResolution
+}
+
+func (c StatisticsConfig) HistoryMaxAge() time.Duration {
+	return c.historyMaxAge
+}
+
+// getters for MqttClientConfig struct
 
 func (c MqttClientConfig) Name() string {
 	return c.name
@@ -103,6 +149,8 @@ func (c MqttClientConfig) LogMessages() bool {
 	return c.logMessages
 }
 
+// getters for InfluxClientConfig struct
+
 func (c InfluxClientConfig) Name() string {
 	return c.name
 }
@@ -155,32 +203,7 @@ func (c InfluxClientConfig) LogDebug() bool {
 	return c.logDebug
 }
 
-func (c InfluxAuxiliaryTags) Tag() string {
-	return c.tag
-}
-
-func (c InfluxAuxiliaryTags) Equals() *string {
-	return c.equals
-}
-
-func (c InfluxAuxiliaryTags) Matches() *string {
-	return c.matches
-}
-
-func (c InfluxAuxiliaryTags) MatchString(value string) bool {
-	if c.equals != nil {
-		return *c.equals == value
-	}
-	if c.matcher != nil {
-		return c.matcher.MatchString(value)
-	}
-
-	return false
-}
-
-func (c InfluxAuxiliaryTags) TagValues() map[string]string {
-	return c.tagValues
-}
+// getters for ConverterConfig struct
 
 func (c ConverterConfig) Name() string {
 	return c.name
@@ -206,6 +229,8 @@ func (c ConverterConfig) LogHandleOnce() bool {
 	return c.logHandleOnce
 }
 
+// getters for MqttTopicConfig struct
+
 func (c MqttTopicConfig) Topic() string {
 	return c.topic
 }
@@ -220,38 +245,31 @@ func (c MqttTopicConfig) DeviceIsDynamic() bool {
 	return deviceDynamicMatcher.MatchString(c.device)
 }
 
-func (c HttpServerConfig) Enabled() bool {
-	return c.enabled
+// getters for InfluxAuxiliaryTags struct
+
+func (c InfluxAuxiliaryTags) Tag() string {
+	return c.tag
 }
 
-func (c HttpServerConfig) Bind() string {
-	return c.bind
+func (c InfluxAuxiliaryTags) Equals() *string {
+	return c.equals
 }
 
-func (c HttpServerConfig) Port() int {
-	return c.port
+func (c InfluxAuxiliaryTags) Matches() *string {
+	return c.matches
 }
 
-func (c HttpServerConfig) LogRequests() bool {
-	return c.logRequests
+func (c InfluxAuxiliaryTags) MatchString(value string) bool {
+	if c.equals != nil {
+		return *c.equals == value
+	}
+	if c.matcher != nil {
+		return c.matcher.MatchString(value)
+	}
+
+	return false
 }
 
-func (c LocalDbConfig) Enabled() bool {
-	return c.enabled
-}
-
-func (c LocalDbConfig) Path() string {
-	return c.path
-}
-
-func (c StatisticsConfig) Enabled() bool {
-	return c.enabled
-}
-
-func (c StatisticsConfig) HistoryResolution() time.Duration {
-	return c.historyResolution
-}
-
-func (c StatisticsConfig) HistoryMaxAge() time.Duration {
-	return c.historyMaxAge
+func (c InfluxAuxiliaryTags) TagValues() map[string]string {
+	return c.tagValues
 }
