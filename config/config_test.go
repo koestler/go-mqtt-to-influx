@@ -150,7 +150,7 @@ InfluxClients:
     RetryInterval: 30s
     AggregateInterval: 90s
     TimePrecision: 1ms
-    ConnectTimeout: 300ms
+    ConnectTimeout: 3500ms
     BatchSize: 10000
     RetryQueueLimit: 50
     LogDebug: True
@@ -467,8 +467,8 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect TimePrecision of first InfluxClient to be '1ms'")
 	}
 
-	if config.InfluxClients()[0].ConnectTimeout().String() != "1ms" {
-		t.Error("expect ConnectTimeout of first InfluxClient to be '300ms'")
+	if v := config.InfluxClients()[0].ConnectTimeout().String(); v != "3.5s" {
+		t.Errorf("expect ConnectTimeout of first InfluxClient to be '3.5s', got %s", v)
 	}
 
 	if config.InfluxClients()[0].BatchSize() != 10000 {
@@ -692,16 +692,16 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default MqttClient->Qos to be 1")
 	}
 
-	if config.MqttClients()[0].KeepAlive().String() != "10s" {
-		t.Error("expect default MqttClient->KeepAlive to be 10s")
+	if v := config.MqttClients()[0].KeepAlive().String(); v != "1m0s" {
+		t.Errorf("expect default MqttClient->KeepAlive to be 1m0s, got '%s'", v)
 	}
 
 	if config.MqttClients()[0].ConnectRetryDelay().String() != "10s" {
 		t.Error("expect default MqttClient->ConnectRetryDelay to be 10s")
 	}
 
-	if config.MqttClients()[0].ConnectTimeout().String() != "1s" {
-		t.Error("expect default MqttClient->ConnectTimeout to be 1s")
+	if config.MqttClients()[0].ConnectTimeout().String() != "5s" {
+		t.Error("expect default MqttClient->ConnectTimeout to be 5s")
 	}
 
 	expectedAvailabilityTopic := "%Prefix%tele/%ClientId%/status"
@@ -738,7 +738,7 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default InfluxClient->TimePrecision to be 1s")
 	}
 
-	if config.InfluxClients()[0].ConnectTimeout().String() != "1s" {
+	if config.InfluxClients()[0].ConnectTimeout().String() != "5s" {
 		t.Error("expect default InfluxClient->ConnectTimeout to be 5s")
 	}
 
