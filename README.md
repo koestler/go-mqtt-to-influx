@@ -2,32 +2,50 @@
 [![Docker Image CI](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/docker-image.yml/badge.svg)](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/docker-image.yml)
 [![Run tests](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/test.yml/badge.svg)](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/test.yml)
 
-**This readme is outdated (major version v1) and should be updated to reflect the changes for v2.**
+This tool connects to one or multiple [MQTT](http://mqtt.org/) servers to receive data from IOT-sensors.
+The messages are then parsed using easy to implement device / message specific converters to generate
+data points which are then written to an [Influx Database](https://github.com/influxdata/influxdb).
 
+The tool was written for a couple of different scenarios in mind:
+- Sending telemetry data of a smart home running a couple dozen [Sonoff Switches](https://sonoff.tech/products/)
+  running [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
+  and connected to a local [Eclipse Mosquitto Instance](https://github.com/eclipse/mosquitto)
+  to a [cloud hosted InfluxDB](https://cloud2.influxdata.com/) for displaying them using [Grafana](https://github.com/grafana/grafana).
+- An off-grid holiday home installation running two batteries with
+  Victron Energy [SmartSolar](https://www.victronenergy.com/solar-charge-controllers/bluesolar-mppt-150-35)
+  and [BMV 702](https://www.victronenergy.com/battery-monitors/bmv-702) and various [Shelly Devices](https://www.shelly.cloud/).
+  The last 180 days are kept locally while all data is uploaded to a server for infinite storage.
+  A [Teltonika RUTX11](https://teltonika-networks.com/product/rutx11/) is used for the mobile connection
+  and runs a MQTT-server while a single [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/)
+  runs [go-iotdevice](https://github.com/koestler/go-iotdevice),
+  this software as well as the local [InfluxDB OSS](https://docs.influxdata.com/influxdb/v2.4/).
+- Writing temperatures captured by [Dragino LSN50-v2](https://www.dragino.com/products/lora-lorawan-end-node/item/155-lsn50-v2.html)
+  / [Dragino LHT52](https://www.dragino.com/products/temperature-humidity-sensor/item/199-lht52.html) [LoraWan](https://en.wikipedia.org/wiki/LoRa) sensors
+  and routed via [The Things Network](https://www.thethingsnetwork.org/) to a MQTT database
+  and displaying them in a [Grafana](https://grafana.com/) dashboard.
+  
+This tool consists of the following components:
+* **mqttClient**: Connects to a MQTT servers
+                  using [paho.mqtt.golang](https://github.com/eclipse/paho.mqtt.golang) for MQTT v3.3 
+                  and [paho.golang/paho](https://github.com/eclipse/paho.golang) for MQTT v5
+                  to **receive** raw data.
+* **converter**: Parses the message topics and bodies and **converts** them into InfluxDB data points.
+* **influxClient**: Connects to an InfluxDB v2 server and **writes** data to it.
+* **statistics**: Optional module to measure the flow rate of messages per device / topic / converter / database.
+* **httpServer**: Optional module to output statistics and other debug information.
+* **localDb**: Optional module to record a backlog of data to a local [Sqlite3](https://www.sqlite.org/) database
+               while the InfluxDB is unavailable. The module aggregates small batches into bigger batches to 
+               allow for a relatively quick writing of all data once the InfluxDB is back online.
 
-This daemon connects to [MQTT servers](http://mqtt.org/) and stores the received messages 
-in an [Influx Database](https://github.com/influxdata/influxdb).
+## Supported converters
 
-The tool can connect to one or multiple MQTT servers, handles multiple different topics/data formats and
-saves the data in one or multiple databases.
-
-The tool was originally written for one specific project where the data is measured by Sonoff devices and
-Victron Energy battery monitors / solar chargers. The devices send the data to an
-[Eclipse Mosquitto](https://github.com/eclipse/mosquitto) MQTT server, `go-mqtt-to-influx` writes the data
-to a local Influx Db Server for making it available by [Grafana](https://grafana.com/) and a second Influx Db
-Server for long term data storage. It, therefore, supports the following inputs:
-* Telemetry and sensor data produced by [go-iotdevice](https://github.com/koestler/go-iotdevice)
-* Telemetry and sensor data produced by devices running [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
+Currently, the following devices / message formats are supported:
+* [go-iotdevice](https://github.com/koestler/go-iotdevice)
+* [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
+* [Dragino LoraWAN sensors](https://www.dragino.com/)
 
 However, you are more than welcome to help support new devices. Send push requests of converters including some tests
 or open an issue including examples of topics and messages.
-
-The tool consists of the following components:
-* **mqttClient**: connects to a MQTT Server and *receives* messages
-* **converter**: parses the message topics and bodies and converts them into influx data points
-* **influxClient**: connects to an Influx Database Server and *writes* data to it
-* **httpServer**: optional module to output statistics
-* **statistics**: optional module to compute statistics about handles messages and rates
 
 ## Basic Usage
 ```
