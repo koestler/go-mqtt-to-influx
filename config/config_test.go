@@ -825,3 +825,18 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default Converter->MqttTopics->Device to be '+'")
 	}
 }
+
+// check that configuration file in the documentation do not contain any errors
+func TestReadConfig_DocumentationConfig(t *testing.T) {
+	_, err := ReadConfigFile("", "../documentation/config.yaml")
+	if len(err) > 0 {
+		t.Errorf("did not expect any errors, got %v", err)
+	}
+}
+
+func TestReadConfig_DocumentationFullConfig(t *testing.T) {
+	_, err := ReadConfigFile("", "../documentation/full-config.yaml")
+	if len(err) > 0 {
+		t.Errorf("did not expect any errors, got %v", err)
+	}
+}

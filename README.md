@@ -65,40 +65,63 @@ have a default value.
 ```yaml
 # documentation/config.yaml
 
-Version: 0                                                 # mandatory, version is always 0 (reserved for later use)
+Version: 0
 
-HttpServer:                                                # optional, default Disabled, start the http server
-  Port: 8042                                               # optional, default 8042
-Statistics:                                                # optional, default Disabled, start the statistics module (needs some additional memory/cpu)
-  Enabled: True                                            # mandatory, set to True to enable
+HttpServer:
+  Bind: 0.0.0.0
+  LogRequests: True
 
-MqttClients:                                               # mandatory, a list of MQTT servers to connect to
-  example:                                                 # mandatory, an arbitrary name used in log outputs and for reference in the converters section
-    Broker: "tcp://mqtt.exampel.com:1883"                  # mandatory, the address / port of the server
-    User: Bob                                              # optional, if given used for login
-    Password: Jeir2Jie4zee                                 # optional, if given used for login
+LocalDb:
+  Path: "/app/db/local.db"
 
-InfluxClients:                                             # mandatory, a list of Influx DB Client configuration
-  example:                                                 # mandatory, an arbitrary name used in log outputs and for reference in the converters section
-    Address: "http://influx.example.com:8086"              # mandatory, the address / port of the server
-    User: Alice                                            # optional, if given used for login
-    Password: An2iu2egheijeG                               # optional, if given used for login
+Statistics:
 
-Converters:                                                # mandatory, a list of Converters to run
-  lwt:                                                     # mandatory, an arbitrary name used in log outputs
-    Implementation: lwt                                    # mandatory, which converter to use
-    MqttTopics:                                            # mandatory, a list of topics to subscribe to
-      - tele/+/+/LWT
+LogConfig: True
+LogWorkerStart: True
+
+MqttClients:
+  local-mosquitto:                                         # connect to a local mosquitto server allowing for anonymous connections
+    Broker: "tcp://mqtt.exampel.com:1883"
+
+  ttn:                                                     # connect to the things network mqtt server
+    Broker: "ssl://eu1.cloud.thethings.network:8883"
+    ProtocolVersion: 3
+    User: project@ttn
+    Password: "NNSXS.VM5PRxxx"
+    TopicPrefix: "v3/project@ttn/"
+    AvailabilityTopic: ""                                  # disable availability topic on ttn, nobody will listen for it
+    Qos: 0                                                 # ttn only supports QOS = 0
+
+InfluxClients:
+  example-influx:
+    Url: "http://influx.example.com:8086"
+    Token: "pfYLu9SjvgblMFL5jzNepJ7PHpKsTjAeVmAMCYHll3BH2cNW5bIz7AdrIbfnsH0tXKcQU9JGr8K-LB1Vdpupmg=="
+    Org: "iot"
+    Bucket: "iot"
+
+Converters:
+  go-iotdevices:
+    Implementation: go-iotdevice
+    MqttTopics:
+      - Topic: "%Prefix%tele/go-iotdevice/%Device%/state"
 
   tasmota-state:
     Implementation: tasmota-state
     MqttTopics:
-      - tele/+/+/STATE
+      - Topic: "%Prefix%tele/%Device%/STATE"
+        Device: "+/+"
 
   tasmota-sensor:
     Implementation: tasmota-sensor
     MqttTopics:
-      - tele/+/+/SENSOR
+      - Topic: "%Prefix%tele/%Device%/SENSOR"
+        Device: "+/+"
+
+  ttn-dragino:
+    Implementation: ttn-dragino
+    MqttTopics:
+      - Topic: "ttn/devices/%Device%/up"
+
 ```  
 
 ### Complete, explained example
@@ -106,80 +129,144 @@ Converters:                                                # mandatory, a list o
 ```yaml
 # documentation/full-config.yaml
 
-Version: 0                                                 # mandatory, version is always 0 (reserved for later use)
-LogConfig: True                                            # optional, default False, outputs the configuration including defaults on startup
-LogWorkerStart: True                                       # optional, default False, write log for starting / stoping of workers
-LogMqttDebug: False                                        # optional, default False, enable debug output of the mqtt module
-HttpServer:                                                # optional, default Disabled, start the http server
-  Bind: 0.0.0.0                                            # optional, default ::1 (ipv6 loopback)
-  Port: 80                                                 # optional, default 8042
-  LogRequests: True                                        # optional, default False, log all requests to stdout
+# Configuration file format version. Always set to 0 since not other format is supported yet (reserved for future use).
+
+# HttpServer: When this section is present, a http server is started.
+HttpServer:                                                # optional, default Disabled
+  Bind: [::1]                                              # optional, default [::1]; set to 127.0.0.1 for ipv4 loop-back, or [::] / 0.0.0.0 to listen on all ports
+  Port: 8000                                               # optional, default 8000; what tcp port the server is listing on; running as root is required when a low port like 80 is used
+  LogRequests: False                                       # optional, default False; log all requests to stdout
+
+# LocalDb: When this section is present, a local sqlite-database is created to store a backlog of data waiting to be written to influx
+LocalDb:                                                   # optional, default Disabled
+  Path: "/app/db/local.db"                                 # optional, default ./go-mqtt-to-influx.db, where to put the file. Use /app/db/XXX when using the docker container.
+
+# Statistics: When this section is enabled, event counters for received, converted and saved events are stored in memory.
+# This module might up significant amounts of memory.
+# It stores a counter for each mqttTopic, for each mqttClient/influxClient/converter and for each time step.
+# The number of time steps is HistoryMaxAge / HistoryResolution.
 Statistics:                                                # optional, default Disabled, start the statistics module (needs some additional memory/cpu)
-  Enabled: True                                            # mandatory, set to True to enable
-  HistoryResolution: 1s                                    # optional, default 1s, time resolution for aggregation, decrease with caution
+  HistoryResolution: 10s                                   # optional, default 10s, time resolution for aggregation, decrease with caution
   HistoryMaxAge: 10m                                       # optional, default 10min, how many time steps to keep, increase with caution
 
-MqttClients:                                               # mandatory, a list of MQTT servers to connect to
-  0-piegn-mosquitto:                                       # mandatory, an arbitrary name used in log outputs and for reference in the converters section
+LogConfig: True                                            # optional, default False, outputs the used configuration including defaults on startup
+LogWorkerStart: True                                       # optional, default False, write log for starting / stopping of worker threads
+
+# A map of MQTT servers to connect to
+MqttClients:                                               # mandatory, the list must not be empty
+  local-mosquitto:                                         # mandatory, an arbitrary name used in log outputs and for reference in the converters section
     Broker: "tcp://mqtt.exampel.com:1883"                  # mandatory, the address / port of the server
+    ProtocolVersion: 5                                     # optional, default  5, 3 for mqtt v3.3.x and 5 for mqtt v5.
     User: Bob                                              # optional, if given used for login
     Password: Jeir2Jie4zee                                 # optional, if given used for login
-    ClientId: "config-tester"                              # optional, default go-mqtt-to-influx, client-id sent to the server
-    Qos: 2                                                 # optional, default 0, QOS-level used for subscriptions
-    AvailabilityTopic: test/%Prefix%tele/%ClientId%/LWT    # optional, if given, a message with Online/Offline will be published on connect/disconnect
+    #ClientId: "go-mqtt-to-influx"                         # optional, default go-mqtt-to-influx-UUID (UUID is generated), client-id sent to the server
+    Qos: 1                                                 # optional, default 1, QOS-level used for subscriptions / availability messages must be 0, 1, or 2
+    KeepAlive: 60s                                         # optional, default 60s, how often ping messages are sent to the server
+    ConnectRetryDelay: 10s                                 # optional, default 10s, how often to try to reestablish a connection to the server
+    ConnectTimeout: 5s                                     # optional, default 5s, how long to wait for the connect response, increase on very slow notworks
+    AvailabilityTopic: test/%Prefix%tele/%ClientId%/LWT    # optional, if given, a message with "online" / "offline" as payload will be published on connect / disconnect
                                                            # supported placeholders:
-                                                           # - %Prefix$   : as specified in this config section
-                                                           # - %ClientId% : as specified in this config section
-    TopicPrefix: piegn/                                    # optional, default empty
-    LogMessages: False                                     # optional, default False, logs all received messages
+                                                           # - %Prefix$   : as specified in TopicPrefix in this config section
+                                                           # - %ClientId% : as specified in ClientId this config section
+    TopicPrefix: my-project/                               # optional, default empty, used to generate Mqtt Message topics
+    LogDebug: False                                        # optional, default False, when enabled debug log of the mqtt client is enabled.
+    LogMessages: False                                     # optional, default False, when enabled, all received messages are logged
 
-  1-local-mosquitto:                                       # optional, a second MQTT erver
-    Broker: "tcp://172.17.0.5:1883"                        # optional, the second MQTT servers broker...
+  ttn:                                                     # optional, a second MQTT server, use The Things Network as an example
+    Broker: "ssl://eu1.cloud.thethings.network:8883"
+    ProtocolVersion: 3                                     # the things network's MQTT server does not support v5 yet, use v3 instead
+    User: project@ttn                                      # see Integrations -> MQTT on thethings.network
+    Password: "NNSXS.VM5PRxxx"                             # see Integrations -> MQTT on thethings.network
+    TopicPrefix: "v3/project@ttn/"                         # see Integrations -> MQTT on thethings.network
+    AvailabilityTopic: ""                                  # disable availability topic on ttn, nobody will listen for it
+    Qos: 0                                                 # ttn only supports QOS = 0
+    # only for ttn implementation: when KeepAlive interval is set to low, regular reconnects occur. 60s works fine.
 
-InfluxClients:                                             # mandatory, a list of Influx DB Client configuration
-  0-piegn:                                                 # mandatory, an arbitrary name used in log outputs and for reference in the converters section
-    Address: "http://influx.example.com:8086"              # mandatory, the address / port of the server
-    User: Alice                                            # optional, if given used for login
-    Password: An2iu2egheijeG                               # optional, if given used for login
-    Database: test-database                                # optional, default go-mqtt-to-influx, the db to be used
-    WriteInterval: 400ms                                   # optional, default 200ms, how often to write a batch of points, if 0, each point is sent immediately in a separate request
-    TimePrecision: 1ms                                     # optional, default 1s, influx db time precision
-    LogLineProtocol: True                                  # optional, default False, outputs the Influx Line Protocol of each point
+# A map of InfluxDB server to send data to
+InfluxClients:                                             # mandatory, the list must not be empty
+  example-influx:                                          # mandatory, an arbitrary name used in log outputs and for reference in the converters section
+    Url: "http://influx.example.com:8086"                  # mandatory, the url to the server
+    Token: "pfYLu9SjvgblMFL5jzNepJ7PHpKsTjAeVmAMCYHll3BH2cNW5bIz7AdrIbfnsH0tXKcQU9JGr8K-LB1Vdpupmg=="
+                                                           # mandatory, the influxDb API Token
+    Org: "iot"                                             # mandatory, the influxDb organisation name
+    Bucket: "iot"                                          # mandatory, the influxDb bucket to which the data shall be written
+    WriteInterval: 10s                                     # optional, default 10s, defines how often data is sent to the influxDb, in between it is stores in memory.
+    RetryInterval: 10s                                     # optional, default 10s, retry after this time when connection fails or on non 2xx-response
+    AggregateInterval: 60s                                 # optional, default 60s, how often the local db aggregates multiple data batches into one.
+    TimePrecision: 1ms                                     # optional, default 1s, influxDb time precision
+    ConnectTimeout: 5s                                     # optional, default 5s, how long to wait for the connect response, increase on very slow notworks
+    BatchSize: 5000                                        # optional, default 5000, points are grouped into batches of this size; a batch is sent when it is full or when WriteInterval elapses
+    RetryQueueLimit: 20                                    # optional, default 20, discard the oldest batches in the retry queue when this limit is reached (limits memory usage)
+    LogDebug: True                                         # optional, default False, outputs the influxDb Line Protocol of each point
 
-  1-local:                                                 # optional, a second Influx Server
-    Address: "http://[::1]:8086"                           # optional, the address of the second Influx server ...
+  local:                                                   # optional, a second Influx Server
+    Url: "http://[::1]:8086"                               # optional, the address of the second Influx server ...
+    Token: "xxx"
+    Org: "dev"
+    Bucket: "dev"
 
-Converters:                                                # mandatory, a list of Converters to run
-  0-lwt:                                                   # mandatory, an arbitrary name used in log outputs
-    Implementation: lwt                                    # mandatory, which converter to use
-    TargetMeasurement: boolValue                           # optional, default depending on implementation
-    MqttTopics:                                            # mandatory, a list of topics to subscribe to
-      - "%Prefix%tele/+/+/LWT"
-    MqttClients:                                           # optional, default all configured, a list of MQTT Clients to receive data from
-      - 0-piegn-mosquitto
-      - 1-local-mosquitto
-    InfluxClients:                                         # optional, default all configured, a list of Influx Clients to send data to
-      - 0-piegn
-      - 1-local
-    LogHandleOnce: True                                    # optional, default False, if True each topic is logged once by each converter
+# A map of converters that receive data from mqtt servers and forward points to influxDb servers
+# This file contains an example configuration for all available implementations.
+Converters:                                                # mandatory, the list must not be empty
+  go-iotdevices:                                           # mandatory, an arbitrary name used in log outputs
+    Implementation: go-iotdevice                           # mandatory, selects the converter implementation
+    MqttTopics:                                            # mandatory, list must not be empty, selects what mqtt subscriptions shall be created for that converter
+      - Topic: "%Prefix%tele/go-iotdevice/%Device%/state"  # mandatory, the topic(s) to subscribe to
+                                                           #            wildcards + and # might be used
+                                                           #            %Prefix% depends on the TopicPrefix defined in the MqttClient config section
+                                                           #            %Device% is a placeholder for the deviceName sent to the influxDb
+        Device: "+"                                        # optional,  default '+', %Device% in the topic is replaced with this
+                                                           #            can be a static value like 'sensor-1'
+                                                           #            can be a wildcard + for a single word
+                                                           #            can be a wildcard +/+ to match something like a/b and foo/sensor-1
+                                                           #            can be # to match an unlimited number of levels
+    MqttClients:                                           # defines which mqtt clients this converter shall subscribe to, if omitted or empty, all clients are used
+      - local-mosquitto                                    # the arbitrary name defined in the MqttClients configuration section
+      - ttn
+    InfluxClients:                                         # defines which influxDb clients this converter shall write data to, if omitted or empty, data is sent to all clients
+      - example-influx                                     # the arbitrary name defined in the InfluxClients configuration section
+      - local
+    LogHandleOnce: True                                    # optional, default True, when enabled, the first time this converter is executed, a log message is generated
 
-  1-iot:                                                    # optional, a second Converter
-    Implementation: go-iotdevice
-    MqttTopics:
-      - "%Prefix%tele/go-iotdevice/+/state"
-    LogHandleOnce: False
+  ttn-dragino:                                             # mandatory, an arbitrary name used in log outputs
+    Implementation: ttn-dragino
+    MqttTopics:                                            # mandatory, list must not be empty, selects what mqtt subscriptions shall be created for that converter
+      - Topic: "ttn/devices/%Device%/up"
+        Device: "+"
+    MqttClients:                                           # defines which mqtt clients this converter shall subscribe to, if omitted or empty, all clients are used
+      - ttn                                                # e.g. only subscribe on ttn for the dagino sensor updates
+    InfluxClients:                                         # defines which influxDb clients this converter shall write data to, if omitted or empty, data is sent to all clients
+      - local                                              # e.g. only sends dragino data to the local db since the internet server has another instance of this tool running
+    LogHandleOnce: True                                    # optional, default True, when enabled, the first time this converter is executed, a log message is generated
 
-  2-tasmota-state:
+  tasmota-state:                                           # mandatory, an arbitrary name used in log outputs
     Implementation: tasmota-state
-    MqttTopics:
-      - "%Prefix%tele/+/+/STATE"
-    LogHandleOnce: True
+    MqttTopics:                                            # mandatory, list must not be empty, selects what mqtt subscriptions shall be created for that converter
+      - Topic: "%Prefix%tele/%Device%/STATE"               # e.g. subscribes 'my-project/tele/+/+/STATE' on local-mosquitto
+                                                           # and subscribes 'v3/project@ttn/tele/+/+/SATE' on ttn
+        Device: "+/+"                                      # e.g. when topic is 'my-project/tele/mezzo/light0/STATE', deviceName=mezzo/light0
+    LogHandleOnce: True                                    # optional, default True, when enabled, the first time this converter is executed, a log message is generated
 
-  3-tasmota-sensor:
+  tasmota-sensor:                                          # mandatory, an arbitrary name used in log outputs
     Implementation: tasmota-sensor
-    MqttTopics:
-      - "%Prefix%tele/+/+/SENSOR"
-    LogHandleOnce: True
+    MqttTopics:                                            # mandatory, list must not be empty, selects what mqtt subscriptions shall be created for that converter
+      - Topic: "%Prefix%tele/%Device%/SENSOR"
+        Device: "+/+"
+    LogHandleOnce: True                                    # optional, default True, when enabled, the first time this converter is executed, a log message is generated
+
+
+# A list of influxDb tags that should be added depending on the deviceName.
+# This is useful to e.g. group sensors by building, by type or so and use this in influxDb queries.
+# You can use either use the Matches or the Equals property. A device can match multiple tags. The tags are then merged (last one in the list overwrites)
+InfluxAuxiliaryTags:                                       # optional, the list can be omitted or left empty
+  - Equals: mezzo/bridge0                                  # Match the device with deviceName=mezzo/bridge0.
+    TagValues:                                             # A map of tagName: value to add as influxDb tag
+      displayName: Sonoff Bridge                           # adds displayName="Sonoff Bridge"
+
+  - Matches: mezzo/.*                                      # optional, match the deviceName by regular expression
+    TagValues:                                             # A map of tagName: value to add as influxDb tag
+      area: Mezzo
+
 ```  
 
 ## Converters
@@ -294,7 +381,7 @@ services:
     image: koestler/go-mqtt-to-influx:v2
     volumes:
       - /srv/volumes/mqtt-to-influx/db:/app/db
-      - ${PWD}/full-config.yaml:/app/full-config.yaml:ro
+      - ${PWD}/config.yaml:/app/config.yaml:ro
 ```
 
 Note the mount of /app/db. It makes the database persist recreation of the docker container.
