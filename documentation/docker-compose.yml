@@ -2,8 +2,7 @@ version: "3"
 services:
   go-mqtt-to-influx:
     restart: always
-    image: koestler/go-mqtt-to-influx:v0
+    image: koestler/go-mqtt-to-influx:v2
     volumes:
+      - /srv/volumes/mqtt-to-influx/db:/app/db
       - ${PWD}/config.yaml:/app/config.yaml:ro
-    ports:
-      - "8880:8880"

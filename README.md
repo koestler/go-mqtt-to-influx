@@ -154,7 +154,7 @@ Converters:                                                # mandatory, a list o
     Implementation: lwt                                    # mandatory, which converter to use
     TargetMeasurement: boolValue                           # optional, default depending on implementation
     MqttTopics:                                            # mandatory, a list of topics to subscribe to
-      - %Prefix%tele/+/+/LWT
+      - "%Prefix%tele/+/+/LWT"
     MqttClients:                                           # optional, default all configured, a list of MQTT Clients to receive data from
       - 0-piegn-mosquitto
       - 1-local-mosquitto
@@ -163,22 +163,22 @@ Converters:                                                # mandatory, a list o
       - 1-local
     LogHandleOnce: True                                    # optional, default False, if True each topic is logged once by each converter
 
-  1-ve:                                                    # optional, a second Converter
+  1-iot:                                                    # optional, a second Converter
     Implementation: go-iotdevice
     MqttTopics:
-      - %Prefix%tele/ve/#
-    LogHandleOnce: True
+      - "%Prefix%tele/go-iotdevice/+/state"
+    LogHandleOnce: False
 
   2-tasmota-state:
     Implementation: tasmota-state
     MqttTopics:
-      - %Prefix%tele/+/+/STATE
+      - "%Prefix%tele/+/+/STATE"
     LogHandleOnce: True
 
   3-tasmota-sensor:
     Implementation: tasmota-sensor
     MqttTopics:
-      - %Prefix%tele/+/+/SENSOR
+      - "%Prefix%tele/+/+/SENSOR"
     LogHandleOnce: True
 ```  
 
@@ -271,12 +271,68 @@ Example:
   * `floatValue,device=elektronik/control0,field=Temperature,sensor=SI7021,unit=C value=5.4`
   * `floatValue,device=elektronik/control0,field=Humidity,sensor=SI7021,unit=% value=27.7`
 
+## Deployment
+The cpu / memory requirements for this tool are quite minimal but depend on the number of messages to be handled.
+I run it on [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/) and on
+[PC Engines APU 2](https://www.pcengines.ch/apu2.htm) in the field as well as X86 virtual servers in the cloud.
+
+There are [github actions](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/docker-image.yml)
+to automatically cross-compile amd64, arm64 and arm/v7
+[docker images](https://hub.docker.com/r/koestler/go-mqtt-to-influx/tags).
+
+The github tags use semantic versioning and whenever a tag like v2.3.4 is build, it is pushed to docker tags
+v2, v2.3 and v2.3.4.
+
+For auto-restart on system reboots, configuration and networking I use `docker compose`. Here is an example file:
+```yaml
+# documentation/docker-compose.yml
+
+version: "3"
+services:
+  go-mqtt-to-influx:
+    restart: always
+    image: koestler/go-mqtt-to-influx:v2
+    volumes:
+      - /srv/volumes/mqtt-to-influx/db:/app/db
+      - ${PWD}/config.yaml:/app/config.yaml:ro
+```
+
+Note the mount of /app/db. It makes the database persist recreation of the docker container.
+It assumes hat you have the following configuration in config.yaml:
+LocalDb:
+```yaml
+  Path: /app/db/local.db
+```
+
+Quick setup:
+```bash
+mkdir -p /srv/dc/mqtt-to-influx
+cd /srv/dc/mqtt-to-influx
+curl https://raw.githubusercontent.com/koestler/go-mqtt-to-influx/main/documentation/docker-compose.yml -o docker-compose.yml
+curl https://github.com/koestler/go-mqtt-to-influx/blob/main/documentation/minimal-config.yaml -o config.yaml
+# adapt config.yaml and configure mqtt / influx connection and converters.
+docker compose up -d
+docker compose logs -f
+```
+
 ## Development
+Development is done on Ubuntu and Mac.
+Install [github cli](https://cli.github.com/) and [golang](https://go.dev/doc/install).
+
+### Local development
+```bash
+gh clone koestler/go-mqtt-to-influx
+cd go-mqtt-to-influx
+go build
+./go-mqtt-to-influx
+```
 
 ### Compile and run inside docker
 ```bash
+git clone koestler/go-mqtt-to-influx
+cd go-mqtt-to-influx
 docker build -f docker/Dockerfile -t go-mqtt-to-influx .
-docker run --rm --name go-mqtt-to-influx -p 127.0.0.1:8042:8042 \
+docker run --rm --name go-mqtt-to-influx -p 127.0.0.1:8000:8000 \
   -v "$(pwd)"/documentation/config.yaml:/app/config.yaml:ro \
   go-mqtt-to-influx
 ```
@@ -291,6 +347,13 @@ go test ./...
 ### Update README.md
 ```bash
 npx embedme README.md
+```
+
+### Upgrade dependencies
+```bash
+go get -t -u ./...
+go generate ./...
+go test ./...
 ```
 
 # License
