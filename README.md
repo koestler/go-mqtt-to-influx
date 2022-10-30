@@ -130,10 +130,11 @@ Converters:
 # documentation/full-config.yaml
 
 # Configuration file format version. Always set to 0 since not other format is supported yet (reserved for future use).
+Version: 0
 
 # HttpServer: When this section is present, a http server is started.
 HttpServer:                                                # optional, default Disabled
-  Bind: [::1]                                              # optional, default [::1]; set to 127.0.0.1 for ipv4 loop-back, or [::] / 0.0.0.0 to listen on all ports
+  Bind: "[::1]"                                            # optional, default [::1]; set to 127.0.0.1 for ipv4 loop-back, or [::] / 0.0.0.0 to listen on all ports
   Port: 8000                                               # optional, default 8000; what tcp port the server is listing on; running as root is required when a low port like 80 is used
   LogRequests: False                                       # optional, default False; log all requests to stdout
 
@@ -226,7 +227,7 @@ Converters:                                                # mandatory, the list
     InfluxClients:                                         # defines which influxDb clients this converter shall write data to, if omitted or empty, data is sent to all clients
       - example-influx                                     # the arbitrary name defined in the InfluxClients configuration section
       - local
-    LogHandleOnce: True                                    # optional, default True, when enabled, the first time this converter is executed, a log message is generated
+    LogHandleOnce: False                                   # optional, default False, when enabled, the first time this converter is executed, a log message is generated
 
   ttn-dragino:                                             # mandatory, an arbitrary name used in log outputs
     Implementation: ttn-dragino
@@ -237,7 +238,7 @@ Converters:                                                # mandatory, the list
       - ttn                                                # e.g. only subscribe on ttn for the dagino sensor updates
     InfluxClients:                                         # defines which influxDb clients this converter shall write data to, if omitted or empty, data is sent to all clients
       - local                                              # e.g. only sends dragino data to the local db since the internet server has another instance of this tool running
-    LogHandleOnce: True                                    # optional, default True, when enabled, the first time this converter is executed, a log message is generated
+    LogHandleOnce: False                                   # optional, default False, when enabled, the first time this converter is executed, a log message is generated
 
   tasmota-state:                                           # mandatory, an arbitrary name used in log outputs
     Implementation: tasmota-state
@@ -245,14 +246,14 @@ Converters:                                                # mandatory, the list
       - Topic: "%Prefix%tele/%Device%/STATE"               # e.g. subscribes 'my-project/tele/+/+/STATE' on local-mosquitto
                                                            # and subscribes 'v3/project@ttn/tele/+/+/SATE' on ttn
         Device: "+/+"                                      # e.g. when topic is 'my-project/tele/mezzo/light0/STATE', deviceName=mezzo/light0
-    LogHandleOnce: True                                    # optional, default True, when enabled, the first time this converter is executed, a log message is generated
+    LogHandleOnce: False                                   # optional, default False, when enabled, the first time this converter is executed, a log message is generated
 
   tasmota-sensor:                                          # mandatory, an arbitrary name used in log outputs
     Implementation: tasmota-sensor
     MqttTopics:                                            # mandatory, list must not be empty, selects what mqtt subscriptions shall be created for that converter
       - Topic: "%Prefix%tele/%Device%/SENSOR"
         Device: "+/+"
-    LogHandleOnce: True                                    # optional, default True, when enabled, the first time this converter is executed, a log message is generated
+    LogHandleOnce: False                                    # optional, default False, when enabled, the first time this converter is executed, a log message is generated
 
 
 # A list of influxDb tags that should be added depending on the deviceName.
