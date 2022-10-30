@@ -241,6 +241,15 @@ func TestReadConfig_NoVersion(t *testing.T) {
 
 func TestReadConfig_InvalidEmpty(t *testing.T) {
 	_, err := ReadConfig([]byte(InvalidEmptyConfig))
+	if !containsError("InfluxClients section must no be empty", err) {
+		t.Error("expect error for empty InfluxClients")
+	}
+	if !containsError("MqttClients section must no be empty", err) {
+		t.Error("expect error for empty MqttClients")
+	}
+	if !containsError("Converters section must no be empty.", err) {
+		t.Error("expect error for empty Converters")
+	}
 	if len(err) != 3 {
 		t.Error("expect 3 errors; for empty MqttClients, empty InfluxClients, and empty Converters")
 	}
@@ -684,8 +693,8 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default MqttClient->Password to be empty")
 	}
 
-	if !strings.Contains(config.MqttClients()[0].ClientId(), "go-mqtt-to-influx-") {
-		t.Error("expect default MqttClient->ClientId to contain 'go-mqtt-to-influx'")
+	if v := config.MqttClients()[0].ClientId(); !strings.Contains(v, "go-mqtt-to-influx-") && v != "go-mqtt-to-influx-" {
+		t.Error("expect default MqttClient->ClientId to contain but not be equal to 'go-mqtt-to-influx'")
 	}
 
 	if config.MqttClients()[0].Qos() != 1 {
@@ -713,12 +722,12 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default MqttClient->TopicPrefix to be empty")
 	}
 
-	if config.MqttClients()[0].LogMessages() {
-		t.Error("expect default MqttClient->LogMessages to be False")
-	}
-
 	if config.MqttClients()[0].LogDebug() {
 		t.Error("expect default MqttClient->LogDebug to be False")
+	}
+
+	if config.MqttClients()[0].LogMessages() {
+		t.Error("expect default MqttClient->LogMessages to be False")
 	}
 
 	// influxClients section
@@ -763,6 +772,11 @@ func TestReadConfig_Default(t *testing.T) {
 		t.Error("expect default Converter->InfluxClients to be empty")
 	}
 
+	if config.Converters()[0].LogHandleOnce() {
+		t.Error("expect default Converter->LogHandleOnce to be False")
+	}
+
+	// MqttTopicConfig section
 	if config.Converters()[0].MqttTopics()[0].Device() != "+" {
 		t.Error("expect default Converter->MqttTopics->Device to be '+'")
 	}

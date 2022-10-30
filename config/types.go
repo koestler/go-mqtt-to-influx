@@ -7,16 +7,16 @@ import (
 )
 
 type Config struct {
-	version             int                    `yaml:"Version"`       // must be 0
-	mqttClients         []*MqttClientConfig    `yaml:"MqttClient"`    // mandatory: at least 1 must be defined
-	influxClients       []*InfluxClientConfig  `yaml:"InfluxClients"` // mandatory: at least 1 must be defined
-	influxAuxiliaryTags []*InfluxAuxiliaryTags `yaml:"InfluxAuxiliaryTags"`
-	converters          []*ConverterConfig     `yaml:"Converters"`     // mandatory: at least 1 must be defined
-	httpServer          HttpServerConfig       `yaml:"HttpServer"`     // optional: default Disabled
-	localDb             LocalDbConfig          `yaml:"LocalDb"`        // optional: default Disasbled
-	statistics          StatisticsConfig       `yaml:"Statistics"`     // optional: default Disabled
-	logConfig           bool                   `yaml:"LogConfig"`      // optional: default False
-	logWorkerStart      bool                   `yaml:"LogWorkerStart"` // optional: default False
+	version             int                    `yaml:"Version"`             // must be 0
+	mqttClients         []*MqttClientConfig    `yaml:"MqttClient"`          // mandatory: at least 1 must be defined
+	influxClients       []*InfluxClientConfig  `yaml:"InfluxClients"`       // mandatory: at least 1 must be defined
+	influxAuxiliaryTags []*InfluxAuxiliaryTags `yaml:"InfluxAuxiliaryTags"` // optional: default empty
+	converters          []*ConverterConfig     `yaml:"Converters"`          // mandatory: at least 1 must be defined
+	httpServer          HttpServerConfig       `yaml:"HttpServer"`          // optional: default Disabled
+	localDb             LocalDbConfig          `yaml:"LocalDb"`             // optional: default Disasbled
+	statistics          StatisticsConfig       `yaml:"Statistics"`          // optional: default Disabled
+	logConfig           bool                   `yaml:"LogConfig"`           // optional: default False
+	logWorkerStart      bool                   `yaml:"LogWorkerStart"`      // optional: default False
 }
 
 type MqttClientConfig struct {
@@ -53,11 +53,11 @@ type InfluxClientConfig struct {
 }
 
 type InfluxAuxiliaryTags struct {
-	tag       string // optional: defaults to device
-	equals    *string
-	matches   *string
-	matcher   *regexp.Regexp
-	tagValues map[string]string
+	tag       string            // optional: defaults to "device"
+	equals    *string           // optional: if not set, matches must be set
+	matches   *string           // optional: if not set, equals must be set
+	matcher   *regexp.Regexp    // used internally
+	tagValues map[string]string // mandatory: must not be empty
 }
 
 type ConverterConfig struct {
@@ -76,7 +76,7 @@ type MqttTopicConfig struct {
 
 type HttpServerConfig struct {
 	enabled     bool   // defined automatically if HttpServer section exists
-	bind        string // optional: defaults to ::1 (ipv6 loopback)
+	bind        string // optional: defaults to [::1] (ipv6 loopback)
 	port        int    // optional: defaults to 8000
 	logRequests bool   // optional:  default False
 }
@@ -145,7 +145,7 @@ type influxClientConfigReadMap map[string]influxClientConfigRead
 type influxAuxiliaryTagsRead struct {
 	Tag       *string           `yaml:"Tag"`
 	Equals    *string           `yaml:"Equals"`
-	Matches   *string           `yaml:"Matches""`
+	Matches   *string           `yaml:"Matches"`
 	TagValues map[string]string `yaml:"TagValues"`
 }
 
