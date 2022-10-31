@@ -11,6 +11,7 @@ The tool was written for a couple of different scenarios in mind:
   running [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
   and connected to a local [Eclipse Mosquitto Instance](https://github.com/eclipse/mosquitto)
   to a [cloud hosted InfluxDB](https://cloud2.influxdata.com/) for displaying them using [Grafana](https://github.com/grafana/grafana).
+  This tool and Mosquitto is running on a [PC Engines APU 2](https://www.pcengines.ch/apu2.htm) single board computer.
 - An off-grid holiday home installation running two batteries with
   Victron Energy [SmartSolar](https://www.victronenergy.com/solar-charge-controllers/bluesolar-mppt-150-35)
   and [BMV 702](https://www.victronenergy.com/battery-monitors/bmv-702) and various [Shelly Devices](https://www.shelly.cloud/).
@@ -20,7 +21,8 @@ The tool was written for a couple of different scenarios in mind:
   runs [go-iotdevice](https://github.com/koestler/go-iotdevice),
   this software as well as the local [InfluxDB OSS](https://docs.influxdata.com/influxdb/v2.4/).
 - Writing temperatures captured by [Dragino LSN50-v2](https://www.dragino.com/products/lora-lorawan-end-node/item/155-lsn50-v2.html)
-  / [Dragino LHT52](https://www.dragino.com/products/temperature-humidity-sensor/item/199-lht52.html) [LoraWan](https://en.wikipedia.org/wiki/LoRa) sensors
+  / [Dragino LHT52](https://www.dragino.com/products/temperature-humidity-sensor/item/199-lht52.html)
+  [LoraWan](https://en.wikipedia.org/wiki/LoRa) sensors
   and routed via [The Things Network](https://www.thethingsnetwork.org/) to a MQTT database
   and displaying them in a [Grafana](https://grafana.com/) dashboard.
   
@@ -37,112 +39,78 @@ This tool consists of the following components:
                while the InfluxDB is unavailable. The module aggregates small batches into bigger batches to 
                allow for a relatively quick writing of all data once the InfluxDB is back online.
 
-## Supported converters
+## Deployment
+The cpu & memory requirements for this tool are quite minimal but depend on the number of messages to be handled.
 
-Currently, the following devices / message formats are supported:
-* [go-iotdevice](https://github.com/koestler/go-iotdevice)
-* [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
-* [Dragino LoraWAN sensors](https://www.dragino.com/)
+There are [GitHub actions](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/docker-image.yml)
+to automatically cross-compile amd64, arm64 and arm/v7
+publicly available [docker images](https://hub.docker.com/r/koestler/go-mqtt-to-influx/tags).
+The docker-container is built on top of alpine, the binary is `/go-mqtt-to-influx` and the config is
+expected to be at `/app/config.yml` and the local-db to be at `/app/db`. The container runs as non-root user `app`.
 
-However, you are more than welcome to help support new devices. Send push requests of converters including some tests
-or open an issue including examples of topics and messages.
+See [Local develpment](#Local-development) on how to compile a single binary.
 
-## Basic Usage
+The GitHub tags use semantic versioning and whenever a tag like v2.3.4 is build, it is pushed to docker tags
+v2, v2.3 and v2.3.4.
+
+For auto-restart on system reboots, configuration and networking I use `docker compose`. Here is an example file:
+```yaml
+# documentation/docker-compose.yml
+
+version: "3"
+services:
+  go-mqtt-to-influx:
+    restart: always
+    image: koestler/go-mqtt-to-influx:v2
+    volumes:
+      - ${PWD}/db:/app/db
+      - ${PWD}/config.yaml:/app/config.yaml:ro
+
 ```
-Usage:
-  go-mqtt-to-influx [-c <path to yaml config file>]
 
-Application Options:
-      --version     Print the build version and timestamp
-  -c, --config=     Config File in yaml format (default: ./config.yaml)
-      --cpuprofile= write cpu profile to <file>
-      --memprofile= write memory profile to <file>
-
-Help Options:
-  -h, --help        Show this help message
+Note the mount of /app/db. It makes the database persist recreation of the docker container.
+It assumes hat you have the following configuration in config.yaml:
+LocalDb:
+```yaml
+  Path: /app/db/local.db
 ```
 
-Setup like this:
+### Quick setup
+[Install Docker](https://docs.docker.com/engine/install/) first.
+
 ```bash
-# create configuration files
-mkdir -p /srv/dc/mqtt-to-influx
+# create a directory for the docker-composer project and config file
+mkdir -p /srv/dc/mqtt-to-influx # or wherever you want to put docker-compose files
 cd /srv/dc/mqtt-to-influx
 curl https://raw.githubusercontent.com/koestler/go-mqtt-to-influx/main/documentation/docker-compose.yml -o docker-compose.yml
 curl https://raw.githubusercontent.com/koestler/go-mqtt-to-influx/main/documentation/config.yaml -o config.yaml
-# edit config.yaml
+# adapt config.yaml and configure mqtt / influx connection and converters.
 
-# start it
-docker-compose up -d
+# create the volume for the local db and change permissions
+mkdir db && sudo chown 100:100 db
+
+# start the container
+docker compose up -d
+
+# optional: check the log output to see how it's going
+docker compose logs -f
+
+# when config.yml is changed, the container needs to be restarter
+docker compose restart
+
+# do upgrade to the newest tag
+docker compose pull
+docker compose up
 ```
 
 ## Config
-The Configuration is stored in one yaml file. There are mandatory fields and there are optional fields which
-have a default value. 
+The configuration is stored in a single yaml file. By default, it is read from `./config.yaml`.
+This can be changed using the `--config=another-config.yml` command line option.
 
-### Minimalistic Example
-```yaml
-# documentation/config.yaml
-
-Version: 0
-
-HttpServer:
-  Bind: 0.0.0.0
-  LogRequests: True
-
-LocalDb:
-  Path: "/app/db/local.db"
-
-Statistics:
-
-LogConfig: True
-LogWorkerStart: True
-
-MqttClients:
-  local-mosquitto:                                         # connect to a local mosquitto server allowing for anonymous connections
-    Broker: "tcp://mqtt.exampel.com:1883"
-
-  ttn:                                                     # connect to the things network mqtt server
-    Broker: "ssl://eu1.cloud.thethings.network:8883"
-    ProtocolVersion: 3
-    User: project@ttn
-    Password: "NNSXS.VM5PRxxx"
-    TopicPrefix: "v3/project@ttn/"
-    AvailabilityTopic: ""                                  # disable availability topic on ttn, nobody will listen for it
-    Qos: 0                                                 # ttn only supports QOS = 0
-
-InfluxClients:
-  example-influx:
-    Url: "http://influx.example.com:8086"
-    Token: "pfYLu9SjvgblMFL5jzNepJ7PHpKsTjAeVmAMCYHll3BH2cNW5bIz7AdrIbfnsH0tXKcQU9JGr8K-LB1Vdpupmg=="
-    Org: "iot"
-    Bucket: "iot"
-
-Converters:
-  go-iotdevices:
-    Implementation: go-iotdevice
-    MqttTopics:
-      - Topic: "%Prefix%tele/go-iotdevice/%Device%/state"
-
-  tasmota-state:
-    Implementation: tasmota-state
-    MqttTopics:
-      - Topic: "%Prefix%tele/%Device%/STATE"
-        Device: "+/+"
-
-  tasmota-sensor:
-    Implementation: tasmota-sensor
-    MqttTopics:
-      - Topic: "%Prefix%tele/%Device%/SENSOR"
-        Device: "+/+"
-
-  ttn-dragino:
-    Implementation: ttn-dragino
-    MqttTopics:
-      - Topic: "ttn/devices/%Device%/up"
-
-```  
+There are mandatory fields and there are optional fields which have reasonable default values. 
 
 ### Complete, explained example
+The following configuration file contains all possible configuration options.
 
 ```yaml
 # documentation/full-config.yaml
@@ -288,8 +256,79 @@ InfluxAuxiliaryTags:                                       # optional, the list 
 
 ```  
 
+### Minimalistic Example
+This a minimalistic configuration example serving as a good starting point.
+
+```yaml
+# documentation/config.yaml
+
+Version: 0
+
+HttpServer:
+  Bind: 0.0.0.0
+  LogRequests: True
+
+LocalDb:
+  Path: "/app/db/local.db"
+
+Statistics:
+
+LogConfig: True
+LogWorkerStart: True
+
+MqttClients:
+  local-mosquitto:                                         # connect to a local mosquitto server allowing for anonymous connections
+    Broker: "tcp://mqtt.exampel.com:1883"
+
+  ttn:                                                     # connect to the things network mqtt server
+    Broker: "ssl://eu1.cloud.thethings.network:8883"
+    ProtocolVersion: 3
+    User: project@ttn
+    Password: "NNSXS.VM5PRxxx"
+    TopicPrefix: "v3/project@ttn/"
+    AvailabilityTopic: ""                                  # disable availability topic on ttn, nobody will listen for it
+    Qos: 0                                                 # ttn only supports QOS = 0
+
+InfluxClients:
+  example-influx:
+    Url: "http://influx.example.com:8086"
+    Token: "pfYLu9SjvgblMFL5jzNepJ7PHpKsTjAeVmAMCYHll3BH2cNW5bIz7AdrIbfnsH0tXKcQU9JGr8K-LB1Vdpupmg=="
+    Org: "iot"
+    Bucket: "iot"
+
+Converters:
+  go-iotdevices:
+    Implementation: go-iotdevice
+    MqttTopics:
+      - Topic: "%Prefix%tele/go-iotdevice/%Device%/state"
+
+  tasmota-state:
+    Implementation: tasmota-state
+    MqttTopics:
+      - Topic: "%Prefix%tele/%Device%/STATE"
+        Device: "+/+"
+
+  tasmota-sensor:
+    Implementation: tasmota-sensor
+    MqttTopics:
+      - Topic: "%Prefix%tele/%Device%/SENSOR"
+        Device: "+/+"
+
+  ttn-dragino:
+    Implementation: ttn-dragino
+    MqttTopics:
+      - Topic: "ttn/devices/%Device%/up"
+```  
+
 ## Converters
-Currently, the following converter implementations exist:
+
+Currently, the following devices are supported:
+* [go-iotdevice](https://github.com/koestler/go-iotdevice)
+* [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
+* [Dragino LoraWAN sensors](https://www.dragino.com/)
+
+However, you are more than welcome to help support new devices. Send push requests of converters including some tests
+or open an issue including examples of topics and messages.
 
 ### lwt
 
@@ -377,50 +416,6 @@ Example:
   * `floatValue,device=elektronik/control0,field=Temperature,sensor=SI7021,unit=C value=5.4`
   * `floatValue,device=elektronik/control0,field=Humidity,sensor=SI7021,unit=% value=27.7`
 
-## Deployment
-The cpu / memory requirements for this tool are quite minimal but depend on the number of messages to be handled.
-I run it on [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/) and on
-[PC Engines APU 2](https://www.pcengines.ch/apu2.htm) in the field as well as X86 virtual servers in the cloud.
-
-There are [github actions](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/docker-image.yml)
-to automatically cross-compile amd64, arm64 and arm/v7
-[docker images](https://hub.docker.com/r/koestler/go-mqtt-to-influx/tags).
-
-The github tags use semantic versioning and whenever a tag like v2.3.4 is build, it is pushed to docker tags
-v2, v2.3 and v2.3.4.
-
-For auto-restart on system reboots, configuration and networking I use `docker compose`. Here is an example file:
-```yaml
-# documentation/docker-compose.yml
-
-version: "3"
-services:
-  go-mqtt-to-influx:
-    restart: always
-    image: koestler/go-mqtt-to-influx:v2
-    volumes:
-      - /srv/volumes/mqtt-to-influx/db:/app/db
-      - ${PWD}/config.yaml:/app/config.yaml:ro
-```
-
-Note the mount of /app/db. It makes the database persist recreation of the docker container.
-It assumes hat you have the following configuration in config.yaml:
-LocalDb:
-```yaml
-  Path: /app/db/local.db
-```
-
-Quick setup:
-```bash
-mkdir -p /srv/dc/mqtt-to-influx
-cd /srv/dc/mqtt-to-influx
-curl https://raw.githubusercontent.com/koestler/go-mqtt-to-influx/main/documentation/docker-compose.yml -o docker-compose.yml
-curl https://github.com/koestler/go-mqtt-to-influx/blob/main/documentation/config.yaml -o config.yaml
-# adapt config.yaml and configure mqtt / influx connection and converters.
-docker compose up -d
-docker compose logs -f
-```
-
 ## Development
 Development is done on Ubuntu and Mac.
 Install [github cli](https://cli.github.com/) and [golang](https://go.dev/doc/install).
@@ -443,7 +438,7 @@ docker run --rm --name go-mqtt-to-influx -p 127.0.0.1:8000:8000 \
   go-mqtt-to-influx
 ```
 
-### run tests
+### Run tests
 ```bash
 go install github.com/golang/mock/mockgen@v1.6.0
 go generate ./...
