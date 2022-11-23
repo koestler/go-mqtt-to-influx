@@ -186,6 +186,7 @@ Converters:
         Device: +/+
       - Topic: piegn/tele/%Device%/LWT
         Device: +/+/+
+    LogDebug: True
 
   2-piegn-tasmota-state:
     Implementation: tasmota-state
@@ -595,6 +596,10 @@ func TestReadConfig_Complex(t *testing.T) {
 		t.Error("expect LogHandleOnce of first Converter to be True")
 	}
 
+	if !config.Converters()[1].LogDebug() {
+		t.Error("expect LogDebug of second Converter to be True")
+	}
+
 	// influxAuxiliaryTags section
 	if len(config.InfluxAuxiliaryTags()) != 2 {
 		t.Error("expect len(config.InfluxAuxiliaryTags) == 2")
@@ -818,6 +823,10 @@ func TestReadConfig_Default(t *testing.T) {
 
 	if config.Converters()[0].LogHandleOnce() {
 		t.Error("expect default Converter->LogHandleOnce to be False")
+	}
+
+	if config.Converters()[0].LogDebug() {
+		t.Error("expect default Converter->LogDebug to be False")
 	}
 
 	// MqttTopicConfig section

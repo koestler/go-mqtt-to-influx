@@ -77,6 +77,7 @@ type ConverterConfig struct {
 	mqttClients    []string           // optional: defaults to all defined clients
 	influxClients  []string           // optional: defaults to all defined clients
 	logHandleOnce  bool               // optional: default False
+	logDebug       bool               // optional: default False
 }
 
 type MqttTopicConfig struct {

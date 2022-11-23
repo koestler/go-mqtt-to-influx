@@ -229,6 +229,10 @@ func (c ConverterConfig) LogHandleOnce() bool {
 	return c.logHandleOnce
 }
 
+func (c ConverterConfig) LogDebug() bool {
+	return c.logDebug
+}
+
 // getters for MqttTopicConfig struct
 
 func (c MqttTopicConfig) Topic() string {

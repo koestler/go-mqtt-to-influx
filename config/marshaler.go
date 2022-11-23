@@ -127,6 +127,7 @@ func (c ConverterConfig) convertToRead() converterConfigRead {
 		}(),
 		MqttClients:   c.mqttClients,
 		LogHandleOnce: &c.logHandleOnce,
+		LogDebug:      &c.logDebug,
 	}
 }
 

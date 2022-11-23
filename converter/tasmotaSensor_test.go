@@ -13,6 +13,7 @@ func TestTasmotaSensor(t *testing.T) {
 
 	mockConfig := converter_mock.NewMockConfig(mockCtrl)
 	mockConfig.EXPECT().Name().Return("test-converter").AnyTimes()
+	mockConfig.EXPECT().LogDebug().Return(false).AnyTimes()
 
 	mockTMConfig := converter_mock.NewMockTopicMatcherConfig(mockCtrl)
 	mockTMConfig.EXPECT().Topic().Return("piegn/tele/%Device%/SENSOR").AnyTimes()

@@ -119,7 +119,7 @@ func tasmotaSensorHandler(c Config, tm TopicMatcher, input Input, outputFunc Out
 	}
 
 	// any points sent?
-	if count < 1 {
+	if count < 1 && c.LogDebug() {
 		log.Printf(
 			"tasmota-sensor[%s]: could not extract any sensor data; "+
 				"sensor type is probably unknown; known sensors are AM2301, SI7021, DS18B20; payload='%s'",

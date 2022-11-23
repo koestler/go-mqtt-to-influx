@@ -73,6 +73,7 @@ type converterConfigRead struct {
 	MqttClients    []string                `yaml:"MqttClients"`
 	InfluxClients  []string                `yaml:"InfluxClients"`
 	LogHandleOnce  *bool                   `yaml:"LogHandleOnce"`
+	LogDebug       *bool                   `yaml:"LogDebug"`
 }
 
 type converterConfigReadMap map[string]converterConfigRead

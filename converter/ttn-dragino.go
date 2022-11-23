@@ -284,7 +284,7 @@ func ttnDraginoHandler(c Config, tm TopicMatcher, input Input, outputFunc Output
 	}
 
 	// any points sent?
-	if count < 1 {
+	if count < 1 && c.LogDebug() {
 		log.Printf(
 			"ttn-dragino[%s]: could not extract any sensor data; payload='%s'",
 			c.Name(), input.Payload(),

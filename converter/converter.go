@@ -10,6 +10,7 @@ type Config interface {
 	Implementation() string
 	InfluxClients() []string
 	LogHandleOnce() bool
+	LogDebug() bool
 }
 
 type Input interface {

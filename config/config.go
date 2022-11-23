@@ -573,6 +573,10 @@ func (c converterConfigRead) TransformAndValidate(
 		ret.logHandleOnce = true
 	}
 
+	if c.LogDebug != nil && *c.LogDebug {
+		ret.logDebug = true
+	}
+
 	return
 }
 
