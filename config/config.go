@@ -130,9 +130,7 @@ func (c *localDbConfigRead) TransformAndValidate() (ret LocalDbConfig, err []err
 		return
 	}
 
-	if c.Enabled != nil {
-		ret.enabled = *c.Enabled
-	}
+	ret.enabled = true
 
 	if c.Path != nil {
 		ret.path = *c.Path
@@ -151,9 +149,7 @@ func (c *statisticsConfigRead) TransformAndValidate() (ret StatisticsConfig, err
 		return
 	}
 
-	if c.Enabled != nil && *c.Enabled {
-		ret.enabled = true
-	}
+	ret.enabled = true
 
 	if len(c.HistoryResolution) < 1 {
 		// use default 1s

@@ -7,16 +7,16 @@ import (
 )
 
 type Config struct {
-	version             int                    `yaml:"Version"`             // must be 0
-	httpServer          HttpServerConfig       `yaml:"HttpServer"`          // optional: default Disabled
-	localDb             LocalDbConfig          `yaml:"LocalDb"`             // optional: default Disabled
-	statistics          StatisticsConfig       `yaml:"Statistics"`          // optional: default Disabled
-	logConfig           bool                   `yaml:"LogConfig"`           // optional: default False
-	logWorkerStart      bool                   `yaml:"LogWorkerStart"`      // optional: default False
-	mqttClients         []*MqttClientConfig    `yaml:"MqttClient"`          // mandatory: at least 1 must be defined
-	influxClients       []*InfluxClientConfig  `yaml:"InfluxClients"`       // mandatory: at least 1 must be defined
-	converters          []*ConverterConfig     `yaml:"Converters"`          // mandatory: at least 1 must be defined
-	influxAuxiliaryTags []*InfluxAuxiliaryTags `yaml:"InfluxAuxiliaryTags"` // optional: default empty
+	version             int                    // must be 0
+	httpServer          HttpServerConfig       // optional: default Disabled
+	localDb             LocalDbConfig          // optional: default Disabled
+	statistics          StatisticsConfig       // optional: default Disabled
+	logConfig           bool                   // optional: default False
+	logWorkerStart      bool                   // optional: default False
+	mqttClients         []*MqttClientConfig    // mandatory: at least 1 must be defined
+	influxClients       []*InfluxClientConfig  // mandatory: at least 1 must be defined
+	converters          []*ConverterConfig     // mandatory: at least 1 must be defined
+	influxAuxiliaryTags []*InfluxAuxiliaryTags // optional: default empty
 }
 
 type HttpServerConfig struct {

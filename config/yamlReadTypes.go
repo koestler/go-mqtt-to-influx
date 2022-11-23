@@ -22,12 +22,10 @@ type httpServerConfigRead struct {
 }
 
 type localDbConfigRead struct {
-	Enabled *bool   `yaml:"Enabled"`
-	Path    *string `yaml:"Path"`
+	Path *string `yaml:"Path"`
 }
 
 type statisticsConfigRead struct {
-	Enabled           *bool  `yaml:"Enabled"`
 	HistoryResolution string `yaml:"HistoryResolution"`
 	HistoryMaxAge     string `yaml:"HistoryMaxAge"`
 }

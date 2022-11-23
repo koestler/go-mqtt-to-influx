@@ -67,14 +67,12 @@ func (c HttpServerConfig) convertToRead() httpServerConfigRead {
 
 func (c LocalDbConfig) convertToRead() localDbConfigRead {
 	return localDbConfigRead{
-		Enabled: &c.enabled,
-		Path:    &c.path,
+		Path: &c.path,
 	}
 }
 
 func (c StatisticsConfig) convertToRead() statisticsConfigRead {
 	return statisticsConfigRead{
-		Enabled:           &c.enabled,
 		HistoryResolution: c.HistoryResolution().String(),
 		HistoryMaxAge:     c.HistoryMaxAge().String(),
 	}
