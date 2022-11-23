@@ -101,20 +101,22 @@ func (c *ClientV5) onConnectionUp() func(*autopaho.ConnectionManager, *paho.Conn
 			}()
 		}
 		// subscribe topics
-		if _, err := cm.Subscribe(c.ctx, &paho.Subscribe{
-			Subscriptions: func() (ret map[string]paho.SubscribeOptions) {
-				c.subscriptionsMutex.RLock()
-				defer c.subscriptionsMutex.RUnlock()
-				ret = make(map[string]paho.SubscribeOptions, len(c.subscriptions))
+		if len(c.subscriptions) > 0 {
+			if _, err := cm.Subscribe(c.ctx, &paho.Subscribe{
+				Subscriptions: func() (ret map[string]paho.SubscribeOptions) {
+					c.subscriptionsMutex.RLock()
+					defer c.subscriptionsMutex.RUnlock()
+					ret = make(map[string]paho.SubscribeOptions, len(c.subscriptions))
 
-				subOpts := paho.SubscribeOptions{QoS: c.cfg.Qos()}
-				for _, s := range c.subscriptions {
-					ret[s.subscribeTopic] = subOpts
-				}
-				return
-			}(),
-		}); err != nil {
-			log.Printf("mqttClientV5[%s]: failed to subscribe: %s", c.cfg.Name(), err)
+					subOpts := paho.SubscribeOptions{QoS: c.cfg.Qos()}
+					for _, s := range c.subscriptions {
+						ret[s.subscribeTopic] = subOpts
+					}
+					return
+				}(),
+			}); err != nil {
+				log.Printf("mqttClientV5[%s]: failed to subscribe: %s", c.cfg.Name(), err)
+			}
 		}
 	}
 }
