@@ -323,12 +323,13 @@ Converters:
 ## Converters
 
 Currently, the following devices are supported:
-* [go-iotdevice](https://github.com/koestler/go-iotdevice)
 * [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
 * [Dragino LoraWAN sensors](https://www.dragino.com/)
+* [go-iotdevice](https://github.com/koestler/go-iotdevice)
 
 However, you are more than welcome to help support new devices. Send push requests of converters including some tests
 or open an issue including examples of topics and messages.
+
 
 ### lwt
 
@@ -340,40 +341,6 @@ Example:
 * Payload: `Online`,
 * Output: `boolValue,device=software/srv1-go-iotdevice,field=Available value=true`
 
-### go-iotdevice
-
-**go-iotdevice** can read out various sensor values like voltages, currents, and power from BMV-702 battery monitors and
-solar chargers made by [Victron Energy](https://www.victronenergy.com/) and send them to an MQTT server. This
-converter can read and parse those.
-
-Example:
-* Topic: `piegn/tele/ve/24v-bmv`
-* Payload:
-```json
-{
-  "Time":"2019-01-06T23:40:03",
-  "NextTele":"2019-01-06T23:40:13",
-  "TimeZone":"UTC",
-  "Model":"bmv700",
-  "Values":{
-    "AmountOfChargedEnergy":{"Value":756.6,"Unit":"kWh"},
-    "AmountOfDischargedEnergy":{"Value":363.1,"Unit":"kWh"},
-    "Consumed":{"Value":-7.2,"Unit":"Ah"},
-    "Current":{"Value":-0.7,"Unit":"A"},
-    "StateOfCharge":{"Value":99,"Unit":"%"},
-    "Power":{"Value":-18,"Unit":"W"},
-    "TimeToGo":{"Value":14400,"Unit":"min"}
-  }
-}
-```
-* Output lines:
-  * `floatValue,device=24v-bmv,field=AmountOfChargedEnergy,sensor=bmv700,unit=kWh value=756.6"`
-  * `floatValue,device=24v-bmv,field=AmountOfDischargedEnergy,sensor=bmv700,unit=kWh value=363.1"`
-  * `floatValue,device=24v-bmv,field=Consumed,sensor=bmv700,unit=Ah value=-7.2"`
-  * `floatValue,device=24v-bmv,field=Current,sensor=bmv700,unit=A value=-0.7"`
-  * `floatValue,device=24v-bmv,field=StateOfCharge,sensor=bmv700,unit=% value=99"`
-  * `floatValue,device=24v-bmv,field=Power,sensor=bmv700,unit=W value=-18"`
-  * `floatValue,device=24v-bmv,field=TimeToGo,sensor=bmv700,unit=min value=14400"`
 
 ### tasmota-state
 [Tasmota](https://github.com/arendst/Sonoff-Tasmota/wiki/MQTT-Overview) sends state messages whenever a switch
@@ -416,9 +383,90 @@ Example:
   * `floatValue,device=elektronik/control0,field=Temperature,sensor=SI7021,unit=C value=5.4`
   * `floatValue,device=elektronik/control0,field=Humidity,sensor=SI7021,unit=% value=27.7`
 
+
+### go-iotdevice
+
+[go-iotdevice](https://github.com/koestler/go-iotdevice) can read out various sensor values like voltages, currents,
+from battery monitors and solar chargers. Whe configured, it can send all those values in a single mqtt message
+at regular intervals.
+
+Configuration template:
+```yaml
+    Implementation: go-iotdevice
+    MqttTopics:
+      - Topic: "%Prefix%tele/go-iotdevice/%Device%/state"
+```
+
+Example:
+* Mqtt Topic: `project/tele/go-iotdevice/device-name/state`
+* Mqtt Payload:
+```json
+{
+  "Time": "2022-08-19T14:52:19Z",
+  "NextTelemetry": "2022-08-19T14:52:24Z",
+  "Model": "BMV-702",
+  "SecondsSinceLastUpdate": 0.576219653,
+  "NumericValues": {
+    "AmountOfChargedEnergy": {
+      "Value": 1883.52,
+      "Unit": "kWh"
+    },
+    "CurrentHighRes": {
+      "Value": -0.58,
+      "Unit": "A"
+    },
+    "NumberOfCycles": {
+      "Value": 241,
+      "Unit": ""
+    },
+    "ProductId": {
+      "Value": 4261544960,
+      "Unit": ""
+    },
+    "SOC": {
+      "Value": 58.16,
+      "Unit": "%"
+    },
+    "TTG": {
+      "Value": 5742,
+      "Unit": "min"
+    },
+    "Uptime": {
+      "Value": 17182790,
+      "Unit": "s"
+    }
+  },
+  "TextValues": {
+    "ModelName": {
+      "Value": "BMV-702"
+    },
+    "SerialNumber": {
+      "Value": "HQ15149CFQI,HQ1515RP6L7,"
+    },
+    "SynchronizationState": {
+      "Value": "true"
+    }
+  }
+}
+```
+* InfluxDB line protocol:
+  * `clock,device=24v-bmv timeValue="2022-08-19T14:52:19Z"`
+  * `telemetry,device=24v-bmv,field=AmountOfChargedEnergy,sensor=BMV-702,unit=kWh floatValue=1883.52`
+  * `telemetry,device=24v-bmv,field=CurrentHighRes,sensor=BMV-702,unit=A floatValue=-0.58`
+  * `telemetry,device=24v-bmv,field=ModelName,sensor=BMV-702 stringValue="BMV-702"`
+  * `telemetry,device=24v-bmv,field=NumberOfCycles,sensor=BMV-702,unit= floatValue=241`
+  * `telemetry,device=24v-bmv,field=ProductId,sensor=BMV-702,unit= floatValue=4.26154496e+09`
+  * `telemetry,device=24v-bmv,field=SOC,sensor=BMV-702,unit=% floatValue=58.16`
+  * `telemetry,device=24v-bmv,field=SerialNumber,sensor=BMV-702 stringValue="HQ15149CFQI,HQ1515RP6L7,"`
+  * `telemetry,device=24v-bmv,field=SynchronizationState,sensor=BMV-702 stringValue="true"`
+  * `telemetry,device=24v-bmv,field=TTG,sensor=BMV-702,unit=min floatValue=5742`
+  * `telemetry,device=24v-bmv,field=Uptime,sensor=BMV-702,unit=s floatValue=1.718279e+07`
+
+
+
 ## Development
 Development is done on Ubuntu and Mac.
-Install [github cli](https://cli.github.com/) and [golang](https://go.dev/doc/install).
+Install [GitHub CLI](https://cli.github.com/) and [golang](https://go.dev/doc/install).
 
 ### Local development
 ```bash
@@ -430,7 +478,7 @@ go build
 
 ### Compile and run inside docker
 ```bash
-git clone koestler/go-mqtt-to-influx
+gh clone koestler/go-mqtt-to-influx
 cd go-mqtt-to-influx
 docker build -f docker/Dockerfile -t go-mqtt-to-influx .
 docker run --rm --name go-mqtt-to-influx -p 127.0.0.1:8000:8000 \

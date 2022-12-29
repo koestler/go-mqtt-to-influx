@@ -33,11 +33,6 @@ InfluxClients:
     Bucket: "iot"
 
 Converters:
-  go-iotdevices:
-    Implementation: go-iotdevice
-    MqttTopics:
-      - Topic: "%Prefix%tele/go-iotdevice/%Device%/state"
-
   tasmota-state:
     Implementation: tasmota-state
     MqttTopics:
@@ -54,3 +49,8 @@ Converters:
     Implementation: ttn-dragino
     MqttTopics:
       - Topic: "ttn/devices/%Device%/up"
+
+  go-iotdevices:
+    Implementation: go-iotdevice
+    MqttTopics:
+      - Topic: "%Prefix%tele/go-iotdevice/%Device%/state"
