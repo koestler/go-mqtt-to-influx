@@ -215,42 +215,42 @@ func ttnDraginoHandler(c Config, tm TopicMatcher, input Input, outputFunc Output
 	if message.UplinkMessage.DecodedPayload.TempBlack != nil {
 		outputFloat(
 			"TempBlack",
-			"C",
+			"°C",
 			message.UplinkMessage.DecodedPayload.TempBlack,
 		)
 	}
 	if message.UplinkMessage.DecodedPayload.TempRed != nil {
 		outputFloat(
 			"TempRed",
-			"C",
+			"°C",
 			message.UplinkMessage.DecodedPayload.TempRed,
 		)
 	}
 	if message.UplinkMessage.DecodedPayload.TempWhite != nil {
 		outputFloat(
 			"TempWhite",
-			"C",
+			"°C",
 			message.UplinkMessage.DecodedPayload.TempWhite,
 		)
 	}
 	if message.UplinkMessage.DecodedPayload.TempC1 != nil {
 		outputFloat(
 			"TempC1",
-			"C",
+			"°C",
 			message.UplinkMessage.DecodedPayload.TempC1,
 		)
 	}
 	if message.UplinkMessage.DecodedPayload.TempC2 != nil {
 		outputFloat(
 			"TempC2",
-			"C",
+			"°C",
 			message.UplinkMessage.DecodedPayload.TempC2,
 		)
 	}
 	if message.UplinkMessage.DecodedPayload.TempC3 != nil {
 		outputFloat(
 			"TempC3",
-			"C",
+			"°C",
 			message.UplinkMessage.DecodedPayload.TempC3,
 		)
 	}
@@ -264,7 +264,7 @@ func ttnDraginoHandler(c Config, tm TopicMatcher, input Input, outputFunc Output
 	if message.UplinkMessage.DecodedPayload.TempCSht != nil {
 		outputFloat(
 			"TempCSht",
-			"C",
+			"°C",
 			message.UplinkMessage.DecodedPayload.TempCSht,
 		)
 	}
