@@ -23,79 +23,117 @@ func TestGoVeSensor(t *testing.T) {
 		{
 			Topic: "piegn/tele/iot-device/24v-bmv/state",
 			Payload: `{
-  "Time": "2022-08-19T14:52:19Z",
-  "NextTelemetry": "2022-08-19T14:52:24Z",
-  "Model": "BMV-702",
-  "SecondsSinceLastUpdate": 0.576219653,
-  "NumericValues": {
-    "AmountOfChargedEnergy": {
-      "Value": 1883.52,
-      "Unit": "kWh"
+    "Time": "2022-12-29T11:19:19Z",
+    "NextTelemetry": "2022-12-29T11:19:21Z",
+    "Model": "SmartShunt 500A\/50mV",
+    "SecondsSinceLastUpdate": 0.56890948,
+    "NumericValues": {
+        "AmountOfChargedEnergy": {
+            "Cat": "Historic",
+            "Desc": "Amount of charged energy",
+            "Val": 16.71,
+            "Unit": "kWh"
+        },
+        "CurrentHighRes": {
+            "Cat": "Essential",
+            "Desc": "Current",
+            "Val": 0.18,
+            "Unit": "A"
+        },
+        "MainVoltage": {
+            "Cat": "Essential",
+            "Desc": "Main voltage",
+            "Val": 26.11,
+            "Unit": "V"
+        },
+        "NumberOfCycles": {
+            "Cat": "Historic",
+            "Desc": "Number of cycles",
+            "Val": 0
+        },
+        "Power": {
+            "Cat": "Essential",
+            "Desc": "Power",
+            "Val": 5,
+            "Unit": "W"
+        },
+        "ProductId": {
+            "Cat": "Product",
+            "Desc": "Product id",
+            "Val": 4272130304
+        },
+        "SOC": {
+            "Cat": "Essential",
+            "Desc": "State of charge",
+            "Val": 38.72,
+            "Unit": "%"
+        },
+        "TTG": {
+            "Cat": "Monitor",
+            "Desc": "Time to go",
+            "Val": 0,
+            "Unit": "min"
+        },
+        "TimeSinceFullCharge": {
+            "Cat": "Historic",
+            "Desc": "Time since full charge",
+            "Val": 473231,
+            "Unit": "s"
+        },
+        "Uptime": {
+            "Cat": "Product",
+            "Desc": "Device uptime",
+            "Val": 480744,
+            "Unit": "s"
+        }
     },
-    "CurrentHighRes": {
-      "Value": -0.58,
-      "Unit": "A"
-    },
-    "NumberOfCycles": {
-      "Value": 241,
-      "Unit": ""
-    },
-    "ProductId": {
-      "Value": 4261544960,
-      "Unit": ""
-    },
-    "SOC": {
-      "Value": 58.16,
-      "Unit": "%"
-    },
-    "TTG": {
-      "Value": 5742,
-      "Unit": "min"
-    },
-    "Uptime": {
-      "Value": 17182790,
-      "Unit": "s"
+    "TextValues": {
+        "ModelName": {
+            "Cat": "Product",
+            "Desc": "Model name",
+            "Val": "BMV-SmartShunt 500A\/50mV"
+        },
+        "SerialNumber": {
+            "Cat": "Product",
+            "Desc": "Serial number",
+            "Val": "HQ2117NTVX4"
+        },
+        "SynchronizationState": {
+            "Cat": "Monitor",
+            "Desc": "Synchronization state",
+            "Val": "true"
+        }
     }
-  },
-  "TextValues": {
-    "ModelName": {
-      "Value": "BMV-702"
-    },
-    "SerialNumber": {
-      "Value": "HQ15149CFQI,HQ1515RP6L7,"
-    },
-    "SynchronizationState": {
-      "Value": "true"
-    }
-  }
-}
-`,
+}`,
 			ExpectedLines: []string{
-				"clock,device=24v-bmv timeValue=\"2022-08-19T14:52:19Z\"",
-				"telemetry,device=24v-bmv,field=AmountOfChargedEnergy,sensor=BMV-702,unit=kWh floatValue=1883.52",
-				"telemetry,device=24v-bmv,field=CurrentHighRes,sensor=BMV-702,unit=A floatValue=-0.58",
-				"telemetry,device=24v-bmv,field=ModelName,sensor=BMV-702 stringValue=\"BMV-702\"",
-				"telemetry,device=24v-bmv,field=NumberOfCycles,sensor=BMV-702,unit= floatValue=241",
-				"telemetry,device=24v-bmv,field=ProductId,sensor=BMV-702,unit= floatValue=4.26154496e+09",
-				"telemetry,device=24v-bmv,field=SOC,sensor=BMV-702,unit=% floatValue=58.16",
-				"telemetry,device=24v-bmv,field=SerialNumber,sensor=BMV-702 stringValue=\"HQ15149CFQI,HQ1515RP6L7,\"",
-				"telemetry,device=24v-bmv,field=SynchronizationState,sensor=BMV-702 stringValue=\"true\"",
-				"telemetry,device=24v-bmv,field=TTG,sensor=BMV-702,unit=min floatValue=5742",
-				"telemetry,device=24v-bmv,field=Uptime,sensor=BMV-702,unit=s floatValue=1.718279e+07",
+				"clock,device=24v-bmv timeValue=\"2022-12-29T11:19:19Z\"",
+				"telemetry,category=Essential,description=Current,device=24v-bmv,field=CurrentHighRes,sensor=SmartShunt,unit=A floatValue=0.18",
+				"telemetry,category=Essential,description=Main\\ voltage,device=24v-bmv,field=MainVoltage,sensor=SmartShunt,unit=V floatValue=26.11",
+				"telemetry,category=Essential,description=Power,device=24v-bmv,field=Power,sensor=SmartShunt,unit=W floatValue=5",
+				"telemetry,category=Essential,description=State\\ of\\ charge,device=24v-bmv,field=SOC,sensor=SmartShunt,unit=% floatValue=38.72",
+				"telemetry,category=Historic,description=Amount\\ of\\ charged\\ energy,device=24v-bmv,field=AmountOfChargedEnergy,sensor=SmartShunt,unit=kWh floatValue=16.71",
+				"telemetry,category=Historic,description=Number\\ of\\ cycles,device=24v-bmv,field=NumberOfCycles,sensor=SmartShunt,unit= floatValue=0",
+				"telemetry,category=Historic,description=Time\\ since\\ full\\ charge,device=24v-bmv,field=TimeSinceFullCharge,sensor=SmartShunt,unit=s floatValue=473231",
+				"telemetry,category=Monitor,description=Synchronization\\ state,device=24v-bmv,field=SynchronizationState,sensor=SmartShunt stringValue=\"true\"",
+				"telemetry,category=Monitor,description=Time\\ to\\ go,device=24v-bmv,field=TTG,sensor=SmartShunt,unit=min floatValue=0",
+				"telemetry,category=Product,description=Device\\ uptime,device=24v-bmv,field=Uptime,sensor=SmartShunt,unit=s floatValue=480744",
+				"telemetry,category=Product,description=Model\\ name,device=24v-bmv,field=ModelName,sensor=SmartShunt stringValue=\"BMV-SmartShunt 500A/50mV\"",
+				"telemetry,category=Product,description=Product\\ id,device=24v-bmv,field=ProductId,sensor=SmartShunt,unit= floatValue=4.272130304e+09",
+				"telemetry,category=Product,description=Serial\\ number,device=24v-bmv,field=SerialNumber,sensor=SmartShunt stringValue=\"HQ2117NTVX4\"",
 			},
 			ExpectedTimeStamp: time.Now(),
 		}, {
+			// go-iotdevice <v2 wihout category/description fields
 			Topic: "piegn/tele/iot-device/12v-solar/state",
 			Payload: `{
   "NextTelemetry": "2022-08-19T14:52:24Z",
   "Model":"SmartSolar MPPT VE.Can 250/100",
   "NumericValues":{
-    "Power":{"Value":-18,"Unit":"W"}
+    "Power":{"Cat": "Essential","Desc": "Power","Val":-18,"Unit":"W"}
   }
 }`,
 			ExpectedLines: []string{
-				"telemetry,device=12v-solar,field=Power,sensor=SmartSolar,unit=W floatValue=-18",
-				"telemetry,device=12v-solar,field=Model,sensor=SmartSolar stringValue=\"SmartSolar MPPT VE.Can 250/100\"",
+				"telemetry,category=Essential,description=Power,device=12v-solar,field=Power,sensor=SmartSolar,unit=W floatValue=-18",
 			},
 			ExpectedTimeStamp: time.Now(),
 		}, {

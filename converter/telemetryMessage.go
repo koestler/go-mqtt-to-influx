@@ -12,6 +12,7 @@ type telemetryOutputMessage struct {
 	floatValue  *float64
 	boolValue   *bool
 	intValue    *int64
+	auxTags     *map[string]string
 }
 
 func (m telemetryOutputMessage) Measurement() string {
@@ -27,6 +28,14 @@ func (m telemetryOutputMessage) Tags() map[string]string {
 
 	if m.unit != nil {
 		ret["unit"] = *m.unit
+	}
+
+	if auxTags := m.auxTags; auxTags != nil {
+		for k, v := range *auxTags {
+			if v != "" {
+				ret[k] = v
+			}
+		}
 	}
 
 	return ret
