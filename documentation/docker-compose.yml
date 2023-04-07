@@ -2,7 +2,7 @@ version: "3"
 services:
   go-mqtt-to-influx:
     restart: always
-    image: koestler/go-mqtt-to-influx:v2
+    image: ghcr.io/koestler/go-mqtt-to-influx:v2
     volumes:
       - ${PWD}/db:/app/db
       - ${PWD}/config.yaml:/app/config.yaml:ro

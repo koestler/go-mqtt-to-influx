@@ -61,7 +61,7 @@ version: "3"
 services:
   go-mqtt-to-influx:
     restart: always
-    image: koestler/go-mqtt-to-influx:v2
+    image: ghcr.io/koestler/go-mqtt-to-influx:v2
     volumes:
       - ${PWD}/db:/app/db
       - ${PWD}/config.yaml:/app/config.yaml:ro
@@ -297,11 +297,6 @@ InfluxClients:
     Bucket: "iot"
 
 Converters:
-  go-iotdevices:
-    Implementation: go-iotdevice
-    MqttTopics:
-      - Topic: "%Prefix%tele/go-iotdevice/%Device%/state"
-
   tasmota-state:
     Implementation: tasmota-state
     MqttTopics:
@@ -318,6 +313,12 @@ Converters:
     Implementation: ttn-dragino
     MqttTopics:
       - Topic: "ttn/devices/%Device%/up"
+
+  go-iotdevices:
+    Implementation: go-iotdevice
+    MqttTopics:
+      - Topic: "%Prefix%tele/go-iotdevice/%Device%/state"
+
 ```  
 
 ## Converters
