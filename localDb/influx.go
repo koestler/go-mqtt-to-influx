@@ -11,7 +11,7 @@ func InfluxBatchNumbLinss(batch string) int {
 }
 
 func (d SqliteLocalDb) InfluxBacklogAdd(client, batch string) error {
-	if err, compressedBatch := compress(batch); err != nil {
+	if compressedBatch, err := compress(batch); err != nil {
 		return fmt.Errorf("cannot compress batch: %s", err)
 	} else if _, err := d.db.Exec(
 		"INSERT INTO influxBacklog (created, client, numbLines, compressedBatch) VALUES(datetime('now'), ?, ?, ?);",
@@ -62,7 +62,7 @@ WHERE client = ? AND id >= (
 		}
 
 		ids = append(ids, id)
-		if err, batch := uncompress(compressedBatch); err != nil {
+		if batch, err := uncompress(compressedBatch); err != nil {
 			return fmt.Errorf("error during uncompress: %s", err)
 		} else {
 			batches = append(batches, batch)
@@ -100,7 +100,7 @@ WHERE client = ? AND id >= (
 	return nil
 }
 
-func (d SqliteLocalDb) InfluxBacklogSize(client string) (err error, numbBatches, numbLines uint) {
+func (d SqliteLocalDb) InfluxBacklogSize(client string) (numbBatches, numbLines uint, err error) {
 	row := d.db.QueryRow(
 		"SELECT COUNT(*), IFNULL(SUM(numbLines), 0) FROM influxBacklog WHERE client = ?",
 		client,
@@ -112,7 +112,7 @@ func (d SqliteLocalDb) InfluxBacklogSize(client string) (err error, numbBatches,
 	return
 }
 
-func (d SqliteLocalDb) InfluxBacklogGet(client string) (err error, id int, batch string) {
+func (d SqliteLocalDb) InfluxBacklogGet(client string) (id int, batch string, err error) {
 	row := d.db.QueryRow(
 		"SELECT id, numbLines, compressedBatch FROM influxBacklog WHERE client = ? ORDER BY id ASC LIMIT 1",
 		client,
@@ -122,7 +122,7 @@ func (d SqliteLocalDb) InfluxBacklogGet(client string) (err error, id int, batch
 	if e := row.Scan(&id, &numbLines, &compressedBatch); e != nil {
 		err = fmt.Errorf("cannot select from influxBacklog: %s", e)
 	} else {
-		err, batch = uncompress(compressedBatch)
+		batch, err = uncompress(compressedBatch)
 		if err != nil {
 			err = fmt.Errorf("cannot uncompress: %s", err)
 		}
@@ -148,11 +148,11 @@ func (d SqliteLocalDb) InfluxBacklogDelete(id int) error {
 func (d DisabledLocalDb) InfluxBacklogAdd(client, batch string) error {
 	return fmt.Errorf("disabled")
 }
-func (d DisabledLocalDb) InfluxBacklogSize(client string) (err error, numbBatches, numbLines uint) {
-	return fmt.Errorf("disabled"), 0, 0
+func (d DisabledLocalDb) InfluxBacklogSize(client string) (numbBatches, numbLines uint, err error) {
+	return 0, 0, fmt.Errorf("disabled")
 }
-func (d DisabledLocalDb) InfluxBacklogGet(client string) (err error, id int, batch string) {
-	return fmt.Errorf("disabled"), 0, ""
+func (d DisabledLocalDb) InfluxBacklogGet(client string) (id int, batch string, err error) {
+	return 0, "", fmt.Errorf("disabled")
 }
 func (d DisabledLocalDb) InfluxBacklogDelete(id int) error {
 	return fmt.Errorf("disabled")

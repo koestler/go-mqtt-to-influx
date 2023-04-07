@@ -53,11 +53,11 @@ func (c Config) PrintConfig() (err error) {
 
 func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	if c.Version == nil {
-		err = append(err, fmt.Errorf("Version must be defined. Use Version=0."))
+		err = append(err, fmt.Errorf("version must be defined. Use Version=0"))
 	} else {
 		ret.version = *c.Version
 		if ret.version != 0 {
-			err = append(err, fmt.Errorf("Version=%d is not supported.", ret.Version()))
+			err = append(err, fmt.Errorf("version=%d is not supported", ret.Version()))
 		}
 	}
 
@@ -493,7 +493,7 @@ func (c converterConfigReadMap) TransformAndValidate(
 	influxClients []*InfluxClientConfig,
 ) (ret []*ConverterConfig, err []error) {
 	if len(c) < 1 {
-		return ret, []error{fmt.Errorf("Converters section must no be empty.")}
+		return ret, []error{fmt.Errorf("converters section must no be empty")}
 	}
 
 	ret = make([]*ConverterConfig, len(c))
@@ -578,7 +578,7 @@ func (c converterConfigRead) TransformAndValidate(
 
 func (c mqttTopicConfigReadList) TransformAndValidate() (ret []*MqttTopicConfig, err []error) {
 	if len(c) < 1 {
-		return ret, []error{fmt.Errorf("mqttTopics section must no be empty.")}
+		return ret, []error{fmt.Errorf("mqttTopics section must no be empty")}
 	}
 
 	ret = make([]*MqttTopicConfig, len(c))

@@ -10,8 +10,8 @@ type LocalDb interface {
 	Enabled() bool
 	Shutdown()
 	InfluxBacklogAdd(client, batch string) error
-	InfluxBacklogSize(client string) (err error, numbBatches, numbLines uint)
-	InfluxBacklogGet(client string) (err error, id int, batch string)
+	InfluxBacklogSize(client string) (numbBatches, numbLines uint, err error)
+	InfluxBacklogGet(client string) (id int, batch string, err error)
 	InfluxBacklogDelete(id int) error
 	InfluxAggregateBacklog(client string, batchSize uint) error
 }

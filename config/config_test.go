@@ -237,8 +237,8 @@ func TestReadConfig_InvalidSyntax(t *testing.T) {
 func TestReadConfig_NoVersion(t *testing.T) {
 	_, err := ReadConfig([]byte(""))
 
-	if !containsError("Version must be defined", err) {
-		t.Error("no version given; expect 'Version must be defined'")
+	if !containsError("version must be defined", err) {
+		t.Error("no version given; expect 'version must be defined'")
 	}
 }
 
@@ -250,7 +250,7 @@ func TestReadConfig_InvalidEmpty(t *testing.T) {
 	if !containsError("MqttClients section must no be empty", err) {
 		t.Error("expect error for empty MqttClients")
 	}
-	if !containsError("Converters section must no be empty.", err) {
+	if !containsError("converters section must no be empty", err) {
 		t.Error("expect error for empty Converters")
 	}
 	if len(err) != 3 {
@@ -260,8 +260,8 @@ func TestReadConfig_InvalidEmpty(t *testing.T) {
 
 func TestReadConfig_InvalidUnknownVersion(t *testing.T) {
 	_, err := ReadConfig([]byte(InvalidUnknownVersionConfig))
-	if len(err) != 1 || err[0].Error() != "Version=42 is not supported." {
-		t.Errorf("expect 1 error: 'Version=42 is not supported.' but got: %v", err)
+	if len(err) != 1 || err[0].Error() != "version=42 is not supported" {
+		t.Errorf("expect 1 error: 'version=42 is not supported' but got: %v", err)
 	}
 }
 

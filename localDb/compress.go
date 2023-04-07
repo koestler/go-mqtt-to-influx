@@ -6,29 +6,29 @@ import (
 	"io"
 )
 
-func compress(inp string) (error, []byte) {
+func compress(inp string) ([]byte, error) {
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
 	if _, err := gz.Write([]byte(inp)); err != nil {
-		return err, nil
+		return nil, err
 	}
 	if err := gz.Close(); err != nil {
-		return err, nil
+		return nil, err
 	}
-	return nil, b.Bytes()
+	return b.Bytes(), nil
 }
 
-func uncompress(inp []byte) (error, string) {
+func uncompress(inp []byte) (string, error) {
 	r := bytes.NewReader(inp)
 	gz, err := gzip.NewReader(r)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 
 	oup, err := io.ReadAll(gz)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 
-	return nil, string(oup)
+	return string(oup), nil
 }

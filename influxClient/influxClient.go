@@ -21,9 +21,6 @@ type Client struct {
 	localDb       LocalDb
 	statistics    Statistics
 
-	lastTransmission time.Time
-	errorRetryDelay  time.Duration
-
 	ctx    context.Context
 	cancel context.CancelFunc
 
@@ -65,8 +62,8 @@ type Point interface {
 type LocalDb interface {
 	Enabled() bool
 	InfluxBacklogAdd(client, batch string) error
-	InfluxBacklogSize(client string) (err error, numbBatches, numbLines uint)
-	InfluxBacklogGet(client string) (err error, id int, batch string)
+	InfluxBacklogSize(client string) (numbBatches, numbLines uint, err error)
+	InfluxBacklogGet(client string) (id int, batch string, err error)
 	InfluxBacklogDelete(id int) error
 	InfluxAggregateBacklog(client string, batchSize uint) error
 }
@@ -245,7 +242,7 @@ func failedCallbackHandler(client string, retryBatchChan chan string) func(batch
 
 func (ic Client) retryHandler() (triggerAgain bool) {
 	// while there is something on the backlog, send it synchronously and remove it on success
-	if err, numbBatches, numbLines := ic.localDb.InfluxBacklogSize(ic.Name()); err != nil {
+	if numbBatches, numbLines, err := ic.localDb.InfluxBacklogSize(ic.Name()); err != nil {
 		log.Printf("influxClient[%s]: retryHandler: cannot access backlog: err=%s", ic.Name(), err)
 		return false
 	} else if numbBatches < 1 {
@@ -257,7 +254,7 @@ func (ic Client) retryHandler() (triggerAgain bool) {
 		)
 	}
 
-	err, id, batch := ic.localDb.InfluxBacklogGet(ic.Name())
+	id, batch, err := ic.localDb.InfluxBacklogGet(ic.Name())
 	if err != nil {
 		return false
 	}

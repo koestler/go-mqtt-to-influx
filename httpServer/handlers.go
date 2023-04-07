@@ -14,7 +14,7 @@ func writeJsonHeaders(w http.ResponseWriter) {
 func HandleStatsCounts(env *Environment, w http.ResponseWriter, r *http.Request) Error {
 	if !env.Statistics.Enabled() {
 		// Statistics module not available -> return 404
-		err := errors.New("Statistics module is disabled.")
+		err := errors.New("statistics module is disabled")
 		return StatusError{404, err}
 	}
 

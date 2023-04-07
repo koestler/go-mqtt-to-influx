@@ -5,7 +5,8 @@ import (
 )
 
 func (s *InMemoryStatistics) countWorker() {
-	ticker := time.Tick(s.config.HistoryResolution())
+	ticker := time.NewTicker(s.config.HistoryResolution())
+	defer ticker.Stop()
 
 	s.historical.PushBack(&HistoricalCount{
 		NewerThan: time.Now(),
@@ -16,7 +17,7 @@ func (s *InMemoryStatistics) countWorker() {
 		select {
 		case desc := <-s.incrementOne:
 			s.handleIncrementOne(desc)
-		case now := <-ticker:
+		case now := <-ticker.C:
 			s.handleHistoryTick(now)
 		case request := <-s.requestHierarchicalCounts:
 			s.handleRequestHierarchicalCounts(request)
