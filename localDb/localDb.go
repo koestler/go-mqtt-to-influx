@@ -48,7 +48,7 @@ func Run(config Config) LocalDb {
 				log.Printf("localDb: db schema up-to-date at version: %d", version)
 			}
 
-			return SqliteLocalDb{
+			return &SqliteLocalDb{
 				config:       config,
 				db:           db,
 				vacuumNeeded: true,
@@ -56,7 +56,7 @@ func Run(config Config) LocalDb {
 		}
 	}
 
-	return DisabledLocalDb{}
+	return &DisabledLocalDb{}
 }
 
 func (d SqliteLocalDb) Enabled() bool {

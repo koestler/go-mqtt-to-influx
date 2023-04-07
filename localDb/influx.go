@@ -10,7 +10,7 @@ func InfluxBatchNumbLinss(batch string) int {
 	return strings.Count(batch, "\n")
 }
 
-func (d SqliteLocalDb) InfluxBacklogAdd(client, batch string) error {
+func (d *SqliteLocalDb) InfluxBacklogAdd(client, batch string) error {
 	if compressedBatch, err := compress(batch); err != nil {
 		return fmt.Errorf("cannot compress batch: %s", err)
 	} else if _, err := d.db.Exec(
@@ -25,7 +25,7 @@ func (d SqliteLocalDb) InfluxBacklogAdd(client, batch string) error {
 	return nil
 }
 
-func (d SqliteLocalDb) InfluxAggregateBacklog(client string, batchSize uint) error {
+func (d *SqliteLocalDb) InfluxAggregateBacklog(client string, batchSize uint) error {
 	// fetch newest up to 100 rows that sum up to no more batchSize number of lines
 	rows, err := d.db.Query(`
 SELECT id, numbLines, compressedBatch
@@ -100,7 +100,7 @@ WHERE client = ? AND id >= (
 	return nil
 }
 
-func (d SqliteLocalDb) InfluxBacklogSize(client string) (numbBatches, numbLines uint, err error) {
+func (d *SqliteLocalDb) InfluxBacklogSize(client string) (numbBatches, numbLines uint, err error) {
 	row := d.db.QueryRow(
 		"SELECT COUNT(*), IFNULL(SUM(numbLines), 0) FROM influxBacklog WHERE client = ?",
 		client,
@@ -112,7 +112,7 @@ func (d SqliteLocalDb) InfluxBacklogSize(client string) (numbBatches, numbLines 
 	return
 }
 
-func (d SqliteLocalDb) InfluxBacklogGet(client string) (id int, batch string, err error) {
+func (d *SqliteLocalDb) InfluxBacklogGet(client string) (id int, batch string, err error) {
 	row := d.db.QueryRow(
 		"SELECT id, numbLines, compressedBatch FROM influxBacklog WHERE client = ? ORDER BY id ASC LIMIT 1",
 		client,
@@ -135,7 +135,7 @@ func (d SqliteLocalDb) InfluxBacklogGet(client string) (id int, batch string, er
 	return
 }
 
-func (d SqliteLocalDb) InfluxBacklogDelete(id int) error {
+func (d *SqliteLocalDb) InfluxBacklogDelete(id int) error {
 	if _, err := d.db.Exec("DELETE FROM influxBacklog  WHERE id = ?", id); err != nil {
 		return fmt.Errorf("cannot delete from influxBacklog: %s", err)
 	}
@@ -145,18 +145,18 @@ func (d SqliteLocalDb) InfluxBacklogDelete(id int) error {
 	return nil
 }
 
-func (d DisabledLocalDb) InfluxBacklogAdd(client, batch string) error {
+func (d *DisabledLocalDb) InfluxBacklogAdd(client, batch string) error {
 	return fmt.Errorf("disabled")
 }
-func (d DisabledLocalDb) InfluxBacklogSize(client string) (numbBatches, numbLines uint, err error) {
+func (d *DisabledLocalDb) InfluxBacklogSize(client string) (numbBatches, numbLines uint, err error) {
 	return 0, 0, fmt.Errorf("disabled")
 }
-func (d DisabledLocalDb) InfluxBacklogGet(client string) (id int, batch string, err error) {
+func (d *DisabledLocalDb) InfluxBacklogGet(client string) (id int, batch string, err error) {
 	return 0, "", fmt.Errorf("disabled")
 }
-func (d DisabledLocalDb) InfluxBacklogDelete(id int) error {
+func (d *DisabledLocalDb) InfluxBacklogDelete(id int) error {
 	return fmt.Errorf("disabled")
 }
-func (d DisabledLocalDb) InfluxAggregateBacklog(client string, batchSize uint) error {
+func (d *DisabledLocalDb) InfluxAggregateBacklog(client string, batchSize uint) error {
 	return nil
 }
