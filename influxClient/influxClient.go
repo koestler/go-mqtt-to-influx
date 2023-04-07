@@ -188,7 +188,10 @@ func (ic Client) worker() {
 	defer close(ic.closed)
 
 	aggregateTicker := time.NewTicker(ic.config.AggregateInterval())
+	defer aggregateTicker.Stop()
 	retryTicker := time.NewTicker(ic.config.RetryInterval())
+	defer retryTicker.Stop()
+
 	if !ic.localDb.Enabled() || ic.config.RetryInterval() <= 0 {
 		aggregateTicker.Stop()
 		retryTicker.Stop()
