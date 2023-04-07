@@ -126,7 +126,7 @@ func main() {
 		}
 
 		// setup SIGTERM, SIGINT handlers
-		gracefulStop := make(chan os.Signal)
+		gracefulStop := make(chan os.Signal, 1)
 		signal.Notify(gracefulStop, syscall.SIGTERM)
 		signal.Notify(gracefulStop, syscall.SIGINT)
 
