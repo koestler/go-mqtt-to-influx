@@ -7,16 +7,16 @@ import (
 )
 
 type Config struct {
-	version             int                    // must be 0
-	httpServer          HttpServerConfig       // optional: default Disabled
-	localDb             LocalDbConfig          // optional: default Disabled
-	statistics          StatisticsConfig       // optional: default Disabled
-	logConfig           bool                   // optional: default False
-	logWorkerStart      bool                   // optional: default False
-	mqttClients         []*MqttClientConfig    // mandatory: at least 1 must be defined
-	influxClients       []*InfluxClientConfig  // mandatory: at least 1 must be defined
-	converters          []*ConverterConfig     // mandatory: at least 1 must be defined
-	influxAuxiliaryTags []*InfluxAuxiliaryTags // optional: default empty
+	version             int                   // must be 0
+	httpServer          HttpServerConfig      // optional: default Disabled
+	localDb             LocalDbConfig         // optional: default Disabled
+	statistics          StatisticsConfig      // optional: default Disabled
+	logConfig           bool                  // optional: default False
+	logWorkerStart      bool                  // optional: default False
+	mqttClients         []MqttClientConfig    // mandatory: at least 1 must be defined
+	influxClients       []InfluxClientConfig  // mandatory: at least 1 must be defined
+	converters          []ConverterConfig     // mandatory: at least 1 must be defined
+	influxAuxiliaryTags []InfluxAuxiliaryTags // optional: default empty
 }
 
 type HttpServerConfig struct {
@@ -71,13 +71,13 @@ type InfluxClientConfig struct {
 }
 
 type ConverterConfig struct {
-	name           string             // defined automatically by map key
-	implementation string             // mandatory
-	mqttTopics     []*MqttTopicConfig // mandatory: at least 1 must be defined
-	mqttClients    []string           // optional: defaults to all defined clients
-	influxClients  []string           // optional: defaults to all defined clients
-	logHandleOnce  bool               // optional: default False
-	logDebug       bool               // optional: default False
+	name           string            // defined automatically by map key
+	implementation string            // mandatory
+	mqttTopics     []MqttTopicConfig // mandatory: at least 1 must be defined
+	mqttClients    []string          // optional: defaults to all defined clients
+	influxClients  []string          // optional: defaults to all defined clients
+	logHandleOnce  bool              // optional: default False
+	logDebug       bool              // optional: default False
 }
 
 type MqttTopicConfig struct {

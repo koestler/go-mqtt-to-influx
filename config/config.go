@@ -193,16 +193,16 @@ func (c mqttClientConfigReadMap) getOrderedKeys() (ret []string) {
 	return
 }
 
-func (c mqttClientConfigReadMap) TransformAndValidate() (ret []*MqttClientConfig, err []error) {
+func (c mqttClientConfigReadMap) TransformAndValidate() (ret []MqttClientConfig, err []error) {
 	if len(c) < 1 {
 		return ret, []error{fmt.Errorf("MqttClients section must no be empty")}
 	}
 
-	ret = make([]*MqttClientConfig, len(c))
+	ret = make([]MqttClientConfig, len(c))
 	j := 0
 	for _, name := range c.getOrderedKeys() {
 		r, e := c[name].TransformAndValidate(name)
-		ret[j] = &r
+		ret[j] = r
 		err = append(err, e...)
 		j++
 	}
@@ -334,16 +334,16 @@ func (c influxClientConfigReadMap) getOrderedKeys() (ret []string) {
 	return
 }
 
-func (c influxClientConfigReadMap) TransformAndValidate() (ret []*InfluxClientConfig, err []error) {
+func (c influxClientConfigReadMap) TransformAndValidate() (ret []InfluxClientConfig, err []error) {
 	if len(c) < 1 {
 		return ret, []error{fmt.Errorf("InfluxClients section must no be empty")}
 	}
 
-	ret = make([]*InfluxClientConfig, len(c))
+	ret = make([]InfluxClientConfig, len(c))
 	j := 0
 	for _, name := range c.getOrderedKeys() {
 		r, e := c[name].TransformAndValidate(name)
-		ret[j] = &r
+		ret[j] = r
 		err = append(err, e...)
 		j++
 	}
@@ -489,18 +489,18 @@ func (c converterConfigReadMap) getOrderedKeys() (ret []string) {
 }
 
 func (c converterConfigReadMap) TransformAndValidate(
-	mqttClients []*MqttClientConfig,
-	influxClients []*InfluxClientConfig,
-) (ret []*ConverterConfig, err []error) {
+	mqttClients []MqttClientConfig,
+	influxClients []InfluxClientConfig,
+) (ret []ConverterConfig, err []error) {
 	if len(c) < 1 {
 		return ret, []error{fmt.Errorf("converters section must no be empty")}
 	}
 
-	ret = make([]*ConverterConfig, len(c))
+	ret = make([]ConverterConfig, len(c))
 	j := 0
 	for _, name := range c.getOrderedKeys() {
 		r, e := c[name].TransformAndValidate(name, mqttClients, influxClients)
-		ret[j] = &r
+		ret[j] = r
 		err = append(err, e...)
 		j++
 	}
@@ -509,8 +509,8 @@ func (c converterConfigReadMap) TransformAndValidate(
 
 func (c converterConfigRead) TransformAndValidate(
 	name string,
-	mqttClients []*MqttClientConfig,
-	influxClients []*InfluxClientConfig,
+	mqttClients []MqttClientConfig,
+	influxClients []InfluxClientConfig,
 ) (ret ConverterConfig, err []error) {
 	ret = ConverterConfig{
 		name:           name,
@@ -576,15 +576,15 @@ func (c converterConfigRead) TransformAndValidate(
 	return
 }
 
-func (c mqttTopicConfigReadList) TransformAndValidate() (ret []*MqttTopicConfig, err []error) {
+func (c mqttTopicConfigReadList) TransformAndValidate() (ret []MqttTopicConfig, err []error) {
 	if len(c) < 1 {
 		return ret, []error{fmt.Errorf("mqttTopics section must no be empty")}
 	}
 
-	ret = make([]*MqttTopicConfig, len(c))
+	ret = make([]MqttTopicConfig, len(c))
 	for i, t := range c {
 		r, e := t.TransformAndValidate()
-		ret[i] = &r
+		ret[i] = r
 		err = append(err, e...)
 	}
 	return
@@ -625,11 +625,11 @@ func (c MqttTopicConfig) ApplyTopicReplace(f ApplyTopicReplaceFunc) MqttTopicCon
 		device: c.device,
 	}
 }
-func (c influxAuxiliaryTagsReadList) TransformAndValidate() (ret []*InfluxAuxiliaryTags, err []error) {
-	ret = make([]*InfluxAuxiliaryTags, len(c))
+func (c influxAuxiliaryTagsReadList) TransformAndValidate() (ret []InfluxAuxiliaryTags, err []error) {
+	ret = make([]InfluxAuxiliaryTags, len(c))
 	for i, t := range c {
 		r, e := t.TransformAndValidate()
-		ret[i] = &r
+		ret[i] = r
 		err = append(err, e...)
 	}
 	return

@@ -32,19 +32,19 @@ func (c Config) LogWorkerStart() bool {
 	return c.logWorkerStart
 }
 
-func (c Config) MqttClients() []*MqttClientConfig {
+func (c Config) MqttClients() []MqttClientConfig {
 	return c.mqttClients
 }
 
-func (c Config) InfluxClients() []*InfluxClientConfig {
+func (c Config) InfluxClients() []InfluxClientConfig {
 	return c.influxClients
 }
 
-func (c Config) Converters() []*ConverterConfig {
+func (c Config) Converters() []ConverterConfig {
 	return c.converters
 }
 
-func (c Config) InfluxAuxiliaryTags() []*InfluxAuxiliaryTags {
+func (c Config) InfluxAuxiliaryTags() []InfluxAuxiliaryTags {
 	return c.influxAuxiliaryTags
 }
 
@@ -213,7 +213,7 @@ func (c ConverterConfig) Implementation() string {
 	return c.implementation
 }
 
-func (c ConverterConfig) MqttTopics() []*MqttTopicConfig {
+func (c ConverterConfig) MqttTopics() []MqttTopicConfig {
 	return c.mqttTopics
 }
 
