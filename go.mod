@@ -13,6 +13,7 @@ require (
 	github.com/lestrrat-go/apache-logformat v2.0.4+incompatible
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/pkg/errors v0.9.1
+	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63
 	gopkg.in/yaml.v2 v2.4.0
 )
 

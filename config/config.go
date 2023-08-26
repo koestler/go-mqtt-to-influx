@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v2"
 	"log"
 	"net/url"
@@ -80,16 +81,45 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 		ret.logWorkerStart = true
 	}
 
-	ret.mqttClients, e = c.MqttClients.TransformAndValidate()
+	ret.mqttClients, e = TransformAndValidateMapToList(
+		c.MqttClients,
+		func(inp mqttClientConfigRead, name string) (MqttClientConfig, []error) {
+			return inp.TransformAndValidate(name)
+		},
+	)
 	err = append(err, e...)
+	if len(ret.mqttClients) < 1 {
+		err = append(err, fmt.Errorf("MqttClients section must no be empty"))
+	}
 
-	ret.influxClients, e = c.InfluxClients.TransformAndValidate()
+	ret.influxClients, e = TransformAndValidateMapToList(
+		c.InfluxClients,
+		func(inp influxClientConfigRead, name string) (InfluxClientConfig, []error) {
+			return inp.TransformAndValidate(name)
+		},
+	)
 	err = append(err, e...)
+	if len(ret.influxClients) < 1 {
+		err = append(err, fmt.Errorf("InfluxClients section must no be empty"))
+	}
 
-	ret.converters, e = c.Converters.TransformAndValidate(ret.mqttClients, ret.influxClients)
+	ret.converters, e = TransformAndValidateMapToList(
+		c.Converters,
+		func(inp converterConfigRead, name string) (ConverterConfig, []error) {
+			return inp.TransformAndValidate(name, ret.mqttClients, ret.influxClients)
+		},
+	)
 	err = append(err, e...)
+	if len(ret.converters) < 1 {
+		err = append(err, fmt.Errorf("converters section must no be empty"))
+	}
 
-	ret.influxAuxiliaryTags, e = c.InfluxAuxiliaryTags.TransformAndValidate()
+	ret.influxAuxiliaryTags, e = TransformAndValidateList(
+		c.InfluxAuxiliaryTags,
+		func(inp influxAuxiliaryTagsRead) (InfluxAuxiliaryTags, []error) {
+			return inp.TransformAndValidate()
+		},
+	)
 	err = append(err, e...)
 
 	return
@@ -177,34 +207,6 @@ func (c *statisticsConfigRead) TransformAndValidate() (ret StatisticsConfig, err
 		))
 	} else {
 		ret.historyMaxAge = historyMaxAge
-	}
-
-	return
-}
-
-func (c mqttClientConfigReadMap) getOrderedKeys() (ret []string) {
-	ret = make([]string, len(c))
-	i := 0
-	for k := range c {
-		ret[i] = k
-		i++
-	}
-	sort.Strings(ret)
-	return
-}
-
-func (c mqttClientConfigReadMap) TransformAndValidate() (ret []MqttClientConfig, err []error) {
-	if len(c) < 1 {
-		return ret, []error{fmt.Errorf("MqttClients section must no be empty")}
-	}
-
-	ret = make([]MqttClientConfig, len(c))
-	j := 0
-	for _, name := range c.getOrderedKeys() {
-		r, e := c[name].TransformAndValidate(name)
-		ret[j] = r
-		err = append(err, e...)
-		j++
 	}
 
 	return
@@ -320,33 +322,6 @@ func (c mqttClientConfigRead) TransformAndValidate(name string) (ret MqttClientC
 		ret.logMessages = true
 	}
 
-	return
-}
-
-func (c influxClientConfigReadMap) getOrderedKeys() (ret []string) {
-	ret = make([]string, len(c))
-	i := 0
-	for k := range c {
-		ret[i] = k
-		i++
-	}
-	sort.Strings(ret)
-	return
-}
-
-func (c influxClientConfigReadMap) TransformAndValidate() (ret []InfluxClientConfig, err []error) {
-	if len(c) < 1 {
-		return ret, []error{fmt.Errorf("InfluxClients section must no be empty")}
-	}
-
-	ret = make([]InfluxClientConfig, len(c))
-	j := 0
-	for _, name := range c.getOrderedKeys() {
-		r, e := c[name].TransformAndValidate(name)
-		ret[j] = r
-		err = append(err, e...)
-		j++
-	}
 	return
 }
 
@@ -477,36 +452,6 @@ func (c influxClientConfigRead) TransformAndValidate(name string) (ret InfluxCli
 	return
 }
 
-func (c converterConfigReadMap) getOrderedKeys() (ret []string) {
-	ret = make([]string, len(c))
-	i := 0
-	for k := range c {
-		ret[i] = k
-		i++
-	}
-	sort.Strings(ret)
-	return
-}
-
-func (c converterConfigReadMap) TransformAndValidate(
-	mqttClients []MqttClientConfig,
-	influxClients []InfluxClientConfig,
-) (ret []ConverterConfig, err []error) {
-	if len(c) < 1 {
-		return ret, []error{fmt.Errorf("converters section must no be empty")}
-	}
-
-	ret = make([]ConverterConfig, len(c))
-	j := 0
-	for _, name := range c.getOrderedKeys() {
-		r, e := c[name].TransformAndValidate(name, mqttClients, influxClients)
-		ret[j] = r
-		err = append(err, e...)
-		j++
-	}
-	return
-}
-
 func (c converterConfigRead) TransformAndValidate(
 	name string,
 	mqttClients []MqttClientConfig,
@@ -528,8 +473,16 @@ func (c converterConfigRead) TransformAndValidate(
 	}
 
 	var e []error
-	ret.mqttTopics, e = c.MqttTopics.TransformAndValidate()
+	ret.mqttTopics, e = TransformAndValidateList(
+		c.MqttTopics,
+		func(inp mqttTopicConfigRead) (MqttTopicConfig, []error) {
+			return inp.TransformAndValidate()
+		},
+	)
 	err = append(err, e...)
+	if len(ret.mqttTopics) < 1 {
+		err = append(err, fmt.Errorf("mqttTopics section must no be empty"))
+	}
 
 	// validate that all listed mqttClients exist
 	for _, clientName := range ret.mqttClients {
@@ -576,20 +529,6 @@ func (c converterConfigRead) TransformAndValidate(
 	return
 }
 
-func (c mqttTopicConfigReadList) TransformAndValidate() (ret []MqttTopicConfig, err []error) {
-	if len(c) < 1 {
-		return ret, []error{fmt.Errorf("mqttTopics section must no be empty")}
-	}
-
-	ret = make([]MqttTopicConfig, len(c))
-	for i, t := range c {
-		r, e := t.TransformAndValidate()
-		ret[i] = r
-		err = append(err, e...)
-	}
-	return
-}
-
 func (c mqttTopicConfigRead) TransformAndValidate() (ret MqttTopicConfig, err []error) {
 	ret = MqttTopicConfig{
 		topic: c.Topic,
@@ -625,15 +564,6 @@ func (c MqttTopicConfig) ApplyTopicReplace(f ApplyTopicReplaceFunc) MqttTopicCon
 		device: c.device,
 	}
 }
-func (c influxAuxiliaryTagsReadList) TransformAndValidate() (ret []InfluxAuxiliaryTags, err []error) {
-	ret = make([]InfluxAuxiliaryTags, len(c))
-	for i, t := range c {
-		r, e := t.TransformAndValidate()
-		ret[i] = r
-		err = append(err, e...)
-	}
-	return
-}
 
 func (c influxAuxiliaryTagsRead) TransformAndValidate() (ret InfluxAuxiliaryTags, err []error) {
 	ret = InfluxAuxiliaryTags{
@@ -666,6 +596,39 @@ func (c influxAuxiliaryTagsRead) TransformAndValidate() (ret InfluxAuxiliaryTags
 	} else {
 		err = append(err, fmt.Errorf("InfluxAuxiliaryTags Equals xor Matches must be set"))
 		return
+	}
+
+	return
+}
+
+func TransformAndValidateMapToList[I any, O any](
+	inp map[string]I,
+	transformer func(inp I, name string) (ret O, err []error),
+) (ret []O, err []error) {
+	keys := maps.Keys(inp)
+	sort.Strings(keys)
+
+	ret = make([]O, len(inp))
+	j := 0
+	for _, name := range keys {
+		r, e := transformer(inp[name], name)
+		ret[j] = r
+		err = append(err, e...)
+		j++
+	}
+	return
+}
+
+func TransformAndValidateList[I any, O any](
+	inp []I,
+	transformer func(inp I) (ret O, err []error),
+) (ret []O, err []error) {
+	ret = make([]O, 0, len(inp))
+	for _, cr := range inp {
+		r, e := transformer(cr)
+
+		ret = append(ret, r)
+		err = append(err, e...)
 	}
 
 	return
