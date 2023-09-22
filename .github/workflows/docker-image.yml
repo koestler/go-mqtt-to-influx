@@ -50,7 +50,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         id: build
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           push: true
           context: .
@@ -78,7 +78,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
       - name: Build and push
         id: build
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           push: true
           context: .
@@ -86,6 +86,7 @@ jobs:
           platforms: linux/arm/v7
           tags: ${{ needs.metadata.outputs.img }}-arm-v7
           labels: ${{ needs.metadata.outputs.labels }}
+          provenance: false
 
   build-amd64:
     runs-on: buildjet-2vcpu-ubuntu-2204
@@ -105,7 +106,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
         id: build
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           push: true
           context: .
