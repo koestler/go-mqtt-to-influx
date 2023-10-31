@@ -103,14 +103,16 @@ func (c *ClientV5) onConnectionUp() func(*autopaho.ConnectionManager, *paho.Conn
 		// subscribe topics
 		if len(c.subscriptions) > 0 {
 			if _, err := cm.Subscribe(c.ctx, &paho.Subscribe{
-				Subscriptions: func() (ret map[string]paho.SubscribeOptions) {
+				Subscriptions: func() (ret []paho.SubscribeOptions) {
 					c.subscriptionsMutex.RLock()
 					defer c.subscriptionsMutex.RUnlock()
-					ret = make(map[string]paho.SubscribeOptions, len(c.subscriptions))
+					ret = make([]paho.SubscribeOptions, 0, len(c.subscriptions))
 
-					subOpts := paho.SubscribeOptions{QoS: c.cfg.Qos()}
 					for _, s := range c.subscriptions {
-						ret[s.subscribeTopic] = subOpts
+						ret = append(ret, paho.SubscribeOptions{
+							Topic: s.subscribeTopic,
+							QoS:   c.cfg.Qos(),
+						})
 					}
 					return
 				}(),
