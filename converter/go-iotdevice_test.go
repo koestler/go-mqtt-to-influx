@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestGoVeSensor(t *testing.T) {
+func TestGoVeSensorV2(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -26,7 +26,6 @@ func TestGoVeSensor(t *testing.T) {
     "Time": "2022-12-29T11:19:19Z",
     "NextTelemetry": "2022-12-29T11:19:21Z",
     "Model": "SmartShunt 500A\/50mV",
-    "SecondsSinceLastUpdate": 0.56890948,
     "NumericValues": {
         "AmountOfChargedEnergy": {
             "Cat": "Historic",
@@ -145,6 +144,109 @@ func TestGoVeSensor(t *testing.T) {
 			Topic:             "invalid",
 			Payload:           "{}",
 			ExpectedLines:     []string{},
+			ExpectedTimeStamp: time.Now(),
+		},
+		{
+			Topic: "piegn/tele/iot-device/12v-solar/state",
+			Payload: `{
+    "Time": "2023-10-31T11:04:58+01:00",
+    "NextTelemetry": "2023-10-31T11:05:08+01:00",
+    "Model": "Teracom",
+    "NumericValues": {
+        "AI1": {
+            "Cat": "Analog Inputs",
+            "Desc": "Analog Input 1",
+            "Val": 0.02,
+            "Unit": "V"
+        },
+        "AI1Hys": {
+            "Cat": "Settings",
+            "Desc": "Analog Input 1 Hysteresis",
+            "Val": 1,
+            "Unit": "V"
+        },
+        "AI1Max": {
+            "Cat": "Settings",
+            "Desc": "Analog Input 1 Max",
+            "Val": 60,
+            "Unit": "V"
+        },
+        "AI1Min": {
+            "Cat": "Settings",
+            "Desc": "Analog Input 1 Min",
+            "Val": 0,
+            "Unit": "V"
+        },
+        "AI2": {
+            "Cat": "Analog Inputs",
+            "Desc": "Analog Input 2",
+            "Val": 0.02,
+            "Unit": "V"
+        }
+    },
+    "TextValues": {
+        "Date": {
+            "Cat": "General",
+            "Desc": "Date",
+            "Val": "31.10.2023"
+        },
+        "DeviceName": {
+            "Cat": "Device Info",
+            "Desc": "Device Name",
+            "Val": "TCW241"
+        },
+        "FWVer": {
+            "Cat": "Device Info",
+            "Desc": "Firmware Vesion",
+            "Val": "TCW241-v1.248"
+        },
+        "HostName": {
+            "Cat": "Device Info",
+            "Desc": "Host Name",
+            "Val": "TCW241"
+        },
+        "Id": {
+            "Cat": "Device Info",
+            "Desc": "Id",
+            "Val": "5C:32:C5:00:C8:72"
+        },
+        "Time": {
+            "Cat": "General",
+            "Desc": "Time",
+            "Val": "13:07:30"
+        }
+    },
+    "EnumValues": {
+        "AI1Alarm": {
+            "Cat": "Alarms",
+            "Desc": "Analog Input 1",
+            "Idx": 1,
+            "Val": "ALARMED"
+        },
+        "DI1": {
+            "Cat": "Digital Inputs",
+            "Desc": "Digital Input 1",
+            "Idx": 1,
+            "Val": "CLOSED"
+        }
+    }
+}`,
+			ExpectedLines: []string{
+				"clock,device=12v-solar timeValue=\"2023-10-31T11:04:58+01:00\"",
+				"telemetry,category=Alarms,description=Analog\\ Input\\ 1,device=12v-solar,field=AI1Alarm,sensor=Teracom intValue=1i,stringValue=\"ALARMED\"",
+				"telemetry,category=Analog\\ Inputs,description=Analog\\ Input\\ 1,device=12v-solar,field=AI1,sensor=Teracom,unit=V floatValue=0.02",
+				"telemetry,category=Analog\\ Inputs,description=Analog\\ Input\\ 2,device=12v-solar,field=AI2,sensor=Teracom,unit=V floatValue=0.02",
+				"telemetry,category=Device\\ Info,description=Device\\ Name,device=12v-solar,field=DeviceName,sensor=Teracom stringValue=\"TCW241\"",
+				"telemetry,category=Device\\ Info,description=Firmware\\ Vesion,device=12v-solar,field=FWVer,sensor=Teracom stringValue=\"TCW241-v1.248\"",
+				"telemetry,category=Device\\ Info,description=Host\\ Name,device=12v-solar,field=HostName,sensor=Teracom stringValue=\"TCW241\"",
+				"telemetry,category=Device\\ Info,description=Id,device=12v-solar,field=Id,sensor=Teracom stringValue=\"5C:32:C5:00:C8:72\"",
+				"telemetry,category=Digital\\ Inputs,description=Digital\\ Input\\ 1,device=12v-solar,field=DI1,sensor=Teracom intValue=1i,stringValue=\"CLOSED\"",
+				"telemetry,category=General,description=Date,device=12v-solar,field=Date,sensor=Teracom stringValue=\"31.10.2023\"",
+				"telemetry,category=General,description=Time,device=12v-solar,field=Time,sensor=Teracom stringValue=\"13:07:30\"",
+				"telemetry,category=Settings,description=Analog\\ Input\\ 1\\ Hysteresis,device=12v-solar,field=AI1Hys,sensor=Teracom,unit=V floatValue=1",
+				"telemetry,category=Settings,description=Analog\\ Input\\ 1\\ Max,device=12v-solar,field=AI1Max,sensor=Teracom,unit=V floatValue=60",
+				"telemetry,category=Settings,description=Analog\\ Input\\ 1\\ Min,device=12v-solar,field=AI1Min,sensor=Teracom,unit=V floatValue=0",
+			},
 			ExpectedTimeStamp: time.Now(),
 		},
 	}

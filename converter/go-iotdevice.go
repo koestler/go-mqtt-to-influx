@@ -8,12 +8,12 @@ import (
 )
 
 type goIotdeviceTelemetryMessage struct {
-	Time                   string
-	NextTelemetry          string
-	Model                  string
-	SecondsSinceLastUpdate float64
-	NumericValues          map[string]goIotdeviceNumericTelemetryValue
-	TextValues             map[string]goIotdeviceTextTelemetryValue
+	Time          string
+	NextTelemetry string
+	Model         string
+	NumericValues map[string]goIotdeviceNumericTelemetryValue
+	TextValues    map[string]goIotdeviceTextTelemetryValue
+	EnumValues    map[string]EnumTelemetryValue
 }
 
 type goIotdeviceNumericTelemetryValue struct {
@@ -26,6 +26,13 @@ type goIotdeviceNumericTelemetryValue struct {
 type goIotdeviceTextTelemetryValue struct {
 	Category    string `json:"Cat"`
 	Description string `json:"Desc"`
+	Value       string `json:"Val"`
+}
+
+type EnumTelemetryValue struct {
+	Category    string `json:"Cat"`
+	Description string `json:"Desc"`
+	EnumIdx     int    `json:"Idx"`
 	Value       string `json:"Val"`
 }
 
@@ -88,6 +95,24 @@ func goIotdeviceHandler(c Config, tm TopicMatcher, input Input, outputFunc Outpu
 			field:       field,
 			unit:        nil,
 			sensor:      sensor,
+			stringValue: &value.Value,
+			auxTags: &map[string]string{
+				"category":    value.Category,
+				"description": value.Description,
+			},
+		})
+	}
+
+	for field, value := range message.EnumValues {
+		i := int64(value.EnumIdx)
+
+		outputFunc(telemetryOutputMessage{
+			timeStamp:   timeStamp,
+			device:      device,
+			field:       field,
+			unit:        nil,
+			sensor:      sensor,
+			intValue:    &i,
 			stringValue: &value.Value,
 			auxTags: &map[string]string{
 				"category":    value.Category,
