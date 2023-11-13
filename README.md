@@ -46,7 +46,7 @@ There are [GitHub actions](https://github.com/koestler/go-mqtt-to-influx/actions
 to automatically cross-compile amd64, arm64 and arm/v7
 publicly available [docker images](https://github.com/koestler/go-mqtt-to-influx/pkgs/container/go-mqtt-to-influx).
 The docker-container is built on top of alpine, the binary is `/go-mqtt-to-influx` and the config is
-expected to be at `/app/config.yml` and the local-db to be at `/app/db`. The container runs as non-root user `app`.
+expected to be at `/app/config.yaml` and the local-db to be at `/app/db`. The container runs as non-root user `app`.
 
 See [Local develpment](#Local-development) on how to compile a single binary.
 
@@ -95,7 +95,7 @@ docker compose up -d
 # optional: check the log output to see how it's going
 docker compose logs -f
 
-# when config.yml is changed, the container needs to be restarter
+# when config.yaml is changed, the container needs to be restarter
 docker compose restart
 
 # do upgrade to the newest tag
@@ -105,7 +105,7 @@ docker compose up
 
 ## Config
 The configuration is stored in a single yaml file. By default, it is read from `./config.yaml`.
-This can be changed using the `--config=another-config.yml` command line option.
+This can be changed using the `--config=another-config.yaml` command line option.
 
 There are mandatory fields and there are optional fields which have reasonable default values. 
 
