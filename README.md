@@ -44,7 +44,7 @@ The cpu & memory requirements for this tool are quite minimal but depend on the 
 
 There are [GitHub actions](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/docker-image.yml)
 to automatically cross-compile amd64, arm64 and arm/v7
-publicly available [docker images](https://hub.docker.com/r/koestler/go-mqtt-to-influx/tags).
+publicly available [docker images](https://github.com/koestler/go-mqtt-to-influx/pkgs/container/go-mqtt-to-influx).
 The docker-container is built on top of alpine, the binary is `/go-mqtt-to-influx` and the config is
 expected to be at `/app/config.yml` and the local-db to be at `/app/db`. The container runs as non-root user `app`.
 
