@@ -48,12 +48,12 @@ publicly available [docker images](https://github.com/koestler/go-mqtt-to-influx
 The docker-container is built on top of alpine, the binary is `/go-mqtt-to-influx` and the config is
 expected to be at `/app/config.yaml` and the local-db to be at `/app/db`. The container runs as non-root user `app`.
 
-See [Local develpment](#Local-development) on how to compile a single binary.
+See [Local development](#Local-development) on how to compile a single binary.
 
-The GitHub tags use semantic versioning and whenever a tag like v2.3.4 is build, it is pushed to docker tags
-v2, v2.3 and v2.3.4.
+The GitHub tags use semantic versioning and whenever a tag like v2.3.4 is built, it is pushed to docker tags
+v2, v2.3, and v2.3.4.
 
-For auto-restart on system reboots, configuration and networking I use `docker compose`. Here is an example file:
+For auto-restart on system reboots, configuration, and networking I use `docker compose`. Here is an example file:
 ```yaml
 # documentation/docker-compose.yml
 
@@ -98,7 +98,7 @@ docker compose logs -f
 # when config.yaml is changed, the container needs to be restarter
 docker compose restart
 
-# do upgrade to the newest tag
+# upgrade to the newest tag
 docker compose pull
 docker compose up
 ```
