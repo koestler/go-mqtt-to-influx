@@ -2,6 +2,11 @@
 [![Docker Image CI](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/docker-image.yml/badge.svg)](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/docker-image.yml)
 [![Run tests](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/test.yml/badge.svg)](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/test.yml)
 
+This major version is no longer supported. Please use the version 2.x.:
+
+https://github.com/koestler/go-mqtt-to-influx/tree/main
+https://pkg.go.dev/github.com/koestler/go-mqtt-to-influx/v2
+
 
 This daemon connects to [MQTT servers](http://mqtt.org/) and stores the received messages 
 in an [Influx Database](https://github.com/influxdata/influxdb).

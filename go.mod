@@ -1,5 +1,7 @@
 module github.com/koestler/go-mqtt-to-influx
 
+// Deprecated: use github.com/koestler/go-mqtt-to-influx/v2 instead.
+
 go 1.17
 
 require (
