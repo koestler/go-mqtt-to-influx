@@ -43,13 +43,31 @@ This tool consists of the following components:
 ## Deployment
 The cpu & memory requirements for this tool are quite minimal but depend on the number of messages to be handled.
 
+<details>
+<summary>
+Deployment without docker
+</summary>
+I use docker to deploy this tool.
+Alternatively, you can use `go install` to build binary locally.
+
+```bash
+go install github.com/koestler/go-mqtt-to-influx/v2@latest
+curl https://raw.githubusercontent.com/koestler/go-mqtt-to-influx/main/documentation/config.yaml -o config.yaml
+# adapt config.yaml and configure mqtt / influx connection and converters.
+
+# start the tool
+go-mqtt-to-influx
+```
+</details>
+
+
+### Docker
+
 There are [GitHub actions](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/docker-image.yml)
 to automatically cross-compile amd64, arm64 and arm/v7
 publicly available [docker images](https://github.com/koestler/go-mqtt-to-influx/pkgs/container/go-mqtt-to-influx).
 The docker-container is built on top of alpine, the binary is `/go-mqtt-to-influx` and the config is
 expected to be at `/app/config.yaml` and the local-db to be at `/app/db`. The container runs as non-root user `app`.
-
-See [Local development](#Local-development) on how to compile a single binary.
 
 The GitHub tags use semantic versioning and whenever a tag like v2.3.4 is built, it is pushed to docker tags
 v2, v2.3, and v2.3.4.
