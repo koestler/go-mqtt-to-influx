@@ -1,6 +1,7 @@
 # go-mqtt-to-influx
 [![Docker Image CI](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/docker-image.yml/badge.svg)](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/docker-image.yml)
 [![Run tests](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/test.yml/badge.svg)](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/test.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/koestler/go-mqtt-to-influx/v2.svg)](https://pkg.go.dev/github.com/koestler/go-mqtt-to-influx/v2)
 
 This tool connects to one or multiple [MQTT](http://mqtt.org/) servers to receive data from IOT-sensors.
 The messages are then parsed using easy to implement device / message specific converters to generate
