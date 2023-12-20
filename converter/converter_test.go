@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"github.com/golang/mock/gomock"
 	influxdb2Write "github.com/influxdata/influxdb-client-go/v2/api/write"
-	"github.com/koestler/go-mqtt-to-influx/converter/mock"
-	"github.com/koestler/go-mqtt-to-influx/influxClient"
+	converter_mock "github.com/koestler/go-mqtt-to-influx/v2/converter/mock"
+	"github.com/koestler/go-mqtt-to-influx/v2/influxClient"
 	"log"
 	"reflect"
 	"sort"
@@ -14,8 +14,8 @@ import (
 	"time"
 )
 
-//go:generate mockgen -destination=mock/converter_mock.go -package converter_mock github.com/koestler/go-mqtt-to-influx/converter Config,Input,Output
-//go:generate mockgen -destination=mock/topicMatcher_mock.go -package converter_mock github.com/koestler/go-mqtt-to-influx/converter TopicMatcherConfig
+//go:generate mockgen -destination=mock/converter_mock.go -package converter_mock github.com/koestler/go-mqtt-to-influx/v2/converter Config,Input,Output
+//go:generate mockgen -destination=mock/topicMatcher_mock.go -package converter_mock github.com/koestler/go-mqtt-to-influx/v2/converter TopicMatcherConfig
 
 const epsilon = 10 * time.Millisecond
 

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/koestler/go-mqtt-to-influx/config"
-	LocalDb "github.com/koestler/go-mqtt-to-influx/localDb"
+	"github.com/koestler/go-mqtt-to-influx/v2/config"
+	LocalDb "github.com/koestler/go-mqtt-to-influx/v2/localDb"
 	"log"
 )
 

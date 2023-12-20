@@ -1,4 +1,4 @@
-module github.com/koestler/go-mqtt-to-influx
+module github.com/koestler/go-mqtt-to-influx/v2
 
 go 1.21
 

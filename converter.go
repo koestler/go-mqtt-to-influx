@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/koestler/go-mqtt-to-influx/config"
-	"github.com/koestler/go-mqtt-to-influx/converter"
-	"github.com/koestler/go-mqtt-to-influx/influxClient"
-	"github.com/koestler/go-mqtt-to-influx/mqttClient"
-	"github.com/koestler/go-mqtt-to-influx/statistics"
+	"github.com/koestler/go-mqtt-to-influx/v2/config"
+	"github.com/koestler/go-mqtt-to-influx/v2/converter"
+	"github.com/koestler/go-mqtt-to-influx/v2/influxClient"
+	"github.com/koestler/go-mqtt-to-influx/v2/mqttClient"
+	"github.com/koestler/go-mqtt-to-influx/v2/statistics"
 	"github.com/pkg/errors"
 	"log"
 )

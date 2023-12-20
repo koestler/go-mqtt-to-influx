@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/koestler/go-mqtt-to-influx/config"
-	"github.com/koestler/go-mqtt-to-influx/statistics"
+	"github.com/koestler/go-mqtt-to-influx/v2/config"
+	"github.com/koestler/go-mqtt-to-influx/v2/statistics"
 	"log"
 )
 

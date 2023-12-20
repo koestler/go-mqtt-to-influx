@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/koestler/go-mqtt-to-influx/config"
-	"github.com/koestler/go-mqtt-to-influx/influxClient"
-	LocalDb "github.com/koestler/go-mqtt-to-influx/localDb"
-	"github.com/koestler/go-mqtt-to-influx/statistics"
+	"github.com/koestler/go-mqtt-to-influx/v2/config"
+	"github.com/koestler/go-mqtt-to-influx/v2/influxClient"
+	LocalDb "github.com/koestler/go-mqtt-to-influx/v2/localDb"
+	"github.com/koestler/go-mqtt-to-influx/v2/statistics"
 	"log"
 )
 

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/jessevdk/go-flags"
-	"github.com/koestler/go-mqtt-to-influx/config"
+	"github.com/koestler/go-mqtt-to-influx/v2/config"
 	"log"
 	"os"
 	"os/signal"
