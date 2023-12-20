@@ -2,8 +2,6 @@ module github.com/koestler/go-mqtt-to-influx/v2
 
 go 1.21
 
-toolchain go1.21.3
-
 require (
 	github.com/eclipse/paho.golang v0.12.0
 	github.com/eclipse/paho.mqtt.golang v1.4.3
