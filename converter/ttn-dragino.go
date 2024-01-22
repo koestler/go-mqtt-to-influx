@@ -47,7 +47,7 @@ type ttnDraginoMessage struct {
 			UplinkToken string    `json:"uplink_token"`
 			GpsTime     time.Time `json:"gps_time"`
 			ReceivedAt  time.Time `json:"received_at"`
-		} `json:"rx_metadata"`
+		} `json:"r_metadata"`
 		ConsumedAirtime string `json:"consumed_airtime"`
 		VersionIds      struct {
 			ModelId string `json:"model_id"`
