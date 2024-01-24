@@ -7,10 +7,6 @@ import (
 )
 
 type ttnDraginoMessage struct {
-	EndDeviceIds struct {
-		DeviceId string `json:"device_id"`
-		DevEui   string `json:"dev_eui"`
-	} `json:"end_device_ids"`
 	ReceivedAt    time.Time `json:"received_at"`
 	UplinkMessage struct {
 		DecodedPayload struct {
@@ -34,39 +30,10 @@ type ttnDraginoMessage struct {
 			Ext            *int64   `json:"Ext"`
 			Systimestamp   *int64   `json:"Systimestamp"`
 		} `json:"decoded_payload"`
-		RxMetadata []struct {
-			GatewayIds struct {
-				GatewayId string `json:"gateway_id"`
-				Eui       string `json:"eui"`
-			} `json:"gateway_ids"`
-			Time        time.Time `json:"time"`
-			Timestamp   int64     `json:"timestamp"`
-			Rssi        int64     `json:"rssi"`
-			ChannelRssi int64     `json:"channel_rssi"`
-			Snr         float64   `json:"snr"`
-			UplinkToken string    `json:"uplink_token"`
-			GpsTime     time.Time `json:"gps_time"`
-			ReceivedAt  time.Time `json:"received_at"`
-		} `json:"r_metadata"`
-		ConsumedAirtime string `json:"consumed_airtime"`
-		VersionIds      struct {
-			ModelId string `json:"model_id"`
-		} `json:"version_ids"`
 	} `json:"uplink_message"`
 }
 
-func init() {
-	registerHandler("ttn-dragino", ttnDraginoHandler)
-}
-
-func ttnDraginoHandler(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
-	// parse topic
-	device, err := tm.MatchDevice(input.Topic())
-	if err != nil {
-		log.Printf("ttn-dragino[%s]: cannot extract device from topic='%s err=%s", c.Name(), input.Topic(), err)
-		return
-	}
-
+func ttnDraginoHandler(c Config, device, model string, input Input, outputFunc OutputFunc) {
 	// parse payload
 	var message ttnDraginoMessage
 	if err := json.Unmarshal(input.Payload(), &message); err != nil {
@@ -80,29 +47,6 @@ func ttnDraginoHandler(c Config, tm TopicMatcher, input Input, outputFunc Output
 			timeStamp: message.ReceivedAt,
 			device:    device,
 			value:     time.Unix(*message.UplinkMessage.DecodedPayload.Systimestamp, 0).UTC(),
-		})
-	}
-
-	sensor := message.UplinkMessage.VersionIds.ModelId
-
-	// lora
-	for gatewayIdx, rx := range message.UplinkMessage.RxMetadata {
-		airtime, err := time.ParseDuration(message.UplinkMessage.ConsumedAirtime)
-		if err != nil {
-			airtime = 0
-		}
-
-		outputFunc(loraOutputMessage{
-			timeStamp:       message.ReceivedAt,
-			device:          device,
-			devEui:          message.EndDeviceIds.DevEui,
-			gatewayId:       rx.GatewayIds.GatewayId,
-			gatewayEui:      rx.GatewayIds.Eui,
-			rssi:            rx.Rssi,
-			channelRssi:     rx.ChannelRssi,
-			snr:             rx.Snr,
-			consumedAirtime: airtime,
-			gatewayIdx:      gatewayIdx,
 		})
 	}
 
@@ -120,7 +64,7 @@ func ttnDraginoHandler(c Config, tm TopicMatcher, input Input, outputFunc Output
 				}
 				return nil
 			}(unit),
-			sensor:      sensor,
+			sensor:      model,
 			stringValue: stringValue,
 			floatValue:  floatValue,
 			boolValue:   boolValue,
