@@ -21,8 +21,8 @@ The tool was written for a couple of different scenarios in mind:
   and runs a MQTT-server while a single [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/)
   runs [go-iotdevice](https://github.com/koestler/go-iotdevice),
   this software as well as the local [InfluxDB OSS](https://docs.influxdata.com/influxdb/v2.4/).
-- Writing temperatures captured by [Dragino LSN50-v2](https://www.dragino.com/products/lora-lorawan-end-node/item/155-lsn50-v2.html)
-  / [Dragino LHT52](https://www.dragino.com/products/temperature-humidity-sensor/item/199-lht52.html)
+- Writing meteorological measurements captured by [Dragino LSN50-v2](https://www.dragino.com/products/lora-lorawan-end-node/item/155-lsn50-v2.html)
+  / [SenseCAP S2120](https://www.seeedstudio.com/sensecap-s2120-lorawan-8-in-1-weather-sensor-p-5436.html)
   [LoraWan](https://en.wikipedia.org/wiki/LoRa) sensors
   and routed via [The Things Network](https://www.thethingsnetwork.org/) to a MQTT database
   and displaying them in a [Grafana](https://grafana.com/) dashboard.
@@ -234,8 +234,8 @@ Converters:                                                # mandatory, the list
       - local
     LogHandleOnce: False                                   # optional, default False, when enabled, the first time this converter is executed, a log message is generated
 
-  ttn-dragino:                                             # mandatory, an arbitrary name used in log outputs
-    Implementation: ttn-dragino
+  ttn:                                                     # mandatory, an arbitrary name used in log outputs
+    Implementation: ttn
     MqttTopics:                                            # mandatory, list must not be empty, selects what mqtt subscriptions shall be created for that converter
       - Topic: "ttn/devices/%Device%/up"
         Device: "+"
@@ -328,8 +328,8 @@ Converters:
       - Topic: "%Prefix%tele/%Device%/SENSOR"
         Device: "+/+"
 
-  ttn-dragino:
-    Implementation: ttn-dragino
+  ttn:
+    Implementation: ttn
     MqttTopics:
       - Topic: "ttn/devices/%Device%/up"
 
@@ -345,6 +345,7 @@ Converters:
 Currently, the following devices are supported:
 * [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
 * [Dragino LoraWAN sensors](https://www.dragino.com/)
+* [SenseCAP LoraWAN sensors via The Things Network](https://www.seeedstudio.com/LoRaWAN-Sensor-c-1937.html)
 * [go-iotdevice](https://github.com/koestler/go-iotdevice)
 
 However, you are more than welcome to help support new devices. Send push requests of converters including some tests

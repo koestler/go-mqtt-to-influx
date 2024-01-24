@@ -98,8 +98,8 @@ Converters:                                                # mandatory, the list
       - local
     LogHandleOnce: False                                   # optional, default False, when enabled, the first time this converter is executed, a log message is generated
 
-  ttn-dragino:                                             # mandatory, an arbitrary name used in log outputs
-    Implementation: ttn-dragino
+  ttn:                                                     # mandatory, an arbitrary name used in log outputs
+    Implementation: ttn
     MqttTopics:                                            # mandatory, list must not be empty, selects what mqtt subscriptions shall be created for that converter
       - Topic: "ttn/devices/%Device%/up"
         Device: "+"

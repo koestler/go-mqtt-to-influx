@@ -45,8 +45,8 @@ Converters:
       - Topic: "%Prefix%tele/%Device%/SENSOR"
         Device: "+/+"
 
-  ttn-dragino:
-    Implementation: ttn-dragino
+  ttn:
+    Implementation: ttn
     MqttTopics:
       - Topic: "ttn/devices/%Device%/up"
 
