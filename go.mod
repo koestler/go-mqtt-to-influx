@@ -22,7 +22,10 @@ require (
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lestrrat-go/strftime v1.0.6 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/oapi-codegen/runtime v1.1.1 // indirect
 	golang.org/x/net v0.20.0 // indirect

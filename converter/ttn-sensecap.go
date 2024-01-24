@@ -1,7 +1,6 @@
 package converter
 
 import (
-	"encoding/json"
 	"log"
 	"strconv"
 	"time"
