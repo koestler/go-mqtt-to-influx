@@ -9,7 +9,7 @@ import (
 
 // example inputs
 
-func TestTtsDragino(t *testing.T) {
+func TestTtnDragino(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 

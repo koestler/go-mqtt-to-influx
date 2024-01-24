@@ -53,7 +53,8 @@ func ttnHandler(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
 
 	// parse payload
 	var message ttnMessage
-	if err := json.Unmarshal(input.Payload(), &message); err != nil {
+	payload := input.Payload()
+	if err := json.Unmarshal(payload, &message); err != nil {
 		log.Printf("ttn[%s]: cannot json decode: %s", c.Name(), err)
 		return
 	}

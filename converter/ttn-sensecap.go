@@ -3,14 +3,13 @@ package converter
 import (
 	"encoding/json"
 	"log"
-	"strings"
+	"strconv"
 	"time"
 )
 
 // Parse payload of SenseCAP S2120 8-in-1 LoRaWAN Weather Sensor
 // Code is compatible with TTN decoder function shown here:
 // https://github.com/Seeed-Solution/TTN-Payload-Decoder/blob/master/SenseCAP_S2120_Weather_Station_Decoder.js
-
 type ttnSensecapMessage struct {
 	ReceivedAt    time.Time `json:"received_at"`
 	UplinkMessage struct {
@@ -19,65 +18,17 @@ type ttnSensecapMessage struct {
 			Messages []struct {
 				MeasurementId    string  `json:"measurementId"`
 				MeasurementValue float64 `json:"measurementValue"`
-				Type             string  `json:"type"`
 			} `json:"messages"`
 			Valid bool `json:"valid"`
 		} `json:"decoded_payload"`
 	} `json:"uplink_message"`
 }
 
-func init() {
-	registerHandler("ttn-sensecap-s2120", ttnSensecapS2120Handler)
-}
-
-// example messages:
-//         "messages": [
-//          {
-//            "measurementId": "4104",
-//            "measurementValue": 228,
-//            "type": "Wind Direction Sensor"
-//          },
-//          {
-//            "measurementId": "4105",
-//            "measurementValue": 0,
-//            "type": "Wind Speed"
-//          },
-
-//          {
-//            "measurementId": "4097",
-//            "measurementValue": 8.9,
-//            "type": "Air Temperature"
-//          },
-//          {
-//            "measurementId": "4098",
-//            "measurementValue": 57,
-//            "type": "Air Humidity"
-//          },
-//          {
-//            "measurementId": "4099",
-//            "measurementValue": 1651,
-//            "type": "Light Intensity"
-//          },
-//          {
-//            "measurementId": "4190",
-//            "measurementValue": 0,
-//            "type": "UV Index"
-//          },
-//          {
-//            "measurementId": "4113",
-//            "measurementValue": 0,
-//            "type": "Rain Gauge"
-//          },
-//          {
-//            "measurementId": "4101",
-//            "measurementValue": 96950,
-//            "type": "Barometric Pressure"
-//          }
-
 func ttnSensecapHandler(c Config, device, model string, input Input, outputFunc OutputFunc) {
 	// parse payload
 	var message ttnSensecapMessage
-	if err := json.Unmarshal(input.Payload(), &message); err != nil {
+	payload := input.Payload()
+	if err := json.Unmarshal(payload, &message); err != nil {
 		log.Printf("ttn-sensecap[%s]: cannot json decode: %s", c.Name(), err)
 		return
 	}
@@ -85,12 +36,19 @@ func ttnSensecapHandler(c Config, device, model string, input Input, outputFunc 
 	// send points
 	count := 0
 	for _, m := range message.UplinkMessage.DecodedPayload.Messages {
+		mId, err := strconv.Atoi(m.MeasurementId)
+		if err != nil {
+			log.Printf("ttn-sensecap[%s]: invalid MeasurementId='%s'", c.Name(), m.MeasurementId)
+			continue
+		}
+		name, _, unit := senscapMeasurementDecoder(mId)
+
 		count += 1
 		outputFunc(telemetryOutputMessage{
-			timeStamp: message.ReceivedAt,
-			device:    device,
-			field:     m.Type,
-			unit:,
+			timeStamp:  message.ReceivedAt,
+			device:     device,
+			field:      name,
+			unit:       &unit,
 			sensor:     model,
 			floatValue: &m.MeasurementValue,
 		})
@@ -105,250 +63,223 @@ func ttnSensecapHandler(c Config, device, model string, input Input, outputFunc 
 	}
 }
 
-func ttnSensecapField(t string) string {
-	return strings.ReplaceAll(t, " ", "")
-}
-
-func ttnSenscapeUnit(t string) string {
-	switch t {
-	case "Air Temperature":
-		return "°C"
-	case "Air Humidity":
-		return "%"
-	case "Light Intensity":
-		return "lux"
-	case "Barometric Pressure":
-		return "hPa"
-	case "Wind Speed":
-		return "m/s"
-	case "WindDirection":
-		return "°"
-	case "Rainfall":
-		return "mm"
-	case "Battery":
-		return "V"
-	default:
-		return ""
-	}
-}()
-
-func senscapMeasurementIdDecoder(id uint) (string, string) {
-	switch id {
+// List from https://sensecap-docs.seeed.cc/measurement_list.html
+func senscapMeasurementDecoder(measurementId int) (name, valueRange, unit string) {
+	switch measurementId {
 	case 4097:
-		return "Air Temperature", "°C"
+		return "Air Temperature", "-40~90", "°C"
 	case 4098:
-		return "Air Humidity", "%"
+		return "Air Humidity", "0~100", "% RH"
 	case 4099:
-		return "Light Intensity", "lux"
+		return "Light Intensity", "0~188000", "Lux"
 	case 4100:
-		return "CO2", "ppm"
+		return "CO2", "0~10000", "ppm"
 	case 4101:
-		return "Barometric Pressure", "hPa"
+		return "Barometric Pressure", "300~1100000", "Pa"
 	case 4102:
-		return "Soil Temperature", "°C"
+		return "Soil Temperature", "-30~70", "°C"
 	case 4103:
-		return "Soil Moisture", "%"
+		return "Soil Moisture", "0~100", "%"
 	case 4104:
-		return "Wind Direction", "°"
+		return "Wind Direction", "0~360", "°"
 	case 4105:
-		return "Wind Speed", "m/s"
+		return "Wind Speed", "0~60", "m/s"
 	case 4106:
-		return "pH", "pH"
+		return "pH", "0~14", "PH"
 	case 4107:
-		return "Light Quantum", "umol/㎡s"
+		return "Light Quantum", "0~5000", "umol/㎡s"
 	case 4108:
-		return "Electrical Conductivity", "mS/cm"
+		return "Electrical Conductivity", "0~23", "mS/cm"
 	case 4109:
-		return "Dissolved Oxygen", "mg/L"
+		return "Dissolved Oxygen", "0~20", "mg/L"
 	case 4110:
-		return "Soil Volumetric Water Content", "%"
+		return "Soil Volumetric Water Content", "0~100", "%"
 	case 4111:
-		return "Soil Electrical Conductivity", "mS/cm"
+		return "Soil Electrical Conductivity", "0~23", "mS/cm"
 	case 4112:
-		return "Soil Temperature(Soil Temperature, VWC & EC Sensor)", "°C"
+		return "Soil Temperature(Soil Temperature, VWC & EC Sensor)", "-40~60", "°C"
 	case 4113:
-		return "Rainfall Hourly", "mm/hour"
+		return "Rainfall Hourly", "0~240", "mm/hour"
 	case 4115:
-		return "Distance", "cm"
+		return "Distance", "28~250", "cm"
 	case 4116:
-		return "Water Leak", ""
+		return "Water Leak", "true / false", ""
 	case 4117:
-		return "Liguid Level", "cm"
+		return "Liguid Level", "0~500", "cm"
 	case 4118:
-		return "NH3", "ppm"
+		return "NH3", "0~100", "ppm"
 	case 4119:
-		return "H2S", "ppm"
+		return "H2S", "0~100", "ppm"
 	case 4120:
-		return "Flow Rate", "m3/h"
+		return "Flow Rate", "0~65535", "m3/h"
 	case 4121:
-		return "Total Flow", "m3"
+		return "Total Flow", "0~6553599", "m3"
 	case 4122:
-		return "Oxygen Concentration", "%vol"
+		return "Oxygen Concentration", "0~25", "%vol"
 	case 4123:
-		return "Water Eletrical Conductivity", "us/cm"
+		return "Water Eletrical Conductivity", "0~20000", "us/cm"
 	case 4124:
-		return "Water Temperature", "°C"
+		return "Water Temperature", "-40~80", "°C"
 	case 4125:
-		return "Soil Heat Flux", "W/㎡"
+		return "Soil Heat Flux", "-500~500", "W/㎡"
 	case 4126:
-		return "Sunshine Duration", "h"
+		return "Sunshine Duration", "0~10000", "h"
 	case 4127:
-		return "Total Solar Radiation", "W/㎡
+		return "Total Solar Radiation", "0~5000", "W/㎡"
 	case 4128:
-		return "Water Surface Evaporation", "mm"
+		return "Water Surface Evaporation", "0~10000", "mm"
 	case 4129:
-		return "Photosynthetically Active Radiation(PAR)", "umol/㎡s"
+		return "Photosynthetically Active Radiation(PAR)", "0～5000", "umol/㎡s"
 	case 4130:
-		return "Accelerometer", "m/s"
+		return "Accelerometer", "0,0,0~x.xx,y.yy,z.zz", "m/s"
 	case 4131:
-		return "Sound Intensity", ""
+		return "Sound Intensity", "0~100", ""
 	case 4133:
-		return "Soil Tension", "KPA"
+		return "Soil Tension", "-100~0", "KPA"
 	case 4134:
-		return "Salinity", "mg/L"
+		return "Salinity", "0~20000", "mg/L"
 	case 4135:
-		return "TDS", "mg/L"
+		return "TDS", "0~20000", "mg/L"
 	case 4136:
-		return "Leaf Temperature", "°C"
+		return "Leaf Temperature", "0~100", "°C"
 	case 4137:
-		return "Leaf Wetness", "%"
+		return "Leaf Wetness", "-40~85", "%"
 	case 4138:
-		return "Soil Moisture-10cm", "%"
+		return "Soil Moisture-10cm", "0~100", "%"
 	case 4139:
-		return "Soil Moisture-20cm", "%"
+		return "Soil Moisture-20cm", "0~100", "%"
 	case 4140:
-		return "Soil Moisture-30cm", "%"
+		return "Soil Moisture-30cm", "0~100", "%"
 	case 4141:
-		return "Soil Moisture-40cm", "%"
+		return "Soil Moisture-40cm", "0~100", "%"
 	case 4142:
-		return "Soil Temperature-10cm", "°C"
+		return "Soil Temperature-10cm", "-30~70", "°C"
 	case 4143:
-		return "Soil Temperature-20cm", "°C"
+		return "Soil Temperature-20cm", "-30~70", "°C"
 	case 4144:
-		return "Soil Temperature-30cm", "°C"
+		return "Soil Temperature-30cm", "-30~70", "°C"
 	case 4145:
-		return "Soil Temperature-40cm", "°C"
+		return "Soil Temperature-40cm", "-30~70", "°C"
 	case 4146:
-		return "PM2.5", "μg/m3"
+		return "PM2.5", "0~1000", "μg/m3"
 	case 4147:
-		return "PM10", "μg/m3"
+		return "PM10", "0~2000", "μg/m3"
 	case 4148:
-		return "Noise", "dB"
+		return "Noise", "30~130", "dB"
 	case 4150:
-		return "AccelerometerX", "m/s²"
+		return "AccelerometerX", "-49.99~49.99", "m/s²"
 	case 4151:
-		return "AccelerometerY", "m/s²"
+		return "AccelerometerY", "-49.99~49.99", "m/s²"
 	case 4152:
-		return "AccelerometerZ", "m/s²"
+		return "AccelerometerZ", "-49.99~49.99", "m/s²"
 	case 4154:
-		return "Salinity", "PSU"
+		return "Salinity", "0~70", "PSU"
 	case 4155:
-		return "ORP", "mV"
+		return "ORP", "-1500~-1500", "mV"
 	case 4156:
-		return "Turbidity", "NTU"
+		return "Turbidity", "0~1000", "NTU"
 	case 4157:
-		return "Ammonia ion", "mg/L"
+		return "Ammonia ion", "0~100", "mg/L"
 	case 4158:
-		return "Eletrical Conductivity", "mS/cm"
+		return "Eletrical Conductivity", "0~23", "mS/cm"
 	case 4159:
-		return "Eletrical Conductivity", "mS/cm"
+		return "Eletrical Conductivity", "0~23", "mS/cm"
 	case 4160:
-		return "Eletrical Conductivity", "mS/cm"
+		return "Eletrical Conductivity", "0~23", "mS/cm"
 	case 4161:
-		return "Eletrical Conductivity", "mS/cm"
+		return "Eletrical Conductivity", "0~23", "mS/cm"
 	case 4162:
-		return "N Content", "mg/kg"
+		return "N Content", "0~1999", "mg/kg"
 	case 4163:
-		return "P Content", "mg/kg"
+		return "P Content", "0~1999", "mg/kg"
 	case 4164:
-		return "K Content", "mg/kg"
+		return "K Content", "0~1999", "mg/kg"
 	case 4165:
-		return "Measurement1", ""
+		return "Measurement1", "~", ""
 	case 4166:
-		return "Measurement2", ""
+		return "Measurement2", "~", ""
 	case 4167:
-		return "Measurement3", ""
+		return "Measurement3", "~", ""
 	case 4168:
-		return "Measurement4", ""
+		return "Measurement4", "~", ""
 	case 4169:
-		return "Measurement5", ""
+		return "Measurement5", "~", ""
 	case 4170:
-		return "Measurement6", ""
+		return "Measurement6", "~", ""
 	case 4171:
-		return "Measurement7", ""
+		return "Measurement7", "~", ""
 	case 4172:
-		return "Measurement8", ""
+		return "Measurement8", "~", ""
 	case 4173:
-		return "Measurement9", ""
+		return "Measurement9", "~", ""
 	case 4174:
-		return "Measurement10", ""
+		return "Measurement10", "~", ""
 	case 4175:
-		return "AI Detection No.01", ""
+		return "AI Detection No.01", "1.00~39.99", ""
 	case 4176:
-		return "AI Detection No.02", ""
+		return "AI Detection No.02", "1.00~39.99", ""
 	case 4177:
-		return "AI Detection No.03", ""
+		return "AI Detection No.03", "1.00~39.99", ""
 	case 4178:
-		return "AI Detection No.04", ""
+		return "AI Detection No.04", "1.00~39.99", ""
 	case 4179:
-		return "AI Detection No.05", ""
+		return "AI Detection No.05", "1.00~39.99", ""
 	case 4180:
-		return "AI Detection No.06", ""
+		return "AI Detection No.06", "1.00~39.99", ""
 	case 4181:
-		return "AI Detection No.07", ""
+		return "AI Detection No.07", "1.00~39.99", ""
 	case 4182:
-		return "AI Detection No.08", ""
+		return "AI Detection No.08", "1.00~39.99", ""
 	case 4183:
-		return "AI Detection No.09", ""
+		return "AI Detection No.09", "1.00~39.99", ""
 	case 4184:
-		return "AI Detection No.10", ""
+		return "AI Detection No.10", "1.00~39.99", ""
 	case 4190:
-		return "UV Index", ""
+		return "UV Index", "0~16.0", ""
 	case 4191:
-		return "Peak Wind Gust", "m/s"
+		return "Peak Wind Gust", "0~100", "m/s"
 	case 4192:
-		return "Sound Intensity", "dB"
+		return "Sound Intensity", "0~1023", "dB"
 	case 4193:
-		return "Light Intensity", ""
+		return "Light Intensity", "0~1023", ""
 	case 4195:
-		return "TVOC", "ppb"
+		return "TVOC", "0~60000", "ppb"
 	case 4196:
-		return "Soil moisture intensity", ""
+		return "Soil moisture intensity", "0~1023", ""
 	case 4197:
-		return "longitude", "°"
+		return "longitude", "-180~180", "°"
 	case 4198:
-		return "latitude", "°"
+		return "latitude", "-90~90", "°"
 	case 4199:
-		return "Light", "%"
+		return "Light", "0~100", "%"
 	case 4200:
-		return "SOS Event", ""
+		return "SOS Event", "0~1", ""
 	case 4201:
-		return "Ultraviolet Radiation", "W/㎡"
+		return "Ultraviolet Radiation", "0~200", "W/㎡"
 	case 4202:
-		return "Dew point temperature", "°C"
+		return "Dew point temperature", "0~50", "°C"
 	case 4203:
-		return "Temperature", "°C"
+		return "Temperature", "-40~150", "°C"
 	case 4204:
-		return "Soil Pore Water Eletrical Conductivity", "mS/cm"
+		return "Soil Pore Water Eletrical Conductivity", "0~32", "mS/cm"
 	case 4205:
-		return "Epsilon", ""
+		return "Epsilon", "0~100", ""
 	case 4206:
-		return "VOC_INDEX", ""
+		return "VOC_INDEX", "~", ""
 	case 4207:
-		return "Noise", ""
+		return "Noise", "~", ""
 	case 4208:
-		return "Custom event", ""
+		return "Custom event", "~", ""
 	case 4209:
-		return "Motion Id", ""
+		return "Motion Id", "0~255", ""
 	case 5001:
-		return "Wi-Fi MAC Address", ""
+		return "Wi-Fi MAC Address", "~", ""
 	case 5002:
-		return "Bluetooth Beacon MAC Address", ""
+		return "Bluetooth Beacon MAC Address", "~", ""
 	case 5003:
-		return "Event list", ""
+		return "Event list", "~", ""
 	case 5100:
-		return "Switch", ""
-	default:
-		return "", ""
+		return "Switch", "100~200", ""
 	}
+	return "", "", ""
 }
