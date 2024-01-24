@@ -26,7 +26,7 @@ type ttnMessage struct {
 			UplinkToken string    `json:"uplink_token"`
 			GpsTime     time.Time `json:"gps_time"`
 			ReceivedAt  time.Time `json:"received_at"`
-		} `json:"r_metadata"`
+		} `json:"rx_metadata"`
 		ConsumedAirtime string `json:"consumed_airtime"`
 		VersionIds      struct {
 			BrandId string `json:"brand_id"`

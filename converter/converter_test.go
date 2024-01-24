@@ -60,7 +60,7 @@ func testStimuliResponse(
 
 		mockInput := converter_mock.NewMockInput(mockCtrl)
 		mockInput.EXPECT().Topic().Return(s.Topic).MinTimes(1)
-		mockInput.EXPECT().Payload().Return([]byte(s.Payload)).AnyTimes() // must no be called when topic is invalid
+		mockInput.EXPECT().Payload().Return([]byte(s.Payload)).AnyTimes() // must not be called when topic is invalid
 
 		outputTestFuncCounter := 0
 		responseLines := make([]string, 0, len(s.ExpectedLines))
