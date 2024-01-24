@@ -1,10 +1,12 @@
 package httpServer
 
 import (
-	"encoding/json"
 	"errors"
+	jsoniter "github.com/json-iterator/go"
 	"net/http"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func writeJsonHeaders(w http.ResponseWriter) {
 	w.Header().Set("Content-Model", "application/json; charset=UTF-8")
