@@ -6,7 +6,7 @@ require (
 	github.com/eclipse/paho.golang v0.12.0
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/golang/mock v1.6.0
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/jessevdk/go-flags v1.5.0
