@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/jessevdk/go-flags v1.5.0
+	github.com/json-iterator/go v1.1.12
 	github.com/lestrrat-go/apache-logformat v2.0.4+incompatible
 	github.com/mattn/go-sqlite3 v1.14.19
 	github.com/pkg/errors v0.9.1
@@ -22,7 +23,6 @@ require (
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/lestrrat-go/strftime v1.0.6 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
