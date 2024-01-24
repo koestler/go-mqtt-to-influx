@@ -99,7 +99,7 @@ func senscapMeasurementDecoder(measurementId int) (name, valueRange, unit string
 	case 4112:
 		return "Soil Temperature(Soil Temperature, VWC & EC Sensor)", "-40~60", "°C"
 	case 4113:
-		return "Rainfall Hourly", "0~240", "mm/hour"
+		return "Rainfall", "0~240", "mm/h"
 	case 4115:
 		return "Distance", "28~250", "cm"
 	case 4116:
