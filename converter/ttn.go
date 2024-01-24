@@ -87,6 +87,8 @@ func ttnHandler(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
 	case "sensecap":
 		ttnSensecapHandler(c, device, model, input, outputFunc)
 	default:
-		log.Printf("ttn[%s]: there is now decoder for brand='%s', model='%s'", c.Name(), brand, model)
+		if brand != "" || model != "" {
+			log.Printf("ttn[%s]: there is now decoder for brand='%s', model='%s'", c.Name(), brand, model)
+		}
 	}
 }
