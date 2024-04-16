@@ -3,7 +3,7 @@ module github.com/koestler/go-mqtt-to-influx/v2
 go 1.21
 
 require (
-	github.com/eclipse/paho.golang v0.20.0
+	github.com/eclipse/paho.golang v0.21.0
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
@@ -14,7 +14,7 @@ require (
 	github.com/lestrrat-go/apache-logformat v2.0.4+incompatible
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/pkg/errors v0.9.1
-	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
+	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -28,8 +28,8 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/oapi-codegen/runtime v1.1.1 // indirect
-	golang.org/x/net v0.21.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/sync v0.7.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 )
