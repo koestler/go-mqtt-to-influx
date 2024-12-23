@@ -86,6 +86,8 @@ func ttnHandler(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
 		ttnDraginoHandler(c, device, model, input, outputFunc)
 	case "sensecap":
 		ttnSensecapHandler(c, device, model, input, outputFunc)
+	case "fencyboy":
+		ttnFencyboyHandler(c, device, model, input, outputFunc)
 	default:
 		if brand != "" || model != "" {
 			log.Printf("ttn[%s]: there is now decoder for brand='%s', model='%s'", c.Name(), brand, model)

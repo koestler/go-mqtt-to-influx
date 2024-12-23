@@ -26,6 +26,7 @@ The tool was written for a couple of different scenarios in mind:
   [LoraWan](https://en.wikipedia.org/wiki/LoRa) sensors
   and routed via [The Things Network](https://www.thethingsnetwork.org/) to a MQTT database
   and displaying them in a [Grafana](https://grafana.com/) dashboard.
+- Writing electric fence voltage measured by [Fencyboy](https://fencyboy.com/) to a local InfluxDB.
   
 This tool consists of the following components:
 * **mqttClient**: Connects to a MQTT servers
