@@ -15,8 +15,8 @@ type ttnSensecapMessage struct {
 		DecodedPayload struct {
 			Err      int `json:"err"`
 			Messages []struct {
-				MeasurementId    string  `json:"measurementId"`
-				MeasurementValue float64 `json:"measurementValue"`
+				MeasurementId    string      `json:"measurementId"`
+				MeasurementValue interface{} `json:"measurementValue"`
 			} `json:"messages"`
 			Valid bool `json:"valid"`
 		} `json:"decoded_payload"`
@@ -43,13 +43,31 @@ func ttnSensecapHandler(c Config, device, model string, input Input, outputFunc 
 		name, _, unit := senscapMeasurementDecoder(mId)
 
 		count += 1
+
+		var value float64
+		switch v := m.MeasurementValue.(type) {
+		case float64:
+			value = v
+		case int:
+			value = float64(v)
+		case string:
+			value, err = strconv.ParseFloat(v, 64)
+			if err != nil {
+				log.Printf("ttn-sensecap[%s]: error while parsing MeasurementValue='%s': %s", c.Name(), m.MeasurementValue, err)
+				continue
+			}
+		default:
+			log.Printf("ttn-sensecap[%s]: invalid type for MeasurementValue='%s'", c.Name(), m.MeasurementValue)
+			continue
+		}
+
 		outputFunc(telemetryOutputMessage{
 			timeStamp:  message.ReceivedAt,
 			device:     device,
 			field:      name,
 			unit:       &unit,
 			sensor:     model,
-			floatValue: &m.MeasurementValue,
+			floatValue: &value,
 		})
 	}
 

@@ -278,6 +278,72 @@ func TestTtnSensecap(t *testing.T) {
 			// 2024-01-24T20:43:56.136229322Z
 			ExpectedTimeStamp: time.Date(2024, time.January, 24, 20, 43, 56, 136229322, time.UTC),
 		},
+		{ // negative temperature with encoding as string instead of float
+			Topic: "v3/piegn@ttn/devices/s2120-0/up",
+			Payload: `{
+    "end_device_ids": {
+        "device_id": "s2120-0",
+        "application_ids": {
+            "application_id": "piegn"
+        },
+        "dev_eui": "2CF7F1C0443003DD",
+        "join_eui": "53D800BB13E0ED90",
+        "dev_addr": "260BC756"
+    },
+    "correlation_ids": [
+        "gs:uplink:01HMYKE4MT8Y8660D39MV6PX9K"
+    ],
+    "received_at": "2024-01-24T20:43:56.136229322Z",
+    "uplink_message": {
+        "session_key_id": "AY0sCQ6M4uie08eWl9Uo+g==",
+        "f_port": 3,
+        "f_cnt": 1041,
+        "frm_payload": "AQBBQgAAAAAAAAACAE8AAAAAJdw=",
+        "decoded_payload": {
+            "err": 0,
+            "messages": [
+                {
+                    "measurementId": "4097",
+                    "measurementValue": "-1.5",
+                    "type": "Air Temperature"
+                }
+            ],
+            "payload": "010041420000000000000002004F0000000025DC",
+            "valid": true
+        },
+        "rx_metadata": [
+            {
+                "gateway_ids": {
+                    "gateway_id": "piegn-srv3",
+                    "eui": "E45F01FFFEDECBE3"
+                },
+                "time": "2024-01-24T20:43:55.866967916Z",
+                "timestamp": 2570298224,
+                "rssi": -80,
+                "channel_rssi": -80,
+                "snr": 6.5,
+                "uplink_token": "ChgKFgoKcGllZ24tc3J2MxII5F8B\/\/7ey+MQ8MbOyQkaDAiL7cWtBhDe3Mq7AyCA29mN58QC",
+                "received_at": "2024-01-24T20:43:55.895127767Z"
+            }
+        ],
+        "received_at": "2024-01-24T20:43:55.931223662Z",
+        "consumed_airtime": "0.071936s",
+        "version_ids": {
+            "brand_id": "sensecap",
+            "model_id": "sensecaps2120-8-in-1",
+            "hardware_version": "1.0",
+            "firmware_version": "1.0",
+            "band_id": "EU_863_870"
+        }
+    }
+}`,
+			ExpectedLines: []string{
+				"lora,devEui=2CF7F1C0443003DD,device=s2120-0,gatewayEui=E45F01FFFEDECBE3,gatewayId=piegn-srv3 channelRssi=-80i,consumedAirtimeUs=71936i,gatewayIdx=0i,rssi=-80i,snr=6.5",
+				"telemetry,device=s2120-0,field=Air\\ Temperature,sensor=sensecaps2120-8-in-1,unit=°C floatValue=-1.5",
+			},
+			// 2024-01-24T20:43:56.136229322Z
+			ExpectedTimeStamp: time.Date(2024, time.January, 24, 20, 43, 56, 136229322, time.UTC),
+		},
 	}
 
 	if h, err := GetHandler("ttn"); err != nil {
