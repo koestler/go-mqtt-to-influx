@@ -17,7 +17,7 @@ Currently, the following devices are supported:
   * [Dragino LoraWAN sensors](https://www.dragino.com/)
   * [Dragino LSN50-v2](https://www.dragino.com/products/lora-lorawan-end-node/item/155-lsn50-v2.html)
   * [SenseCAP S2120](https://www.seeedstudio.com/sensecap-s2120-lorawan-8-in-1-weather-sensor-p-5436.html)
-  * [Fencyboy](https://fencyboy.com/) using this payload decoder (TODO, ask for consent / like to publish).
+  * [Fencyboy](https://fencyboy.com/)
 
 You are more than welcome to help support new devices. Send pull requests of converters including some tests
 or open an issue including examples of topics and messages.
