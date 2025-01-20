@@ -11,7 +11,7 @@ type ttnFencyboyMessage struct {
 		DecodedPayload struct {
 			ActiveMode        *bool    `json:"ACTIVE_MODE"`
 			Impulses          *int64   `json:"IMPULSES"`
-			FenceVoltage      *float64 `json:"FENCE_VOLTAGE"`
+			FenceVoltage      *float64 `json:"FENCEVOLTAGE"`
 			FenceVoltageStd   *float64 `json:"FENCE_VOLTAGE_STD"`
 			FenceVoltageMin   *float64 `json:"FENCEVOLTAGEMIN"`
 			FenceVoltageMax   *float64 `json:"FENCEVOLTAGEMAX"`
@@ -22,7 +22,7 @@ type ttnFencyboyMessage struct {
 	} `json:"uplink_message"`
 }
 
-func ttnFencyboyHandler(c Config, device, model string, input Input, outputFunc OutputFunc) {
+func ttnFencyboyHandler(c Config, device string, input Input, outputFunc OutputFunc) {
 	// parse payload
 	var message ttnFencyboyMessage
 	if err := json.Unmarshal(input.Payload(), &message); err != nil {
@@ -44,7 +44,7 @@ func ttnFencyboyHandler(c Config, device, model string, input Input, outputFunc 
 				}
 				return nil
 			}(unit),
-			sensor:      model,
+			sensor:      "fencyboy",
 			stringValue: stringValue,
 			floatValue:  floatValue,
 			boolValue:   boolValue,
@@ -122,7 +122,7 @@ func ttnFencyboyHandler(c Config, device, model string, input Input, outputFunc 
 		outputFloat(
 			"Temperature",
 			"°C",
-			message.UplinkMessage.DecodedPayload.RemainingCapacity,
+			message.UplinkMessage.DecodedPayload.Temperature,
 		)
 	}
 
