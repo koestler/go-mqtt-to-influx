@@ -7,26 +7,21 @@ This tool connects to one or multiple [MQTT](http://mqtt.org/) servers to receiv
 The messages are then parsed using easy to implement device / message specific converters to generate
 data points which are then written to an [Influx Database](https://github.com/influxdata/influxdb).
 
-The tool was written for a couple of different scenarios in mind:
-- Sending telemetry data of a smart home running a couple dozen [Sonoff Switches](https://sonoff.tech/products/)
-  running [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
-  and connected to a local [Eclipse Mosquitto Instance](https://github.com/eclipse/mosquitto)
-  to a [cloud hosted InfluxDB](https://cloud2.influxdata.com/) for displaying them using [Grafana](https://github.com/grafana/grafana).
-  This tool and Mosquitto is running on a [PC Engines APU 2](https://www.pcengines.ch/apu2.htm) single board computer.
-- An off-grid holiday home installation running two batteries with
-  Victron Energy [SmartSolar](https://www.victronenergy.com/solar-charge-controllers/bluesolar-mppt-150-35)
-  and [BMV 702](https://www.victronenergy.com/battery-monitors/bmv-702) and various [Shelly Devices](https://www.shelly.cloud/).
-  The last 180 days are kept locally while all data is uploaded to a server for infinite storage.
-  A [Teltonika RUTX11](https://teltonika-networks.com/product/rutx11/) is used for the mobile connection
-  and runs a MQTT-server while a single [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/)
-  runs [go-iotdevice](https://github.com/koestler/go-iotdevice),
-  this software as well as the local [InfluxDB OSS](https://docs.influxdata.com/influxdb/v2.4/).
-- Writing meteorological measurements captured by [Dragino LSN50-v2](https://www.dragino.com/products/lora-lorawan-end-node/item/155-lsn50-v2.html)
-  / [SenseCAP S2120](https://www.seeedstudio.com/sensecap-s2120-lorawan-8-in-1-weather-sensor-p-5436.html)
-  [LoraWan](https://en.wikipedia.org/wiki/LoRa) sensors
-  and routed via [The Things Network](https://www.thethingsnetwork.org/) to a MQTT database
-  and displaying them in a [Grafana](https://grafana.com/) dashboard.
-  
+Currently, the following devices are supported:
+* All devices connected via [go-iotdevice](https://github.com/koestler/go-iotdevice) which includes
+  [Victron Energy](https://www.victronenergy.com/) devices like the [BMV 702](https://www.victronenergy.com/battery-monitors/bmv-702),
+  [Shelly EM3 Energy Meter](https://www.shelly.cloud/en-ch/products/product-overview/shelly-3-em),
+  [Finder7M38](https://www.findernet.com/en/uk/series/7m-series-smart-energy-meters/type/type-7m-38-three-phase-multi-function-bi-directional-energy-meters-with-backlit-matrix-lcd-display/).
+* Devices running the [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) firmware.
+* Various devices connected via a Lora WAN Network like [The Things Network](https://www.thethingsnetwork.org/).
+  * [Dragino LoraWAN sensors](https://www.dragino.com/)
+  * [Dragino LSN50-v2](https://www.dragino.com/products/lora-lorawan-end-node/item/155-lsn50-v2.html)
+  * [SenseCAP S2120](https://www.seeedstudio.com/sensecap-s2120-lorawan-8-in-1-weather-sensor-p-5436.html)
+  * [Fencyboy](https://fencyboy.com/)
+
+You are more than welcome to help support new devices. Send pull requests of converters including some tests
+or open an issue including examples of topics and messages.
+
 This tool consists of the following components:
 * **mqttClient**: Connects to a MQTT servers
                   using [paho.mqtt.golang](https://github.com/eclipse/paho.mqtt.golang) for MQTT v3.3 
@@ -42,6 +37,7 @@ This tool consists of the following components:
 
 ## Deployment
 The cpu & memory requirements for this tool are quite minimal but depend on the number of messages to be handled.
+All my instances run without issues on a Raspberry Pi Zero 2 W.
 
 <details>
 <summary>
@@ -342,16 +338,6 @@ Converters:
 
 ## Converters
 
-Currently, the following devices are supported:
-* [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
-* [Dragino LoraWAN sensors](https://www.dragino.com/)
-* [SenseCAP LoraWAN sensors via The Things Network](https://www.seeedstudio.com/LoRaWAN-Sensor-c-1937.html)
-* [go-iotdevice](https://github.com/koestler/go-iotdevice)
-
-However, you are more than welcome to help support new devices. Send push requests of converters including some tests
-or open an issue including examples of topics and messages.
-
-
 ### lwt
 
 LWT (Last Will Topic) Messages are used to broadcast the availability (online/offline) of a device.
@@ -482,8 +468,6 @@ Example:
   * `telemetry,device=24v-bmv,field=SynchronizationState,sensor=BMV-702 stringValue="true"`
   * `telemetry,device=24v-bmv,field=TTG,sensor=BMV-702,unit=min floatValue=5742`
   * `telemetry,device=24v-bmv,field=Uptime,sensor=BMV-702,unit=s floatValue=1.718279e+07`
-
-
 
 ## Development
 Development is done on Ubuntu and Mac.

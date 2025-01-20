@@ -27,7 +27,7 @@ type ttnMessage struct {
 			ReceivedAt  time.Time `json:"received_at"`
 		} `json:"rx_metadata"`
 		ConsumedAirtime string `json:"consumed_airtime"`
-		VersionIds      struct {
+		VersionIds      *struct {
 			BrandId string `json:"brand_id"`
 			ModelId string `json:"model_id"`
 		} `json:"version_ids"`
@@ -35,60 +35,74 @@ type ttnMessage struct {
 }
 
 func init() {
-	registerHandler("ttn", ttnHandler)
+	registerHandler("ttn", ttnHandler("auto"))
 
-	// ttn-dragino is also accepted for backwards compatibility; it is depraecated because now there is a general
+	// ttn-dragino is also accepted for backwards compatibility; it is deprecated because now there is a general
 	// ttn implementation which automatically detects the sensor type
-	registerHandler("ttn-dragino", ttnHandler)
+	registerHandler("ttn-dragino", ttnHandler("auto"))
+
+	// ttn-fencyboy is needed because the fencyboy message does not contain the VersionIDs string
+	registerHandler("ttn-fencyboy", ttnHandler("fencyboy"))
 }
 
-func ttnHandler(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
-	// parse topic
-	device, err := tm.MatchDevice(input.Topic())
-	if err != nil {
-		log.Printf("ttn[%s]: cannot extract device from topic='%s err=%s", c.Name(), input.Topic(), err)
-		return
-	}
-
-	// parse payload
-	var message ttnMessage
-	payload := input.Payload()
-	if err := json.Unmarshal(payload, &message); err != nil {
-		log.Printf("ttn[%s]: cannot json decode: %s", c.Name(), err)
-		return
-	}
-
-	// save general lora data
-	for gatewayIdx, rx := range message.UplinkMessage.RxMetadata {
-		airtime, err := time.ParseDuration(message.UplinkMessage.ConsumedAirtime)
+func ttnHandler(implementation string) func(Config, TopicMatcher, Input, OutputFunc) {
+	return func(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
+		// parse topic
+		device, err := tm.MatchDevice(input.Topic())
 		if err != nil {
-			airtime = 0
+			log.Printf("ttn[%s]: cannot extract device from topic='%s err=%s", c.Name(), input.Topic(), err)
+			return
 		}
 
-		outputFunc(loraOutputMessage{
-			timeStamp:       message.ReceivedAt,
-			device:          device,
-			devEui:          message.EndDeviceIds.DevEui,
-			gatewayId:       rx.GatewayIds.GatewayId,
-			gatewayEui:      rx.GatewayIds.Eui,
-			rssi:            rx.Rssi,
-			channelRssi:     rx.ChannelRssi,
-			snr:             rx.Snr,
-			consumedAirtime: airtime,
-			gatewayIdx:      gatewayIdx,
-		})
-	}
+		// parse payload
+		var message ttnMessage
+		payload := input.Payload()
+		if err := json.Unmarshal(payload, &message); err != nil {
+			log.Printf("ttn[%s]: cannot json decode: %s", c.Name(), err)
+			return
+		}
 
-	brand := message.UplinkMessage.VersionIds.BrandId
-	model := message.UplinkMessage.VersionIds.ModelId
-	switch brand {
-	case "dragino":
-		ttnDraginoHandler(c, device, model, input, outputFunc)
-	case "sensecap":
-		ttnSensecapHandler(c, device, model, input, outputFunc)
-	default:
-		if brand != "" || model != "" {
-			log.Printf("ttn[%s]: there is now decoder for brand='%s', model='%s'", c.Name(), brand, model)
+		// save general lora data
+		for gatewayIdx, rx := range message.UplinkMessage.RxMetadata {
+			airtime, err := time.ParseDuration(message.UplinkMessage.ConsumedAirtime)
+			if err != nil {
+				airtime = 0
+			}
+
+			outputFunc(loraOutputMessage{
+				timeStamp:       message.ReceivedAt,
+				device:          device,
+				devEui:          message.EndDeviceIds.DevEui,
+				gatewayId:       rx.GatewayIds.GatewayId,
+				gatewayEui:      rx.GatewayIds.Eui,
+				rssi:            rx.Rssi,
+				channelRssi:     rx.ChannelRssi,
+				snr:             rx.Snr,
+				consumedAirtime: airtime,
+				gatewayIdx:      gatewayIdx,
+			})
+		}
+
+		switch implementation {
+		case "fencyboy":
+			ttnFencyboyHandler(c, device, input, outputFunc)
+		case "auto":
+			vs := message.UplinkMessage.VersionIds
+			if vs == nil {
+				log.Printf("ttn[%s]: VersionIds missing", c.Name())
+				return
+			}
+
+			switch vs.BrandId {
+			case "dragino":
+				ttnDraginoHandler(c, device, vs.ModelId, input, outputFunc)
+			case "sensecap":
+				ttnSensecapHandler(c, device, vs.ModelId, input, outputFunc)
+			default:
+				if vs.BrandId != "" || vs.ModelId != "" {
+					log.Printf("ttn[%s]: there is now decoder for brand='%s', model='%s'", c.Name(), vs.BrandId, vs.ModelId)
+				}
+			}
 		}
 	}
 }
