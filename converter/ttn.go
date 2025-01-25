@@ -90,7 +90,9 @@ func ttnHandler(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
 			ttnFencyboyHandler(c, device, vids.ModelId, input, outputFunc)
 		default:
 			if vids.BrandId != "" || vids.ModelId != "" {
-				log.Printf("ttn[%s]: VersionIds present, but no decoder for brand='%s', model='%s'", c.Name(), brand, model)
+				log.Printf("ttn[%s]: VersionIds present, but no decoder for brand='%s', model='%s'", c.Name(),
+					vids.BrandId, vids.ModelId,
+				)
 			}
 		}
 	} else {
