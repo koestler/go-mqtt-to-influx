@@ -2,6 +2,7 @@ package converter
 
 import (
 	"log"
+	"strings"
 	"time"
 )
 
@@ -27,7 +28,7 @@ type ttnMessage struct {
 			ReceivedAt  time.Time `json:"received_at"`
 		} `json:"rx_metadata"`
 		ConsumedAirtime string `json:"consumed_airtime"`
-		VersionIds      struct {
+		VersionIds      *struct {
 			BrandId string `json:"brand_id"`
 			ModelId string `json:"model_id"`
 		} `json:"version_ids"`
@@ -79,18 +80,29 @@ func ttnHandler(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
 		})
 	}
 
-	brand := message.UplinkMessage.VersionIds.BrandId
-	model := message.UplinkMessage.VersionIds.ModelId
-	switch brand {
-	case "dragino":
-		ttnDraginoHandler(c, device, model, input, outputFunc)
-	case "sensecap":
-		ttnSensecapHandler(c, device, model, input, outputFunc)
-	case "fencyboy":
-		ttnFencyboyHandler(c, device, model, input, outputFunc)
-	default:
-		if brand != "" || model != "" {
-			log.Printf("ttn[%s]: there is now decoder for brand='%s', model='%s'", c.Name(), brand, model)
+	if vids := message.UplinkMessage.VersionIds; vids != nil {
+		switch vids.BrandId {
+		case "dragino":
+			ttnDraginoHandler(c, device, vids.ModelId, input, outputFunc)
+		case "sensecap":
+			ttnSensecapHandler(c, device, vids.ModelId, input, outputFunc)
+		case "fencyboy":
+			ttnFencyboyHandler(c, device, vids.ModelId, input, outputFunc)
+		default:
+			if vids.BrandId != "" || vids.ModelId != "" {
+				log.Printf("ttn[%s]: VersionIds present, but no decoder for brand='%s', model='%s'", c.Name(), brand, model)
+			}
+		}
+	} else {
+		deviceId := message.EndDeviceIds.DeviceId
+		if strings.Contains(deviceId, "dragino") {
+			ttnDraginoHandler(c, device, "dragino", input, outputFunc)
+		} else if strings.Contains(deviceId, "sensecap") {
+			ttnSensecapHandler(c, device, "sensecap", input, outputFunc)
+		} else if strings.Contains(deviceId, "fencyboy") {
+			ttnFencyboyHandler(c, device, "fencyboy", input, outputFunc)
+		} else {
+			log.Printf("ttn[%s]: fallback to device_id, but no match for device_id='%s'", c.Name(), deviceId)
 		}
 	}
 }

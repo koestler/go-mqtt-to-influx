@@ -22,7 +22,7 @@ type ttnFencyboyMessage struct {
 	} `json:"uplink_message"`
 }
 
-func ttnFencyboyHandler(c Config, device string, input Input, outputFunc OutputFunc) {
+func ttnFencyboyHandler(c Config, device, model string, input Input, outputFunc OutputFunc) {
 	// parse payload
 	var message ttnFencyboyMessage
 	if err := json.Unmarshal(input.Payload(), &message); err != nil {
@@ -44,7 +44,7 @@ func ttnFencyboyHandler(c Config, device string, input Input, outputFunc OutputF
 				}
 				return nil
 			}(unit),
-			sensor:      "fencyboy",
+			sensor:      model,
 			stringValue: stringValue,
 			floatValue:  floatValue,
 			boolValue:   boolValue,
