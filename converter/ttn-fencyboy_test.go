@@ -108,7 +108,7 @@ func TestTtnFencyboy(t *testing.T) {
 		},
 	}
 
-	if h, err := GetHandler("ttn-fencyboy"); err != nil {
+	if h, err := GetHandler("ttn"); err != nil {
 		t.Errorf("did not expect an error while getting handler: %s", err)
 	} else {
 		testStimuliResponse(t, mockCtrl, mockConfig, mockTMConfig, h, stimuli)
