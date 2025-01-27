@@ -469,6 +469,59 @@ Example:
   * `telemetry,device=24v-bmv,field=TTG,sensor=BMV-702,unit=min floatValue=5742`
   * `telemetry,device=24v-bmv,field=Uptime,sensor=BMV-702,unit=s floatValue=1.718279e+07`
 
+### ttn
+
+TTN is a generic converter for messages from [The Things Network](https://www.thethingsnetwork.org/).
+It currently support the following devices:
+* [Dragino LoraWAN sensors](https://www.dragino.com/)
+* [Fencyboy](https://fencyboy.com/)
+* [SenseCAP S2120](https://www.seeedstudio.com/sensecap-s2120-lorawan-8-in-1-weather-sensor-p-5436.html)
+
+For all devices, a line for the lora measurement is produced:
+* "lora,devEui=2CF7F1C0443003DD,device=s2120-0,gatewayEui=E45F01FFFEDECBE3,gatewayId=piegn-srv3 channelRssi=-80i,consumedAirtimeUs=71936i,gatewayIdx=0i,rssi=-80i,snr=6.5",
+
+Depending on the VersionIDs received, the correct sub-converter is executed. The VersionIDs are only available, when the devices
+is taken from the TTN device registry. A fallback to the device name is implemented. 
+If you manually create the device, make sure to include "dragino", "fencyboy" or "sensecap" in the device name.
+
+At the moment, the following sub-converters are available:
+
+#### dragino
+The exact lines depend on the fields the sensor produces. The current implementation is tested with the LSN50, LHT52 and D20S sensors.
+
+* InfluxDB line protocol:
+  * "telemetry,device=lsn50-temp-1,field=AlarmStatus,sensor=lsn50v2-d20-d22-d23 boolValue=false",
+  * "telemetry,device=lsn50-temp-1,field=BatV,sensor=lsn50v2-d20-d22-d23,unit=V floatValue=3.655",
+  * "telemetry,device=lsn50-temp-1,field=TempBlack,sensor=lsn50v2-d20-d22-d23,unit=°C floatValue=37.5",
+  * "telemetry,device=lsn50-temp-1,field=TempRed,sensor=lsn50v2-d20-d22-d23,unit=°C floatValue=28.3",
+  * "telemetry,device=lsn50-temp-1,field=TempWhite,sensor=lsn50v2-d20-d22-d23,unit=°C floatValue=20.4",
+  * "telemetry,device=lsn50-temp-1,field=WorkMode,sensor=lsn50v2-d20-d22-d23 stringValue=\"DS18B20\"",
+
+#### fencyboy
+
+* InfluxDB line protocol:
+  * "telemetry,device=fencyboy-0,field=ActiveMode,sensor=fencyboy boolValue=true",
+  * "telemetry,device=fencyboy-0,field=BatteryVoltage,sensor=fencyboy,unit=V floatValue=3.361",
+  * "telemetry,device=fencyboy-0,field=FenceVoltage,sensor=fencyboy,unit=V floatValue=10246",
+  * "telemetry,device=fencyboy-0,field=FenceVoltageMax,sensor=fencyboy,unit=V floatValue=10368",
+  * "telemetry,device=fencyboy-0,field=FenceVoltageMin,sensor=fencyboy,unit=V floatValue=10175",
+  * "telemetry,device=fencyboy-0,field=FenceVoltageStd,sensor=fencyboy floatValue=32.2",
+  * "telemetry,device=fencyboy-0,field=Impulses,sensor=fencyboy intValue=466i",
+  * "telemetry,device=fencyboy-0,field=RemainingCapacity,sensor=fencyboy,unit=mAh floatValue=600.8870239257812",
+  * "telemetry,device=fencyboy-0,field=Temperature,sensor=fencyboy,unit=°C floatValue=5.32",
+
+#### senscap
+
+* InfluxDB line protocol:
+  * "telemetry,device=s2120-0,field=Air\\ Humidity,sensor=sensecaps2120-8-in-1,unit=%\\ RH floatValue=66",
+  * "telemetry,device=s2120-0,field=Air\\ Temperature,sensor=sensecaps2120-8-in-1,unit=°C floatValue=6.5",
+  * "telemetry,device=s2120-0,field=Barometric\\ Pressure,sensor=sensecaps2120-8-in-1,unit=Pa floatValue=96920",
+  * "telemetry,device=s2120-0,field=Light\\ Intensity,sensor=sensecaps2120-8-in-1,unit=Lux floatValue=0",
+  * "telemetry,device=s2120-0,field=Rainfall,sensor=sensecaps2120-8-in-1,unit=mm/h floatValue=0",
+  * "telemetry,device=s2120-0,field=UV\\ Index,sensor=sensecaps2120-8-in-1,unit= floatValue=0",
+  * "telemetry,device=s2120-0,field=Wind\\ Direction,sensor=sensecaps2120-8-in-1,unit=° floatValue=79",
+  * "telemetry,device=s2120-0,field=Wind\\ Speed,sensor=sensecaps2120-8-in-1,unit=m/s floatValue=0",
+
 ## Development
 Development is done on Ubuntu and Mac.
 Install [GitHub CLI](https://cli.github.com/) and [golang](https://go.dev/doc/install).
