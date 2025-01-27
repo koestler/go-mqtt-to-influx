@@ -97,7 +97,8 @@ func ttnHandler(c Config, tm TopicMatcher, input Input, outputFunc OutputFunc) {
 		}
 	} else {
 		deviceId := message.EndDeviceIds.DeviceId
-		if strings.Contains(deviceId, "dragino") {
+		if strings.Contains(deviceId, "dragino") ||
+			strings.Contains(deviceId, "d20s") { // temporary solution until sensor is in the device registry
 			ttnDraginoHandler(c, device, "dragino", input, outputFunc)
 		} else if strings.Contains(deviceId, "sensecap") {
 			ttnSensecapHandler(c, device, "sensecap", input, outputFunc)
