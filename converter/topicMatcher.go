@@ -45,7 +45,7 @@ func CreateTopicMatcher(cfg TopicMatcherConfig) (TopicMatcher, error) {
 
 func (t topicMatcherStruct) MatchDevice(messageTopic string) (device string, err error) {
 	matches := t.matcher.FindStringSubmatch(messageTopic)
-	if matches == nil || len(matches) < 2 {
+	if len(matches) < 2 {
 		err = fmt.Errorf("messageTopic='%s' does not match", messageTopic)
 	} else {
 		device = matches[1]
