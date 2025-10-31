@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -33,7 +33,7 @@ jobs:
       img: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
   build-arm64:
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    runs-on: ubuntu-latest
     needs:
       - metadata
     permissions:
@@ -48,6 +48,8 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: set up qemu
+        uses: docker/setup-qemu-action@v3
       - name: Build and push
         id: build
         uses: docker/build-push-action@v5
@@ -55,11 +57,12 @@ jobs:
           push: true
           context: .
           file: docker/Dockerfile
+          platforms: linux/arm64
           tags: ${{ needs.metadata.outputs.img }}-arm64
           labels: ${{ needs.metadata.outputs.labels }}
 
   build-arm-v7:
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    runs-on: ubuntu-latest
     needs:
       - metadata
     permissions:
@@ -74,8 +77,8 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: set up qemu
+        uses: docker/setup-qemu-action@v3
       - name: Build and push
         id: build
         uses: docker/build-push-action@v5
@@ -89,7 +92,7 @@ jobs:
           provenance: false
 
   build-amd64:
-    runs-on: buildjet-2vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
     needs:
       - metadata
     permissions:
