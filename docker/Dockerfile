@@ -1,5 +1,5 @@
 # build backend
-FROM golang:1.25-alpine AS go-builder
+FROM golang:1.26-alpine AS go-builder
 
 RUN apk add build-base git
 
