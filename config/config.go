@@ -469,7 +469,7 @@ func (c converterConfigRead) TransformAndValidate(
 	}
 
 	if len(ret.implementation) < 1 {
-		err = append(err, fmt.Errorf("Converters->%s->Implementation='%s' is unkown", name, ret.implementation))
+		err = append(err, fmt.Errorf("Converters->%s->Implementation='%s' is unknown", name, ret.implementation))
 	}
 
 	var e []error
