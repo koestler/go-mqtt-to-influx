@@ -17,6 +17,7 @@ func runCpuProfile(fileName string) (started bool) {
 		log.Printf("pprof: could not open file for CPU profile: %s", err)
 		return false
 	}
+	defer f.Close()
 	if err := pprof.StartCPUProfile(f); err != nil {
 		log.Printf("pprof: could not start CPU profile: %s", err)
 		return false
