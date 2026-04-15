@@ -6,19 +6,26 @@ on:
       - '*'
     tags:
       - '*'
+  pull_request:
+    branches:
+      - 'main'
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  metadata:
-    runs-on: ubuntu-latest
+  docker:
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -27,119 +34,23 @@ jobs:
             type=semver,pattern=v{{version}}
             type=semver,pattern=v{{major}}.{{minor}}
             type=semver,pattern=v{{major}}
-    outputs:
-      json: ${{ steps.meta.outputs.json }}
-      labels: ${{ steps.meta.outputs.labels }}
-      img: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-
-  build-arm64:
-    runs-on: ubuntu-latest
-    needs:
-      - metadata
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
       - name: Log in to the Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: set up qemu
-        uses: docker/setup-qemu-action@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
       - name: Build and push
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
-          push: true
           context: .
           file: docker/Dockerfile
-          platforms: linux/arm64
-          tags: ${{ needs.metadata.outputs.img }}-arm64
-          labels: ${{ needs.metadata.outputs.labels }}
-
-  build-arm-v7:
-    runs-on: ubuntu-latest
-    needs:
-      - metadata
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: set up qemu
-        uses: docker/setup-qemu-action@v3
-      - name: Build and push
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          push: true
-          context: .
-          file: docker/Dockerfile
-          platforms: linux/arm/v7
-          tags: ${{ needs.metadata.outputs.img }}-arm-v7
-          labels: ${{ needs.metadata.outputs.labels }}
-          provenance: false
-
-  build-amd64:
-    runs-on: ubuntu-latest
-    needs:
-      - metadata
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          push: true
-          context: .
-          file: docker/Dockerfile
-          tags: ${{ needs.metadata.outputs.img }}-amd64
-          labels: ${{ needs.metadata.outputs.labels }}
-
-  multi-arch-manifest:
-    runs-on: ubuntu-latest
-    needs:
-      - metadata
-      - build-arm64
-      - build-arm-v7
-      - build-amd64
-    strategy:
-      matrix:
-        tag: ${{ fromJSON(needs.metadata.outputs.json).tags }}
-    steps:
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Create manifest
-        run: |
-          docker manifest create ${{ matrix.tag }} \
-            ${{ needs.metadata.outputs.img }}-arm64 \
-            ${{ needs.metadata.outputs.img }}-arm-v7 \
-            ${{ needs.metadata.outputs.img }}-amd64
-      - name: Push manifest
-        run: |
-          docker manifest push ${{ matrix.tag }}
+          platforms: linux/arm64,linux/arm/v7,linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
