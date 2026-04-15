@@ -182,8 +182,8 @@ func (ic Client) WritePoint(point Point) {
 	// statistics
 	if ic.statistics.Enabled() {
 		line := influxdb2Write.PointToLineProtocol(p, time.Second)
-		measurement := strings.Fields(line)[0]
-		ic.statistics.IncrementOne("influx", ic.Name(), measurement)
+		field := strings.Fields(line)[0]
+		ic.statistics.IncrementOne("influx", ic.Name(), field)
 	}
 }
 
