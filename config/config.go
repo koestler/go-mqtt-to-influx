@@ -480,8 +480,9 @@ func (c converterConfigRead) TransformAndValidate(
 		},
 	)
 	err = append(err, e...)
+
 	if len(ret.mqttTopics) < 1 {
-		err = append(err, fmt.Errorf("mqttTopics section must not be empty"))
+		err = append(err, fmt.Errorf("Converters->%s->MqttTopics must not be empty", name))
 	}
 
 	// validate that all listed mqttClients exist
@@ -512,10 +513,6 @@ func (c converterConfigRead) TransformAndValidate(
 		if !found {
 			err = append(err, fmt.Errorf("Converters->%s->InfluxClient='%s' is not defined", name, clientName))
 		}
-	}
-
-	if len(ret.mqttTopics) < 1 {
-		err = append(err, fmt.Errorf("Converters->%s->MqttTopics must not be empty", name))
 	}
 
 	if c.LogHandleOnce != nil && *c.LogHandleOnce {
