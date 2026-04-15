@@ -122,7 +122,7 @@ func senscapMeasurementDecoder(measurementId int) (name, valueRange, unit string
 	case 4116:
 		return "Water Leak", "true / false", ""
 	case 4117:
-		return "Liguid Level", "0~500", "cm"
+		return "Liquid Level", "0~500", "cm"
 	case 4118:
 		return "NH3", "0~100", "ppm"
 	case 4119:
@@ -134,7 +134,7 @@ func senscapMeasurementDecoder(measurementId int) (name, valueRange, unit string
 	case 4122:
 		return "Oxygen Concentration", "0~25", "%vol"
 	case 4123:
-		return "Water Eletrical Conductivity", "0~20000", "us/cm"
+		return "Water Electrical Conductivity", "0~20000", "us/cm"
 	case 4124:
 		return "Water Temperature", "-40~80", "°C"
 	case 4125:
@@ -198,13 +198,13 @@ func senscapMeasurementDecoder(measurementId int) (name, valueRange, unit string
 	case 4157:
 		return "Ammonia ion", "0~100", "mg/L"
 	case 4158:
-		return "Eletrical Conductivity", "0~23", "mS/cm"
+		return "Electrical Conductivity", "0~23", "mS/cm"
 	case 4159:
-		return "Eletrical Conductivity", "0~23", "mS/cm"
+		return "Electrical Conductivity", "0~23", "mS/cm"
 	case 4160:
-		return "Eletrical Conductivity", "0~23", "mS/cm"
+		return "Electrical Conductivity", "0~23", "mS/cm"
 	case 4161:
-		return "Eletrical Conductivity", "0~23", "mS/cm"
+		return "Electrical Conductivity", "0~23", "mS/cm"
 	case 4162:
 		return "N Content", "0~1999", "mg/kg"
 	case 4163:
@@ -278,7 +278,7 @@ func senscapMeasurementDecoder(measurementId int) (name, valueRange, unit string
 	case 4203:
 		return "Temperature", "-40~150", "°C"
 	case 4204:
-		return "Soil Pore Water Eletrical Conductivity", "0~32", "mS/cm"
+		return "Soil Pore Water Electrical Conductivity", "0~32", "mS/cm"
 	case 4205:
 		return "Epsilon", "0~100", ""
 	case 4206:
