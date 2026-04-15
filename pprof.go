@@ -34,11 +34,13 @@ func writeMemProfile(fileName string) {
 	f, err := os.Create(fileName)
 	if err != nil {
 		log.Printf("pprof: could not create memory profile: %s", err)
+		return
 	}
+	defer f.Close()
 	runtime.GC() // get up-to-date statistics
 	if err := pprof.WriteHeapProfile(f); err != nil {
 		log.Printf("pprof: could not write memory profile: %s", err)
+		return
 	}
 	log.Printf("pprof: wrote memory profile to %s", fileName)
-	_ = f.Close()
 }
