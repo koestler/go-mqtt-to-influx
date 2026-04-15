@@ -17,7 +17,7 @@ func runCpuProfile(fileName string) (started bool) {
 		log.Printf("pprof: could not open file for CPU profile: %s", err)
 		return false
 	}
-	defer f.Close()
+	defer f.Close() //nolint:errcheck
 	if err := pprof.StartCPUProfile(f); err != nil {
 		log.Printf("pprof: could not start CPU profile: %s", err)
 		return false
@@ -37,8 +37,8 @@ func writeMemProfile(fileName string) {
 		log.Printf("pprof: could not create memory profile: %s", err)
 		return
 	}
-	defer f.Close()
-	runtime.GC() // get up-to-date statistics
+	defer f.Close() //nolint:errcheck
+	runtime.GC()    // get up-to-date statistics
 	if err := pprof.WriteHeapProfile(f); err != nil {
 		log.Printf("pprof: could not write memory profile: %s", err)
 		return

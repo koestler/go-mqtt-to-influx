@@ -49,7 +49,7 @@ WHERE client = ? AND id >= (
 	if err != nil {
 		return fmt.Errorf(" error during query: %s", err)
 	}
-	defer rows.Close()
+	defer rows.Close() //nolint:errcheck
 
 	// aggregate all rows by decompressing,
 	var ids []int
