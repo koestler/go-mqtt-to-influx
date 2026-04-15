@@ -69,6 +69,7 @@ type LocalDb interface {
 }
 
 type Statistics interface {
+	Enabled() bool
 	IncrementOne(module, name, field string)
 }
 
@@ -179,9 +180,11 @@ func (ic Client) WritePoint(point Point) {
 	ic.writeApi.WritePoint(p)
 
 	// statistics
-	line := influxdb2Write.PointToLineProtocol(p, time.Second)
-	measurement := strings.Fields(line)[0]
-	ic.statistics.IncrementOne("influx", ic.Name(), measurement)
+	if ic.statistics.Enabled() {
+		line := influxdb2Write.PointToLineProtocol(p, time.Second)
+		measurement := strings.Fields(line)[0]
+		ic.statistics.IncrementOne("influx", ic.Name(), measurement)
+	}
 }
 
 func (ic Client) worker() {
