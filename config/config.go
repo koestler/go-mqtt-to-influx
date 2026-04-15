@@ -21,7 +21,7 @@ var nameMatcher = regexp.MustCompile(NameRegexp)
 func ReadConfigFile(exe, source string) (config Config, err []error) {
 	yamlStr, e := os.ReadFile(source)
 	if e != nil {
-		return config, []error{fmt.Errorf("cannot read configuration: %v; use see `%s --help`", e, exe)}
+		return config, []error{fmt.Errorf("cannot read configuration: %v; see `%s --help`", e, exe)}
 	}
 
 	return ReadConfig(yamlStr)
