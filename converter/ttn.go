@@ -38,7 +38,7 @@ type ttnMessage struct {
 func init() {
 	registerHandler("ttn", ttnHandler)
 
-	// ttn-dragino is also accepted for backwards compatibility; it is depraecated because now there is a general
+	// ttn-dragino is also accepted for backwards compatibility; it is deprecated because now there is a general
 	// ttn implementation which automatically detects the sensor type
 	registerHandler("ttn-dragino", ttnHandler)
 }

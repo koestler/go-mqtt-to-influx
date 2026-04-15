@@ -34,7 +34,7 @@ func CreateTopicMatcher(cfg TopicMatcherConfig) (TopicMatcher, error) {
 
 	matcher, err := regexp.Compile(expr)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create topic machter: invalid regexp: %s", err)
+		return nil, fmt.Errorf("cannot create topic matcher: invalid regexp: %s", err)
 	}
 
 	return topicMatcherStruct{

@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func InfluxBatchNumbLinss(batch string) int {
+func InfluxBatchNumbLines(batch string) int {
 	return strings.Count(batch, "\n")
 }
 
@@ -16,7 +16,7 @@ func (d *SqliteLocalDb) InfluxBacklogAdd(client, batch string) error {
 	} else if _, err := d.db.Exec(
 		"INSERT INTO influxBacklog (created, client, numbLines, compressedBatch) VALUES(datetime('now'), ?, ?, ?);",
 		client,
-		InfluxBatchNumbLinss(batch),
+		InfluxBatchNumbLines(batch),
 		compressedBatch,
 	); err != nil {
 		return fmt.Errorf("cannot insert into influxBacklog: %s", err)
@@ -70,7 +70,7 @@ WHERE client = ? AND id >= (
 	}
 
 	if len(ids) < 1 {
-		// nothing to aggregte, free up unused disk space instead
+		// nothing to aggregate, free up unused disk space instead
 		if d.vacuumNeeded {
 			if _, err := d.db.Exec("VACUUM"); err != nil {
 				log.Printf("localDb: error during VACUUM: %s", err)
@@ -96,7 +96,7 @@ WHERE client = ? AND id >= (
 		}
 	}
 
-	log.Printf("localDb[%s]: aggregateBacklog: aggragted %d entries into one", client, len(ids))
+	log.Printf("localDb[%s]: aggregateBacklog: aggregated %d entries into one", client, len(ids))
 	return nil
 }
 
@@ -128,7 +128,7 @@ func (d *SqliteLocalDb) InfluxBacklogGet(client string) (id int, batch string, e
 		}
 	}
 
-	if count := InfluxBatchNumbLinss(batch); count != numbLines {
+	if count := InfluxBatchNumbLines(batch); count != numbLines {
 		err = fmt.Errorf("numbLines does not match for id=%d, %d != %d", id, count, numbLines)
 	}
 

@@ -119,7 +119,7 @@ func tasmotaStateHandler(c Config, tm TopicMatcher, input Input, outputFunc Outp
 		case "OFF":
 			return false, true
 		default:
-			log.Printf("tasmota-state[%s]: cannot parse POWER='%s': only ON/OFF case-insentive known",
+			log.Printf("tasmota-state[%s]: cannot parse POWER='%s': only ON/OFF case-insensitive known",
 				c.Name(), power,
 			)
 			return false, false

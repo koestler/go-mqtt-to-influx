@@ -89,7 +89,7 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	)
 	err = append(err, e...)
 	if len(ret.mqttClients) < 1 {
-		err = append(err, fmt.Errorf("MqttClients section must no be empty"))
+		err = append(err, fmt.Errorf("MqttClients section must not be empty"))
 	}
 
 	ret.influxClients, e = TransformAndValidateMapToList(
@@ -100,7 +100,7 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	)
 	err = append(err, e...)
 	if len(ret.influxClients) < 1 {
-		err = append(err, fmt.Errorf("InfluxClients section must no be empty"))
+		err = append(err, fmt.Errorf("InfluxClients section must not be empty"))
 	}
 
 	ret.converters, e = TransformAndValidateMapToList(
@@ -111,7 +111,7 @@ func (c configRead) TransformAndValidate() (ret Config, err []error) {
 	)
 	err = append(err, e...)
 	if len(ret.converters) < 1 {
-		err = append(err, fmt.Errorf("converters section must no be empty"))
+		err = append(err, fmt.Errorf("converters section must not be empty"))
 	}
 
 	ret.influxAuxiliaryTags, e = TransformAndValidateList(
@@ -481,7 +481,7 @@ func (c converterConfigRead) TransformAndValidate(
 	)
 	err = append(err, e...)
 	if len(ret.mqttTopics) < 1 {
-		err = append(err, fmt.Errorf("mqttTopics section must no be empty"))
+		err = append(err, fmt.Errorf("mqttTopics section must not be empty"))
 	}
 
 	// validate that all listed mqttClients exist
