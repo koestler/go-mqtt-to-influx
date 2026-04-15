@@ -10,7 +10,6 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 func writeJsonHeaders(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 }
 
 func HandleStatsCounts(env *Environment, w http.ResponseWriter, r *http.Request) Error {
