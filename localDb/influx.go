@@ -129,7 +129,7 @@ func (d *SqliteLocalDb) InfluxBacklogGet(client string) (id int, batch string, e
 	}
 
 	if count := InfluxBatchNumbLinss(batch); count != numbLines {
-		log.Fatalf("numbLines does not match for id=%d, %d != %d", id, count, numbLines)
+		err = fmt.Errorf("numbLines does not match for id=%d, %d != %d", id, count, numbLines)
 	}
 
 	return
