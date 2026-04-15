@@ -119,17 +119,17 @@ func (d *SqliteLocalDb) InfluxBacklogGet(client string) (id int, batch string, e
 	)
 	var numbLines int
 	var compressedBatch []byte
-	if e := row.Scan(&id, &numbLines, &compressedBatch); e != nil {
-		err = fmt.Errorf("cannot select from influxBacklog: %s", e)
+	if err := row.Scan(&id, &numbLines, &compressedBatch); err != nil {
+		return 0, "", fmt.Errorf("cannot select from influxBacklog: %s", err)
 	} else {
 		batch, err = uncompress(compressedBatch)
 		if err != nil {
-			err = fmt.Errorf("cannot uncompress: %s", err)
+			return 0, "", fmt.Errorf("cannot uncompress: %s", err)
 		}
 	}
 
 	if count := InfluxBatchNumbLines(batch); count != numbLines {
-		err = fmt.Errorf("numbLines does not match for id=%d, %d != %d", id, count, numbLines)
+		return 0, "", fmt.Errorf("numbLines does not match for id=%d, %d != %d", id, count, numbLines)
 	}
 
 	return
