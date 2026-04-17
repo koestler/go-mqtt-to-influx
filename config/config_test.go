@@ -244,13 +244,13 @@ func TestReadConfig_NoVersion(t *testing.T) {
 
 func TestReadConfig_InvalidEmpty(t *testing.T) {
 	_, err := ReadConfig([]byte(InvalidEmptyConfig))
-	if !containsError("InfluxClients section must no be empty", err) {
+	if !containsError("InfluxClients section must not be empty", err) {
 		t.Error("expect error for empty InfluxClients")
 	}
-	if !containsError("MqttClients section must no be empty", err) {
+	if !containsError("MqttClients section must not be empty", err) {
 		t.Error("expect error for empty MqttClients")
 	}
-	if !containsError("converters section must no be empty", err) {
+	if !containsError("Converters section must not be empty", err) {
 		t.Error("expect error for empty Converters")
 	}
 	if len(err) != 3 {
