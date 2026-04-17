@@ -229,6 +229,7 @@ Converters:                                                # mandatory, the list
       - example-influx                                     # the arbitrary name defined in the InfluxClients configuration section
       - local
     LogHandleOnce: False                                   # optional, default False, when enabled, the first time this converter is executed, a log message is generated
+    LogDebug: False                                        # optional, default False, when enabled, debug log of the converter is enabled
 
   ttn:                                                     # mandatory, an arbitrary name used in log outputs
     Implementation: ttn
@@ -240,6 +241,7 @@ Converters:                                                # mandatory, the list
     InfluxClients:                                         # defines which influxDb clients this converter shall write data to, if omitted or empty, data is sent to all clients
       - local                                              # e.g. only sends dragino data to the local db since the internet server has another instance of this tool running
     LogHandleOnce: False                                   # optional, default False, when enabled, the first time this converter is executed, a log message is generated
+    LogDebug: False                                        # optional, default False, when enabled, debug log of the converter is enabled
 
   tasmota-state:                                           # mandatory, an arbitrary name used in log outputs
     Implementation: tasmota-state
@@ -248,6 +250,7 @@ Converters:                                                # mandatory, the list
                                                            # and subscribes 'v3/project@ttn/tele/+/+/SATE' on ttn
         Device: "+/+"                                      # e.g. when topic is 'my-project/tele/mezzo/light0/STATE', deviceName=mezzo/light0
     LogHandleOnce: False                                   # optional, default False, when enabled, the first time this converter is executed, a log message is generated
+    LogDebug: False                                        # optional, default False, when enabled, debug log of the converter is enabled
 
   tasmota-sensor:                                          # mandatory, an arbitrary name used in log outputs
     Implementation: tasmota-sensor
@@ -255,17 +258,20 @@ Converters:                                                # mandatory, the list
       - Topic: "%Prefix%tele/%Device%/SENSOR"
         Device: "+/+"
     LogHandleOnce: False                                    # optional, default False, when enabled, the first time this converter is executed, a log message is generated
+    LogDebug: False                                        # optional, default False, when enabled, debug log of the converter is enabled
 
 
 # A list of influxDb tags that should be added depending on the deviceName.
 # This is useful to e.g. group sensors by building, by type or so and use this in influxDb queries.
 # You can use either use the Matches or the Equals property. A device can match multiple tags. The tags are then merged (last one in the list overwrites)
 InfluxAuxiliaryTags:                                       # optional, the list can be omitted or left empty
-  - Equals: mezzo/bridge0                                  # Match the device with deviceName=mezzo/bridge0.
+  - Tag: device                                            # optional, default device; the influxDb tag name to match Equals/Matches against
+    Equals: mezzo/bridge0                                  # Match the device with deviceName=mezzo/bridge0.
     TagValues:                                             # A map of tagName: value to add as influxDb tag
       displayName: Sonoff Bridge                           # adds displayName="Sonoff Bridge"
 
-  - Matches: mezzo/.*                                      # optional, match the deviceName by regular expression
+  - Tag: device                                            # optional, default device; the influxDb tag name to match Equals/Matches against
+    Matches: mezzo/.*                                      # optional, match the deviceName by regular expression
     TagValues:                                             # A map of tagName: value to add as influxDb tag
       area: Mezzo
 
