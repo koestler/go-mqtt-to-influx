@@ -514,10 +514,6 @@ func (c converterConfigRead) TransformAndValidate(
 		}
 	}
 
-	if len(ret.mqttTopics) < 1 {
-		err = append(err, fmt.Errorf("Converters->%s->MqttTopics must not be empty", name))
-	}
-
 	if c.LogHandleOnce != nil && *c.LogHandleOnce {
 		ret.logHandleOnce = true
 	}
