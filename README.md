@@ -155,7 +155,7 @@ LogWorkerStart: True                                       # optional, default F
 # A map of MQTT servers to connect to
 MqttClients:                                               # mandatory, the list must not be empty
   local-mosquitto:                                         # mandatory, an arbitrary name used in log outputs and for reference in the converters section
-    Broker: "tcp://mqtt.exampel.com:1883"                  # mandatory, the address / port of the server
+    Broker: "tcp://mqtt.example.com:1883"                  # mandatory, the address / port of the server
     ProtocolVersion: 5                                     # optional, default 5, 3 for MQTT v3.1.x and 5 for MQTT v5.
     User: Bob                                              # optional, if given used for login
     Password: Jeir2Jie4zee                                 # optional, if given used for login
@@ -245,7 +245,7 @@ Converters:                                                # mandatory, the list
     Implementation: tasmota-state
     MqttTopics:                                            # mandatory, list must not be empty, selects what mqtt subscriptions shall be created for that converter
       - Topic: "%Prefix%tele/%Device%/STATE"               # e.g. subscribes 'my-project/tele/+/+/STATE' on local-mosquitto
-                                                           # and subscribes 'v3/project@ttn/tele/+/+/SATE' on ttn
+                                                           # and subscribes 'v3/project@ttn/tele/+/+/STATE' on ttn
         Device: "+/+"                                      # e.g. when topic is 'my-project/tele/mezzo/light0/STATE', deviceName=mezzo/light0
     LogHandleOnce: False                                   # optional, default False, when enabled, the first time this converter is executed, a log message is generated
     LogDebug: False                                        # optional, default False, when enabled, debug log of the converter is enabled
@@ -297,7 +297,7 @@ LogWorkerStart: True
 
 MqttClients:
   local-mosquitto:                                         # connect to a local mosquitto server allowing for anonymous connections
-    Broker: "tcp://mqtt.exampel.com:1883"
+    Broker: "tcp://mqtt.example.com:1883"
 
   ttn:                                                     # connect to the things network mqtt server
     Broker: "ssl://eu1.cloud.thethings.network:8883"
@@ -350,12 +350,12 @@ This follows the format used by [Tasmota](https://github.com/arendst/Sonoff-Tasm
 Example:
 * Topic: `piegn/tele/software/srv1-go-iotdevice/LWT`
 * Payload: `Online`,
-* Output: `boolValue,device=software/srv1-go-iotdevice,field=Available value=true`
+* Output: `availability,device=software/srv1-go-iotdevice boolValue=true`
 
 
 ### tasmota-state
 [Tasmota](https://github.com/arendst/Sonoff-Tasmota/wiki/MQTT-Overview) sends state messages whenever a switch
-is turned on or off. This messages also include the current uptime of the device, the supply voltage and
+is turned on or off. These messages also include the current uptime of the device, the supply voltage and
 details about the current wifi connection. All this data is stored.
 
 Example:
@@ -375,13 +375,13 @@ Example:
 ```
 
 * Output lines:
-  * `timeValue,device=elektronik/control0 value="2019-01-10 22:45:22 +0000 UTC"`
-  * `floatValue,device=elektronik/control0,field=UpTime,unit=s value=811741`
-  * `floatValue,device=elektronik/control0,field=Vcc,unit=V value=3.108`
-  * `boolValue,device=elektronik/control0,field=Power1 value=false`
-  * `boolValue,device=elektronik/control0,field=Power2 value=true`
-  * `boolValue,device=elektronik/control0,field=Power3 value=false`
-  * `boolValue,device=elektronik/control0,field=Power4 value=false`
+  * `clock,device=elektronik/control0 timeValue="2019-01-10T22:45:22Z"`
+  * `telemetry,device=elektronik/control0,field=UpTime,sensor=tasmota,unit=s floatValue=811741`
+  * `telemetry,device=elektronik/control0,field=Vcc,sensor=tasmota,unit=V floatValue=3.108`
+  * `telemetry,device=elektronik/control0,field=Power1,sensor=tasmota boolValue=false`
+  * `telemetry,device=elektronik/control0,field=Power2,sensor=tasmota boolValue=true`
+  * `telemetry,device=elektronik/control0,field=Power3,sensor=tasmota boolValue=false`
+  * `telemetry,device=elektronik/control0,field=Power4,sensor=tasmota boolValue=false`
   * `wifi,BSSId=04:F0:21:2F:B7:CC,SSId=piegn-iot,device=elektronik/control0 AP=1i,Channel=1i,RSSI=100i`
 
 ### tasmota-sensor
@@ -391,8 +391,9 @@ Example:
 * Topic: `piegn/tele/elektronik/control0/SENSOR`
 * Payload: `{"Time":"2019-01-10T22:15:52","SI7021":{"Temperature":5.4,"Humidity":27.7},"TempUnit":"C"}`
 * Output lines:
-  * `floatValue,device=elektronik/control0,field=Temperature,sensor=SI7021,unit=C value=5.4`
-  * `floatValue,device=elektronik/control0,field=Humidity,sensor=SI7021,unit=% value=27.7`
+  * `clock,device=elektronik/control0 timeValue="2019-01-10T22:15:52Z"`
+  * `telemetry,device=elektronik/control0,field=Temperature,sensor=SI7021,unit=C floatValue=5.4`
+  * `telemetry,device=elektronik/control0,field=Humidity,sensor=SI7021,unit=% floatValue=27.7`
 
 
 ### go-iotdevice

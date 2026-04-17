@@ -32,7 +32,7 @@ func availabilityHandler(c Config, tm TopicMatcher, input Input, outputFunc Outp
 		return
 	}
 
-	// parse pay load
+	// parse payload
 	var value bool
 	payload := string(input.Payload())
 	payload = strings.ToLower(payload)
