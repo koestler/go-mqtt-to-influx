@@ -182,7 +182,7 @@ func (c *statisticsConfigRead) TransformAndValidate() (ret StatisticsConfig, err
 	ret.enabled = true
 
 	if len(c.HistoryResolution) < 1 {
-		// use default 1s
+		// use default 10s
 	} else if historyResolution, e := time.ParseDuration(c.HistoryResolution); e != nil {
 		err = append(err, fmt.Errorf("Statistics->HistoryResolution='%s' parse error: %s",
 			c.HistoryResolution, e,
@@ -571,7 +571,7 @@ func (c influxAuxiliaryTagsRead) TransformAndValidate() (ret InfluxAuxiliaryTags
 	if c.Tag == nil {
 		ret.tag = "device"
 	} else if len(*c.Tag) < 1 {
-		err = append(err, fmt.Errorf("InfluxAuxiliaryTags->TagValues Tag must not by empty"))
+		err = append(err, fmt.Errorf("InfluxAuxiliaryTags->TagValues Tag must not be empty"))
 	} else {
 		ret.tag = *c.Tag
 	}

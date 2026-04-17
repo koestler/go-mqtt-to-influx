@@ -136,7 +136,7 @@ func (d *SqliteLocalDb) InfluxBacklogGet(client string) (id int, batch string, e
 }
 
 func (d *SqliteLocalDb) InfluxBacklogDelete(id int) error {
-	if _, err := d.db.Exec("DELETE FROM influxBacklog  WHERE id = ?", id); err != nil {
+	if _, err := d.db.Exec("DELETE FROM influxBacklog WHERE id = ?", id); err != nil {
 		return fmt.Errorf("cannot delete from influxBacklog: %s", err)
 	}
 

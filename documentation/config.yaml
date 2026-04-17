@@ -14,7 +14,7 @@ LogWorkerStart: True
 
 MqttClients:
   local-mosquitto:                                         # connect to a local mosquitto server allowing for anonymous connections
-    Broker: "tcp://mqtt.exampel.com:1883"
+    Broker: "tcp://mqtt.example.com:1883"
 
   ttn:                                                     # connect to the things network mqtt server
     Broker: "ssl://eu1.cloud.thethings.network:8883"

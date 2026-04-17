@@ -149,7 +149,7 @@ func main() {
 	}()
 
 	if cfg.LogWorkerStart() {
-		log.Printf("main: stutdown completed; exit %d", exitCode)
+		log.Printf("main: shutdown completed; exit %d", exitCode)
 	}
 	os.Exit(exitCode)
 }

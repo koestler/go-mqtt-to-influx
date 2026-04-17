@@ -55,7 +55,7 @@ func tasmotaStateHandler(c Config, tm TopicMatcher, input Input, outputFunc Outp
 	// parse topic
 	device, err := tm.MatchDevice(input.Topic())
 	if err != nil {
-		log.Printf("tasmota-state[%s]: cannot extract device from topic='%s err=%s", c.Name(), input.Topic(), err)
+		log.Printf("tasmota-state[%s]: cannot extract device from topic='%s' err=%s", c.Name(), input.Topic(), err)
 		return
 	}
 
