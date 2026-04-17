@@ -3,8 +3,8 @@
 [![Run tests](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/test.yml/badge.svg)](https://github.com/koestler/go-mqtt-to-influx/actions/workflows/test.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/koestler/go-mqtt-to-influx/v2.svg)](https://pkg.go.dev/github.com/koestler/go-mqtt-to-influx/v2)
 
-This tool connects to one or multiple [MQTT](http://mqtt.org/) servers to receive data from IOT-sensors.
-The messages are then parsed using easy to implement device / message specific converters to generate
+This tool connects to one or multiple [MQTT](http://mqtt.org/) servers to receive data from IoT sensors.
+The messages are then parsed using device- and message-specific converters to generate
 data points which are then written to an [Influx Database](https://github.com/influxdata/influxdb).
 
 Currently, the following devices are supported:
@@ -15,7 +15,6 @@ Currently, the following devices are supported:
 * Devices running the [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) firmware.
 * Various devices connected via a Lora WAN Network like [The Things Network](https://www.thethingsnetwork.org/).
   * [Dragino LoraWAN sensors](https://www.dragino.com/)
-  * [Dragino LSN50-v2](https://www.dragino.com/products/lora-lorawan-end-node/item/155-lsn50-v2.html)
   * [SenseCAP S2120](https://www.seeedstudio.com/sensecap-s2120-lorawan-8-in-1-weather-sensor-p-5436.html)
   * [Fencyboy](https://fencyboy.com/)
 
@@ -23,8 +22,8 @@ You are more than welcome to help support new devices. Send pull requests of con
 or open an issue including examples of topics and messages.
 
 This tool consists of the following components:
-* **mqttClient**: Connects to a MQTT servers
-                  using [paho.mqtt.golang](https://github.com/eclipse/paho.mqtt.golang) for MQTT v3.3 
+* **mqttClient**: Connects to one or more MQTT servers
+                  using [paho.mqtt.golang](https://github.com/eclipse/paho.mqtt.golang) for MQTT v3.1.x
                   and [paho.golang/paho](https://github.com/eclipse/paho.golang) for MQTT v5
                   to **receive** raw data.
 * **converter**: Parses the message topics and bodies and **converts** them into InfluxDB data points.
@@ -43,8 +42,7 @@ All my instances run without issues on a Raspberry Pi Zero 2 W.
 <summary>
 Deployment without docker
 </summary>
-I use docker to deploy this tool.
-Alternatively, you can use `go install` to build binary locally.
+Alternatively to Docker, you can use `go install` to build the binary locally.
 
 ```bash
 go install github.com/koestler/go-mqtt-to-influx/v2@latest
@@ -83,8 +81,8 @@ services:
 
 ```
 
-Note the mount of /app/db. It makes the database persist recreation of the docker container.
-It assumes hat you have the following configuration in config.yaml:
+Note the mount of /app/db. It makes the database persist across recreation of the docker container.
+It assumes that you have the following configuration in config.yaml:
 LocalDb:
 ```yaml
   Path: /app/db/local.db
@@ -344,9 +342,9 @@ Converters:
 
 ## Converters
 
-### lwt
+### availability
 
-LWT (Last Will Topic) Messages are used to broadcast the availability (online/offline) of a device.
+Handles LWT (Last Will Topic) messages used to broadcast the availability (online/offline) of a device.
 This follows the format used by [Tasmota](https://github.com/arendst/Sonoff-Tasmota/wiki/MQTT-Overview).
 
 Example:
@@ -399,8 +397,8 @@ Example:
 
 ### go-iotdevice
 
-[go-iotdevice](https://github.com/koestler/go-iotdevice) can read out various sensor values like voltages, currents,
-from battery monitors and solar chargers. Whe configured, it can send all those values in a single mqtt message
+[go-iotdevice](https://github.com/koestler/go-iotdevice) can read out various sensor values like voltages and currents
+from battery monitors and solar chargers. When configured, it can send all those values in a single MQTT message
 at regular intervals.
 
 Configuration template:
@@ -478,7 +476,7 @@ Example:
 ### ttn
 
 TTN is a generic converter for messages from [The Things Network](https://www.thethingsnetwork.org/).
-It currently support the following devices:
+It currently supports the following devices:
 * [Dragino LoraWAN sensors](https://www.dragino.com/)
 * [Fencyboy](https://fencyboy.com/)
 * [SenseCAP S2120](https://www.seeedstudio.com/sensecap-s2120-lorawan-8-in-1-weather-sensor-p-5436.html)
@@ -486,9 +484,12 @@ It currently support the following devices:
 For all devices, a line for the lora measurement is produced:
 * "lora,devEui=2CF7F1C0443003DD,device=s2120-0,gatewayEui=E45F01FFFEDECBE3,gatewayId=piegn-srv3 channelRssi=-80i,consumedAirtimeUs=71936i,gatewayIdx=0i,rssi=-80i,snr=6.5",
 
-Depending on the VersionIDs received, the correct sub-converter is executed. The VersionIDs are only available, when the devices
-is taken from the TTN device registry. A fallback to the device name is implemented. 
+Depending on the VersionIDs received, the correct sub-converter is executed. The VersionIDs are only available when the device
+is registered in the TTN device registry. A fallback to the device name is used otherwise.
 If you manually create the device, make sure to include "dragino", "fencyboy" or "sensecap" in the device name.
+
+Note: `ttn-dragino` is also accepted as an implementation name for backwards compatibility but is deprecated;
+use `ttn` instead.
 
 At the moment, the following sub-converters are available:
 
@@ -516,7 +517,7 @@ The exact lines depend on the fields the sensor produces. The current implementa
   * "telemetry,device=fencyboy-0,field=RemainingCapacity,sensor=fencyboy,unit=mAh floatValue=600.8870239257812",
   * "telemetry,device=fencyboy-0,field=Temperature,sensor=fencyboy,unit=°C floatValue=5.32",
 
-#### senscap
+#### sensecap
 
 * InfluxDB line protocol:
   * "telemetry,device=s2120-0,field=Air\\ Humidity,sensor=sensecaps2120-8-in-1,unit=%\\ RH floatValue=66",
