@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.10.0
+## 2.11.0
 - update various docs
 - fix some typos in error messages
 - fix bugs in pprof initialitation
