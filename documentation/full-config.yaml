@@ -1,18 +1,18 @@
-# Configuration file format version. Always set to 0 since not other format is supported yet (reserved for future use).
+# Configuration file format version. Always set to 0 since no other format is supported yet (reserved for future use).
 Version: 0
 
-# HttpServer: When this section is present, a http server is started.
+# HttpServer: When this section is present, an HTTP server is started.
 HttpServer:                                                # optional, default Disabled
-  Bind: "[::1]"                                            # optional, default [::1]; set to 127.0.0.1 for ipv4 loop-back, or [::] / 0.0.0.0 to listen on all ports
-  Port: 8000                                               # optional, default 8000; what tcp port the server is listing on; running as root is required when a low port like 80 is used
+  Bind: "[::1]"                                            # optional, default [::1]; set to 127.0.0.1 for IPv4 loopback, or [::] / 0.0.0.0 to listen on all ports
+  Port: 8000                                               # optional, default 8000; what TCP port the server is listening on; running as root is required when a low port like 80 is used
   LogRequests: False                                       # optional, default False; log all requests to stdout
 
-# LocalDb: When this section is present, a local sqlite-database is created to store a backlog of data waiting to be written to influx
+# LocalDb: When this section is present, a local SQLite database is created to store a backlog of data waiting to be written to InfluxDB.
 LocalDb:                                                   # optional, default Disabled
   Path: "/app/db/local.db"                                 # optional, default ./go-mqtt-to-influx.db, where to put the file. Use /app/db/XXX when using the docker container.
 
 # Statistics: When this section is enabled, event counters for received, converted and saved events are stored in memory.
-# This module might up significant amounts of memory.
+# This module might use up significant amounts of memory.
 # It stores a counter for each mqttTopic, for each mqttClient/influxClient/converter and for each time step.
 # The number of time steps is HistoryMaxAge / HistoryResolution.
 Statistics:                                                # optional, default Disabled, start the statistics module (needs some additional memory/cpu)
@@ -26,20 +26,20 @@ LogWorkerStart: True                                       # optional, default F
 MqttClients:                                               # mandatory, the list must not be empty
   local-mosquitto:                                         # mandatory, an arbitrary name used in log outputs and for reference in the converters section
     Broker: "tcp://mqtt.exampel.com:1883"                  # mandatory, the address / port of the server
-    ProtocolVersion: 5                                     # optional, default  5, 3 for mqtt v3.3.x and 5 for mqtt v5.
+    ProtocolVersion: 5                                     # optional, default 5, 3 for MQTT v3.1.x and 5 for MQTT v5.
     User: Bob                                              # optional, if given used for login
     Password: Jeir2Jie4zee                                 # optional, if given used for login
     #ClientId: "go-mqtt-to-influx"                         # optional, default go-mqtt-to-influx-UUID (UUID is generated), client-id sent to the server
     Qos: 1                                                 # optional, default 1, QOS-level used for subscriptions / availability messages must be 0, 1, or 2
     KeepAlive: 60s                                         # optional, default 60s, how often ping messages are sent to the server
     ConnectRetryDelay: 10s                                 # optional, default 10s, how often to try to reestablish a connection to the server
-    ConnectTimeout: 5s                                     # optional, default 5s, how long to wait for the connect response, increase on very slow notworks
+    ConnectTimeout: 5s                                     # optional, default 5s, how long to wait for the connect response, increase on very slow networks
     AvailabilityTopic: test/%Prefix%tele/%ClientId%/LWT    # optional, if given, a message with "online" / "offline" as payload will be published on connect / disconnect
                                                            # supported placeholders:
-                                                           # - %Prefix$   : as specified in TopicPrefix in this config section
-                                                           # - %ClientId% : as specified in ClientId this config section
+                                                           # - %Prefix%   : as specified in TopicPrefix in this config section
+                                                           # - %ClientId% : as specified in ClientId in this config section
     TopicPrefix: my-project/                               # optional, default empty, used to generate Mqtt Message topics
-    LogDebug: False                                        # optional, default False, when enabled debug log of the mqtt client is enabled.
+    LogDebug: False                                        # optional, default False, when enabled, debug log of the MQTT client is enabled.
     LogMessages: False                                     # optional, default False, when enabled, all received messages are logged
 
   ttn:                                                     # optional, a second MQTT server, use The Things Network as an example
@@ -50,9 +50,9 @@ MqttClients:                                               # mandatory, the list
     TopicPrefix: "v3/project@ttn/"                         # see Integrations -> MQTT on thethings.network
     AvailabilityTopic: ""                                  # disable availability topic on ttn, nobody will listen for it
     Qos: 0                                                 # ttn only supports QOS = 0
-    # only for ttn implementation: when KeepAlive interval is set to low, regular reconnects occur. 60s works fine.
+    # only for ttn implementation: when KeepAlive interval is set too low, regular reconnects occur. 60s works fine.
 
-# A map of InfluxDB server to send data to
+# A map of InfluxDB servers to send data to
 InfluxClients:                                             # mandatory, the list must not be empty
   example-influx:                                          # mandatory, an arbitrary name used in log outputs and for reference in the converters section
     Url: "http://influx.example.com:8086"                  # mandatory, the url to the server
@@ -60,11 +60,11 @@ InfluxClients:                                             # mandatory, the list
                                                            # mandatory, the influxDb API Token
     Org: "iot"                                             # mandatory, the influxDb organisation name
     Bucket: "iot"                                          # mandatory, the influxDb bucket to which the data shall be written
-    WriteInterval: 10s                                     # optional, default 10s, defines how often data is sent to the influxDb, in between it is stores in memory.
+    WriteInterval: 10s                                     # optional, default 10s, defines how often data is sent to the influxDb, in between it is stored in memory.
     RetryInterval: 10s                                     # optional, default 10s, retry after this time when connection fails or on non 2xx-response
     AggregateInterval: 60s                                 # optional, default 60s, how often the local db aggregates multiple data batches into one.
     TimePrecision: 1ms                                     # optional, default 1s, influxDb time precision
-    ConnectTimeout: 5s                                     # optional, default 5s, how long to wait for the connect response, increase on very slow notworks
+    ConnectTimeout: 5s                                     # optional, default 5s, how long to wait for the connect response, increase on very slow networks
     BatchSize: 5000                                        # optional, default 5000, points are grouped into batches of this size; a batch is sent when it is full or when WriteInterval elapses
     RetryQueueLimit: 20                                    # optional, default 20, discard the oldest batches in the retry queue when this limit is reached (limits memory usage)
     LogDebug: True                                         # optional, default False, outputs the influxDb Line Protocol of each point
@@ -85,7 +85,7 @@ Converters:                                                # mandatory, the list
                                                            #            wildcards + and # might be used
                                                            #            %Prefix% depends on the TopicPrefix defined in the MqttClient config section
                                                            #            %Device% is a placeholder for the deviceName sent to the influxDb
-        Device: "+"                                        # optional,  default '+', %Device% in the topic is replaced with this
+        Device: "+"                                        # optional, default '+', %Device% in the topic is replaced with this
                                                            #            can be a static value like 'sensor-1'
                                                            #            can be a wildcard + for a single word
                                                            #            can be a wildcard +/+ to match something like a/b and foo/sensor-1
@@ -105,7 +105,7 @@ Converters:                                                # mandatory, the list
       - Topic: "ttn/devices/%Device%/up"
         Device: "+"
     MqttClients:                                           # defines which mqtt clients this converter shall subscribe to, if omitted or empty, all clients are used
-      - ttn                                                # e.g. only subscribe on ttn for the dagino sensor updates
+      - ttn                                                # e.g. only subscribe on ttn for the Dragino sensor updates
     InfluxClients:                                         # defines which influxDb clients this converter shall write data to, if omitted or empty, data is sent to all clients
       - local                                              # e.g. only sends dragino data to the local db since the internet server has another instance of this tool running
     LogHandleOnce: False                                   # optional, default False, when enabled, the first time this converter is executed, a log message is generated
@@ -131,7 +131,7 @@ Converters:                                                # mandatory, the list
 
 # A list of influxDb tags that should be added depending on the deviceName.
 # This is useful to e.g. group sensors by building, by type or so and use this in influxDb queries.
-# You can use either use the Matches or the Equals property. A device can match multiple tags. The tags are then merged (last one in the list overwrites)
+# You can use either the Matches or the Equals property. A device can match multiple tags. The tags are then merged (last one in the list overwrites).
 InfluxAuxiliaryTags:                                       # optional, the list can be omitted or left empty
   - Tag: device                                            # optional, default device; the influxDb tag name to match Equals/Matches against
     Equals: mezzo/bridge0                                  # Match the device with deviceName=mezzo/bridge0.
