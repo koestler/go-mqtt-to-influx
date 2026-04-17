@@ -31,7 +31,7 @@ func TestTtnDragino(t *testing.T) {
 				"telemetry,device=lsn50-temp-0,field=Ext,sensor=lht52 intValue=1i",
 				"telemetry,device=lsn50-temp-0,field=HumSHT,sensor=lht52,unit=% floatValue=50",
 				"telemetry,device=lsn50-temp-0,field=Systimestamp,sensor=lht52,unit=ms intValue=1661461942i",
-				"telemetry,device=lsn50-temp-0,field=TempCDs,sensor=lht52,unit=V floatValue=327.67",
+				"telemetry,device=lsn50-temp-0,field=TempCDs,sensor=lht52,unit=°C floatValue=327.67",
 				"telemetry,device=lsn50-temp-0,field=TempCSht,sensor=lht52,unit=°C floatValue=28.77",
 			},
 			// 2022-08-25T21:12:53.828332832Z
@@ -97,7 +97,7 @@ func TestTtnDragino(t *testing.T) {
 				"telemetry,device=lht52-temp-1,field=Ext,sensor=lht52 intValue=1i",
 				"telemetry,device=lht52-temp-1,field=HumSHT,sensor=lht52,unit=% floatValue=47.3",
 				"telemetry,device=lht52-temp-1,field=Systimestamp,sensor=lht52,unit=ms intValue=1661462010i",
-				"telemetry,device=lht52-temp-1,field=TempCDs,sensor=lht52,unit=V floatValue=327.67",
+				"telemetry,device=lht52-temp-1,field=TempCDs,sensor=lht52,unit=°C floatValue=327.67",
 				"telemetry,device=lht52-temp-1,field=TempCSht,sensor=lht52,unit=°C floatValue=29.23",
 			},
 			// 2022-08-25T21:14:02.601203717Z

@@ -4,6 +4,7 @@
 - update various docs
 - fix some typos in error messages
 - fix bugs in pprof initialitation
+- ttn: fix wrong unit V instead of °C for TempCDs
 
 ## 2.9.1
 - TTN: Versions are only available for devices that are in the device registry. Add a matching by device name as fallback.

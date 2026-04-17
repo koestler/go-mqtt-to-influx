@@ -200,7 +200,7 @@ func ttnDraginoHandler(c Config, device, model string, input Input, outputFunc O
 	if message.UplinkMessage.DecodedPayload.TempCDs != nil {
 		outputFloat(
 			"TempCDs",
-			"V",
+			"°C",
 			message.UplinkMessage.DecodedPayload.TempCDs,
 		)
 	}
