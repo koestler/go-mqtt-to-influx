@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.11.1
+- bump dependencies
+- bump go version to 1.27
+- mqttClient: replace deprecated reconnect delay configuration
+
 ## 2.11.0
 - update various docs
 - fix some typos in error messages
